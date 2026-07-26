@@ -1,0 +1,4 @@
+'use client';
+import {FormEvent,useState} from 'react';
+import {supabase} from '@/lib/supabase';
+export default function Login(){const[email,setEmail]=useState('');const[password,setPassword]=useState('');const[msg,setMsg]=useState('');async function go(e:FormEvent){e.preventDefault();setMsg('登入中…');try{const{error}=await supabase().auth.signInWithPassword({email,password});if(error)throw error;location.href='/admin';}catch(x){setMsg(x instanceof Error?x.message:'登入失敗')}}return <main className="auth"><form className="login-card" onSubmit={go}><div className="seal">楓</div><p className="eyebrow">MIANFENGKAN ADMIN</p><h1>眠楓館・管理登入</h1><label>電子郵件<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><label>密碼<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/></label><button>登入</button><p className="message">{msg}</p><a href="/index.html">返回網站</a></form></main>}
