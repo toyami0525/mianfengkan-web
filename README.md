@@ -18,3 +18,9 @@
 
 ## 說明
 前台 v12 目前完整保留，後台已改為 Supabase。預約與點餐前台的資料庫串接可在後續版本逐頁替換，不影響外觀。
+
+## v1.1 點餐／預約串接修正
+
+1. 在 Supabase SQL Editor 執行 `supabase/booking-orders-fix.sql`。
+2. 將本專案完整覆蓋到 GitHub 並推送。
+3. Vercel 完成重新部署後，前台點餐與預約會寫入 Supabase，後台可直接查看。
