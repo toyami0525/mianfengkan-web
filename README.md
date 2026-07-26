@@ -24,3 +24,7 @@
 1. 在 Supabase SQL Editor 執行 `supabase/booking-orders-fix.sql`。
 2. 將本專案完整覆蓋到 GitHub 並推送。
 3. Vercel 完成重新部署後，前台點餐與預約會寫入 Supabase，後台可直接查看。
+
+
+## v1.2 後台操作修正
+部署前請在 Supabase SQL Editor 執行 `supabase/admin-actions-fix.sql`。此修正加入後台狀態更新權限、錯誤提示、訂單品項易讀格式與台灣時間顯示。
