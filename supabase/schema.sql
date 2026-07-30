@@ -6,7 +6,7 @@ create table if not exists public.orders(id uuid primary key default gen_random_
 create table if not exists public.announcements(id uuid primary key default gen_random_uuid(),title text not null,content text,published boolean default true,created_at timestamptz default now());
 create table if not exists public.site_settings(key text primary key,value jsonb not null default 'null',updated_at timestamptz default now());
 insert into public.site_settings(key,value) values ('venue',jsonb_build_object('name','眠楓館','address','穹頂皓天 7區22號','business_status','open','business_hours','依招募板公告為主')) on conflict(key) do nothing;
-insert into public.staff(name,role,slug,active,accepting_reservations,sort_order) values ('羽鶴璃久','館主','riku',true,false,1),('微','館員','wei',true,true,2),('花形','館員','hanagata',true,true,3) on conflict(slug) do nothing;
+insert into public.staff(name,role,slug,active,accepting_reservations,sort_order) values ('羽鶴璃久','館主','riku',true,false,1),('微','館員','wei',true,true,2) on conflict(slug) do nothing;
 alter table public.staff enable row level security;alter table public.staff_unavailability enable row level security;alter table public.reservations enable row level security;alter table public.orders enable row level security;alter table public.announcements enable row level security;alter table public.site_settings enable row level security;
 create policy "public read active staff" on public.staff for select using(active=true);
 create policy "public read blocks" on public.staff_unavailability for select using(true);

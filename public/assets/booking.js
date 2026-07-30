@@ -1,4 +1,4 @@
-const staff=[{name:'微',role:'館員'},{name:'花形',role:'館員'}];
+const staff=[{name:'微',role:'館員'}];
 const SERVICE_INFO={
   '泡湯搓澡':{price:150000,duration:15},
   '按摩服務':{price:100000,duration:15},

@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { publicSupabase } from '@/lib/supabase-server';
 
+const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+function taipeiParts(date: Date) {
+  const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth(),
+    day: shifted.getUTCDate(),
+    hour: shifted.getUTCHours(),
+    minute: shifted.getUTCMinutes(),
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -14,6 +27,26 @@ export async function POST(request: Request) {
 
     if (!guestName || !staffId || !serviceName || !startAt) {
       return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
+    }
+
+    const start = new Date(startAt);
+    const now = new Date();
+    if (Number.isNaN(start.getTime())) {
+      return NextResponse.json({ error: '預約時間格式不正確' }, { status: 400 });
+    }
+    const today = taipeiParts(now);
+    const selected = taipeiParts(start);
+    const sameDay = today.year === selected.year && today.month === selected.month && today.day === selected.day;
+    const startMinutes = selected.hour * 60 + selected.minute;
+    const endMinutes = startMinutes + duration;
+    if (!sameDay) {
+      return NextResponse.json({ error: '指名僅限當天，不能預約其他日期' }, { status: 400 });
+    }
+    if (start <= now) {
+      return NextResponse.json({ error: '不可指名已經過去的時間' }, { status: 400 });
+    }
+    if (startMinutes < 21 * 60 || endMinutes > 24 * 60) {
+      return NextResponse.json({ error: '可指名時間為當天 21:00～24:00，服務必須在午夜 12 點前結束' }, { status: 400 });
     }
 
     const { data, error } = await publicSupabase().rpc('create_reservation', {
