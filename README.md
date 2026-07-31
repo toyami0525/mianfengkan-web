@@ -38,3 +38,11 @@
 - 每頁 20 筆，超過會自動分頁。
 - 完成與取消只改變狀態，不會刪除資料。
 - Dashboard 改為今日統計。
+
+
+## v1.9 content update
+- Replaced homepage slideshow with three supplied garden images.
+- Replaced venue images and added 和室安眠.
+- Updated 羽鶴璃久 and 微 profiles; 微 card uses the supplied flower-field image.
+- Unified public wording to 指名服務.
+- Booking availability remains 微 only.

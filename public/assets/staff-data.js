@@ -1,7 +1,7 @@
 
 const MF_DEFAULT_STAFF = [
-  {slug:'riku',name:'羽鶴璃久',role:'館主',quote:'「歡迎回來。願眠楓館，替您洗去旅途的疲憊。」',bio:'有著安靜而雅緻氣質的龍娘，負責館內整體接待與營運。偶爾會以不同模樣出現在館內，卻總能讓來訪的旅人安心落座。',services:['接待','餐食'],photo_primary:'assets/images/staff-riku-01.webp',photo_secondary:'assets/images/staff-riku-02.webp',sort_order:10,enabled:true},
-  {slug:'wei',name:'微',role:'館員／看板娘',quote:'「小璃～加薪！～我要加薪～！」',bio:'店長的義姊、貪吃鬼，也是眠楓館的可愛擔當。雖然活潑好動，實際上卻十分體貼溫柔，總能讓館內氣氛變得輕鬆。',services:['接待','餐食','泡湯','按摩','枕邊談心'],photo_primary:'assets/images/staff-wei-01.webp',photo_secondary:'assets/images/staff-wei-02.webp',sort_order:20,enabled:true}
+  {slug:'riku',name:'羽鶴璃久',role:'館主',quote:'「歡迎蒞臨『眠楓館』，由衷希望旅人們能在這裡洗去旅途的疲憊。」',bio:'看著安靜且雅緻氣質的龍娘（其實很怕生），負責館內整體接待與營運。偶爾會以不同模樣出現在館內，卻總能讓來訪的旅人安心落座。',services:['接待','餐食'],photo_primary:'assets/images/staff-riku-01.webp',photo_secondary:'assets/images/staff-riku-02.webp',sort_order:10,enabled:true},
+  {slug:'wei',name:'微',role:'館員／看板娘',quote:'',bio:'館主的義姊、貪吃鬼，也是眠楓館的可愛擔當。活潑好動，實際上卻十分體貼溫柔，總能讓館內氣氛變得輕鬆愉快。',services:['接待','餐食','泡湯','按摩','枕邊談心'],photo_primary:'assets/images/staff-wei-01.webp',photo_secondary:'assets/images/staff-wei-02.webp',sort_order:20,enabled:true}
 ];
 function mfEsc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function tagClass(x){return {'接待':'service-reception','餐食':'service-food','泡湯':'service-bath','按摩':'service-massage','枕邊談心':'service-talk','耳語陪伴':'service-talk'}[x]||''}

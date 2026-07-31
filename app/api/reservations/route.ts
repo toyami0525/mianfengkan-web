@@ -26,13 +26,13 @@ export async function POST(request: Request) {
     const note = String(body.note ?? '').trim();
 
     if (!guestName || !staffId || !serviceName || !startAt) {
-      return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
+      return NextResponse.json({ error: '指名資料不完整' }, { status: 400 });
     }
 
     const start = new Date(startAt);
     const now = new Date();
     if (Number.isNaN(start.getTime())) {
-      return NextResponse.json({ error: '預約時間格式不正確' }, { status: 400 });
+      return NextResponse.json({ error: '指名時間格式不正確' }, { status: 400 });
     }
     const today = taipeiParts(now);
     const selected = taipeiParts(start);
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const startMinutes = selected.hour * 60 + selected.minute;
     const endMinutes = startMinutes + duration;
     if (!sameDay) {
-      return NextResponse.json({ error: '指名僅限當天，不能預約其他日期' }, { status: 400 });
+      return NextResponse.json({ error: '指名僅限當天，不能指名其他日期' }, { status: 400 });
     }
     if (start <= now) {
       return NextResponse.json({ error: '不可指名已經過去的時間' }, { status: 400 });
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     if (error) throw error;
     return NextResponse.json({ ok: true, id: data });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '送出預約失敗';
+    const message = error instanceof Error ? error.message : '送出指名失敗';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
