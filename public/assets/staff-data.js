@@ -14,7 +14,12 @@ async function loadStaff(){
  let rows=MF_DEFAULT_STAFF;
  const cfg=window.MF_CONFIG||{};
  if(cfg.supabaseUrl&&cfg.supabaseAnonKey&&window.supabase){
-   try{const client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);const {data,error}=await client.from('staff').select('*').eq('enabled',true).order('sort_order');if(error)throw error;if(data?.length)rows=data.filter(x=>['riku','wei'].includes(x.slug));}catch(e){console.warn('使用內建館員資料：',e.message)}
+   try{const client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);const {data,error}=await client.from('staff').select('*').eq('enabled',true).order('sort_order');if(error)throw error;if(data?.length){
+      rows=data.filter(x=>['riku','wei'].includes(x.slug)).map(x=>{
+        if(x.slug==='wei') return {...x,photo_primary:'assets/images/staff-wei-01.webp',photo_secondary:'assets/images/staff-wei-02.webp'};
+        return x;
+      });
+    }}catch(e){console.warn('使用內建館員資料：',e.message)}
  }
  document.getElementById('staffList').innerHTML=rows.map(staffCard).join('')+`<article class="coming-card"><div class="coming-leaf">楓</div><span class="eyebrow">COMING SOON</span><h2>敬請期待</h2><p>新的館員正在準備與各位旅人見面。</p><div class="coming-line"></div><small>眠楓館 館員名錄</small></article>`;
 }
