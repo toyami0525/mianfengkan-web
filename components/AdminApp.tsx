@@ -4,11 +4,24 @@ import {supabase} from '@/lib/supabase';
 
 type Row=Record<string,any>;
 type DateRange='today'|'yesterday'|'week'|'month'|'all';
+type VenueSettings={name:string,address:string,discord:string,business_status:string,business_hours:string};
+type HomepageSettings={tagline:string,services_text:string};
+type RuleItem={title:string,content:string};
 const PAGE_SIZE=20;
-const tabs=[['dashboard','總覽'],['staff','館員管理'],['schedule','排班／請假'],['reservations','指名管理'],['orders','點餐管理'],['announcements','公告管理'],['settings','網站設定']];
+const tabs=[['dashboard','總覽'],['staff','館員管理'],['schedule','排班／請假'],['reservations','指名管理'],['orders','點餐管理'],['announcements','公告管理'],['rules','規章管理'],['settings','網站設定']];
 const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',starts_at:'指名時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間'};
 const statusText:Record<string,string>={pending:'待確認',confirmed:'已確認',completed:'已完成',cancelled:'已取消',rejected:'已拒絕'};
 const dateRangeText:Record<DateRange,string>={today:'今天',yesterday:'昨天',week:'本週',month:'本月',all:'全部'};
+const DEFAULT_VENUE:VenueSettings={name:'眠楓館',address:'穹頂皓天 7區22號',discord:'',business_status:'open',business_hours:'依招募板公告為主'};
+const DEFAULT_HOME:HomepageSettings={tagline:'在楓影與湯煙之間，靜候旅人安歇。',services_text:'和風溫泉會館　食・湯・癒・眠'};
+const DEFAULT_RULES:RuleItem[]=[
+ {title:'尊重館員與每位旅人',content:'請尊重館員及其他來館旅人的交流空間，避免任何騷擾、惡意言論或影響他人體驗的行為。'},
+ {title:'館內請放慢腳步',content:'請避免於館內奔跑、跳躍或持續使用大型特效技能，共同維護寧靜舒適的環境。'},
+ {title:'拍照請先徵詢同意',content:'若欲與館員或其他旅人拍照、合影或錄影，請先取得對方同意後再進行。'},
+ {title:'尊重館員的服務安排',content:'每位館員可依現場狀況調整服務內容或婉拒部分服務，敬請理解並予以尊重。'},
+ {title:'共同維護館內環境',content:'請避免長時間占用公共空間、刻意干擾他人或影響館內秩序，共同維護舒適的休憩環境。'},
+ {title:'如有任何需求',content:'若有任何問題或需要協助，歡迎隨時向館員提出，我們將竭誠為您服務。'}
+];
 
 export default function AdminApp(){
  const[ready,setReady]=useState(false),[tab,setTab]=useState('dashboard'),[data,setData]=useState<Record<string,Row[]>>({}),[msg,setMsg]=useState(''),[busy,setBusy]=useState('');
@@ -16,16 +29,24 @@ export default function AdminApp(){
  const[reservationStatus,setReservationStatus]=useState('pending'),[orderStatus,setOrderStatus]=useState('pending');
  const[reservationSearch,setReservationSearch]=useState(''),[orderSearch,setOrderSearch]=useState('');
  const[reservationPage,setReservationPage]=useState(1),[orderPage,setOrderPage]=useState(1);
+ const[venue,setVenue]=useState<VenueSettings>(DEFAULT_VENUE),[homepage,setHomepage]=useState<HomepageSettings>(DEFAULT_HOME),[rules,setRules]=useState<RuleItem[]>(DEFAULT_RULES);
  const db=useMemo(()=>supabase(),[]);
+ function syncSettings(rows:Row[]){
+  const map=Object.fromEntries((rows||[]).map(r=>[r.key,r.value]));
+  setVenue({...DEFAULT_VENUE,...(map.venue||{})});
+  setHomepage({...DEFAULT_HOME,...(map.homepage||{})});
+  setRules(Array.isArray(map.rules)&&map.rules.length?map.rules:DEFAULT_RULES);
+ }
  async function load(){
   setMsg('讀取中…');
   const names=['staff','staff_unavailability','reservations','orders','announcements','site_settings'];
   const out:Record<string,Row[]>={};
   for(const n of names){
-   const{data,error}=await db.from(n).select('*').order('created_at',{ascending:false});
-   if(error){console.error(n,error);out[n]=[];}else out[n]=data||[];
+   const query=db.from(n).select('*');
+   const result=n==='site_settings'?await query.order('key',{ascending:true}):await query.order('created_at',{ascending:false});
+   if(result.error){console.error(n,result.error);out[n]=[];}else out[n]=result.data||[];
   }
-  setData(out);setMsg('');
+  setData(out);syncSettings(out.site_settings||[]);setMsg('');
  }
  useEffect(()=>{db.auth.getUser().then(({data})=>{if(!data.user){location.href='/login';return}setReady(true);load()})},[]);
  async function logout(){await db.auth.signOut();location.href='/login'}
@@ -48,6 +69,14 @@ export default function AdminApp(){
   if(kind==='announcement'){const title=prompt('公告標題');const content=prompt('公告內容');if(title)await db.from('announcements').insert({title,content,published:true})}
   await load();
  }
+ async function saveSetting(key:string,value:any){
+  setBusy(`setting:${key}`);setMsg('儲存中…');
+  const{error}=await db.from('site_settings').upsert({key,value,updated_at:new Date().toISOString()},{onConflict:'key'});
+  if(error){setMsg(`儲存失敗：${error.message}`);alert(`儲存失敗：${error.message}`);}else{setMsg('已儲存，前台重新整理後會套用最新內容。');await load()}
+  setBusy('');
+ }
+ function updateRule(index:number,field:keyof RuleItem,value:string){setRules(prev=>prev.map((r,i)=>i===index?{...r,[field]:value}:r))}
+ function moveRule(index:number,delta:number){setRules(prev=>{const next=[...prev],to=index+delta;if(to<0||to>=next.length)return prev;[next[index],next[to]]=[next[to],next[index]];return next})}
  if(!ready)return <main className="admin-loading">確認登入狀態…</main>;
  const reservations=data.reservations||[],orders=data.orders||[],staff=data.staff||[];
  const todayReservations=filterRows(reservations,'today','all','');
@@ -65,7 +94,8 @@ export default function AdminApp(){
  {tab==='reservations'&&<Panel title="指名紀錄"><RecordToolbar range={reservationRange} status={reservationStatus} search={reservationSearch} onRange={v=>{setReservationRange(v);setReservationPage(1)}} onStatus={v=>{setReservationStatus(v);setReservationPage(1)}} onSearch={v=>{setReservationSearch(v);setReservationPage(1)}} statuses={['pending','confirmed','completed','cancelled','all']}/><RecordSummary total={filteredReservations.length} range={reservationRange} status={reservationStatus}/><Table rows={visibleReservations} keys={['guest_name','contact','staff_name','service_name','starts_at','status','note']} actions={r=><><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'confirmed')}>確認</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'completed')}>完成</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'cancelled')}>取消</button></>}/><Pagination page={reservationPage} pages={reservationPages} onChange={setReservationPage}/></Panel>}
  {tab==='orders'&&<Panel title="點餐紀錄"><RecordToolbar range={orderRange} status={orderStatus} search={orderSearch} onRange={v=>{setOrderRange(v);setOrderPage(1)}} onStatus={v=>{setOrderStatus(v);setOrderPage(1)}} onSearch={v=>{setOrderSearch(v);setOrderPage(1)}} statuses={['pending','completed','cancelled','all']}/><RecordSummary total={filteredOrders.length} range={orderRange} status={orderStatus}/><Table rows={visibleOrders} keys={['guest_name','items','total','status','created_at']} actions={r=><><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'completed')}>完成</button><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'cancelled')}>取消</button></>}/><Pagination page={orderPage} pages={orderPages} onChange={setOrderPage}/></Panel>}
  {tab==='announcements'&&<Panel title="公告" action={<button onClick={()=>quickAdd('announcement')}>新增公告</button>}><Table rows={data.announcements||[]} keys={['title','content','published','created_at']} actions={r=><button disabled={busy===`announcements:${r.id}`} onClick={()=>remove('announcements',r.id)}>刪除</button>}/></Panel>}
- {tab==='settings'&&<Panel title="網站設定"><Table rows={data.site_settings||[]} keys={['key','value','updated_at']}/><p className="hint">可在 Supabase Table Editor 修改店名、Discord、營業狀態與營業時間；下一版會加入完整表單與圖片上傳。</p></Panel>}
+ {tab==='rules'&&<Panel title="來館規章" action={<button onClick={()=>setRules(prev=>[...prev,{title:'新規章',content:''}])}>新增規章</button>}><div className="rules-editor">{rules.map((rule,index)=><article className="rule-editor" key={index}><div className="rule-number">{String(index+1).padStart(2,'0')}</div><label>標題<input value={rule.title} onChange={e=>updateRule(index,'title',e.target.value)}/></label><label>內容<textarea rows={3} value={rule.content} onChange={e=>updateRule(index,'content',e.target.value)}/></label><div className="rule-actions"><button onClick={()=>moveRule(index,-1)} disabled={index===0}>上移</button><button onClick={()=>moveRule(index,1)} disabled={index===rules.length-1}>下移</button><button className="danger" onClick={()=>setRules(prev=>prev.filter((_,i)=>i!==index))}>刪除</button></div></article>)}</div><div className="form-submit"><button disabled={busy==='setting:rules'} onClick={()=>saveSetting('rules',rules)}>儲存全部規章</button></div></Panel>}
+ {tab==='settings'&&<><Panel title="基本資訊"><div className="settings-grid"><label>店名<input value={venue.name} onChange={e=>setVenue({...venue,name:e.target.value})}/></label><label>住宅地址<input value={venue.address} onChange={e=>setVenue({...venue,address:e.target.value})}/></label><label>Discord／聯絡資訊<input value={venue.discord} onChange={e=>setVenue({...venue,discord:e.target.value})} placeholder="可留空"/></label><label>營業時間<input value={venue.business_hours} onChange={e=>setVenue({...venue,business_hours:e.target.value})}/></label><label>營業狀態<select value={venue.business_status} onChange={e=>setVenue({...venue,business_status:e.target.value})}><option value="open">營業中</option><option value="closed">今日休館</option><option value="preparing">準備中</option></select></label></div><div className="form-submit"><button disabled={busy==='setting:venue'} onClick={()=>saveSetting('venue',venue)}>儲存基本資訊</button></div></Panel><Panel title="首頁文字"><div className="settings-grid single"><label>首頁標語<input value={homepage.tagline} onChange={e=>setHomepage({...homepage,tagline:e.target.value})}/></label><label>服務摘要<input value={homepage.services_text} onChange={e=>setHomepage({...homepage,services_text:e.target.value})}/></label></div><div className="form-submit"><button disabled={busy==='setting:homepage'} onClick={()=>saveSetting('homepage',homepage)}>儲存首頁文字</button></div><p className="hint">本版可直接修改文字、地址、營業狀態與規章。圖片上傳會在後續版本加入。</p></Panel></>}
  </main></div>
 }
 function Panel({title,action,children}:{title:string,action?:React.ReactNode,children:React.ReactNode}){return <section className="panel"><div className="panel-head"><h2>{title}</h2>{action}</div>{children}</section>}
