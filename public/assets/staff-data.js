@@ -33,7 +33,7 @@ const MF_DEFAULT_STAFF = [
   },
   {
     slug:'hong-hong-hong-taidafeng',name:'轟轟轟太大風',role:'館員',
-    quote:'「觀迎光臨～又辛苦一天了呢～今天要先進餐～？先泡澡～？還是……全都要～？$$$」',
+    quote:'「歡迎光臨～又辛苦一天了呢～今天要先進餐～？先泡澡～？還是……全都要～？$$$」',
     bio:'異國的敖龍少女，言語相似亦相異，煩請各位客人稍等少女組織言語呢。遠似冰，近似火，深愛恐怖亦疼愛可愛。以反差為萌點（自稱）的敖龍少女期待與各位客人在眠楓館共創美好回憶。',
     services:['泡湯搓澡','按摩','枕邊談心','拍立得'],
     photo_primary:'assets/images/staff-hong-01.webp',photo_secondary:'assets/images/staff-hong-02.webp',
