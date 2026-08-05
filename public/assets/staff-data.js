@@ -47,6 +47,22 @@ const MF_DEFAULT_STAFF = [
     photo_primary:'assets/images/staff-grin-01.webp',photo_secondary:'assets/images/staff-grin-02.webp',
     sort_order:60,active:true
   }
+  ,{
+    slug:'shenaixue',name:'神噯雪',role:'館員',
+    quote:'「如果在艾歐澤亞發現了性感辣妹的話，記得向我匯報！！」',
+    bio:'我是拳聖・哈蒙，對你非常信任，因此有一事相求！',
+    services:['枕邊談心'],
+    photo_primary:'assets/images/staff-shenaixue-01.webp',photo_secondary:'assets/images/staff-shenaixue-02.webp',
+    sort_order:70,active:true
+  },
+  {
+    slug:'zixuan',name:'子瑄',role:'館員',
+    quote:'「今晚也請讓瑄瑄陪您度過一段放鬆又溫暖的時光 喵♡」',
+    bio:'一隻喜歡閃亮亮收藏品的小貓，總是會被漂亮的東西吸引走。\n\n如今在一間靜謐的日式湯屋擔任招待，喜歡替每位旅人準備暖暖的湯泉與放鬆的時光。輕柔的水聲、淡淡的木香，都是瑄瑄最喜歡的日常。\n\n雖然偶爾有些迷糊，卻總會帶著笑容迎接每一位來訪的主人。\n\n願每位踏入湯屋的旅人，都能卸下疲憊，在溫暖的湯屋時光中放鬆身心，帶著笑容離開。',
+    services:['泡湯搓澡','按摩','枕邊談心'],
+    photo_primary:'assets/images/staff-zixuan-01.webp',photo_secondary:'assets/images/staff-zixuan-02.webp',
+    sort_order:80,active:true
+  }
 
 ];
 function mfEsc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
