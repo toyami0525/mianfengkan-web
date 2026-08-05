@@ -27,7 +27,7 @@ const MF_DEFAULT_STAFF = [
     slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',
     quote:'「活殺自在、地之印、人之印、冰晶亂流之術！客人，還有哪裡需要加強嗎？……客、客人？」',
     bio:'黃金港忍者部隊退役的優閒忍者，沒事就會參與狩獵怪物的傭兵招募，最喜歡的事情是揮舞雙刃享受戰鬥，今天也會用25萬的傷害給客人的雙肩來上一場華麗的按摩。',
-    services:['泡湯搓澡','按摩','枕邊談心'],
+    services:['泡湯搓澡','按摩','枕邊談心','拍立得'],
     photo_primary:'assets/images/staff-yukinoji-01.webp',photo_secondary:'assets/images/staff-yukinoji-02.webp',
     sort_order:40,active:true
   },
@@ -35,7 +35,7 @@ const MF_DEFAULT_STAFF = [
     slug:'hong-hong-hong-taidafeng',name:'轟轟轟太大風',role:'館員',
     quote:'「觀迎光臨～又辛苦一天了呢～今天要先進餐～？先泡澡～？還是……全都要～？$$$」',
     bio:'異國的敖龍少女，言語相似亦相異，煩請各位客人稍等少女組織言語呢。遠似冰，近似火，深愛恐怖亦疼愛可愛。以反差為萌點（自稱）的敖龍少女期待與各位客人在眠楓館共創美好回憶。',
-    services:['泡湯搓澡','按摩','枕邊談心','拍立得'],
+    services:['泡湯搓澡','按摩','枕邊談心'],
     photo_primary:'assets/images/staff-hong-01.webp',photo_secondary:'assets/images/staff-hong-02.webp',
     sort_order:50,active:true
   },

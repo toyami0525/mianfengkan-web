@@ -1,12 +1,34 @@
-<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>指名服務｜眠楓館</title><link rel="stylesheet" href="assets/style.css"></head><body>
-<header class="site-header"><nav class="nav"><a class="brand" href="index.html"><span class="brand-mark">楓</span><span><strong>眠楓館</strong><small>MIANFENGKAN</small></span></a><button class="menu-btn" aria-expanded="false">☰</button><div class="nav-links"><a href="about.html">館內介紹</a><a href="services.html">服務項目</a><a href="staff.html">館員介紹</a><a href="menu.html">餐食價目</a><a href="rules.html">來館須知</a><a href="location.html">位置</a><a class="reserve-link active" href="reserve.html">指名服務</a><a class="order-link" href="order.html">我要點餐</a></div></nav></header>
-<main class="page"><header class="page-title"><span class="eyebrow">Booking Service</span><h1>指名服務</h1></header><div class="booking-shell"><aside class="booking-note"><span class="eyebrow">Choose Your Host</span><h2>今晚，想由誰陪伴您？</h2><p>指名僅限當天，開放時間為晚上 9 點至午夜 12 點，可自由選擇分鐘。館員每筆指名結束後會保留 5 分鐘，之後才能再次接受指名。</p><div class="staff-select" id="staffSelect"></div></aside><section class="form-panel"><form id="bookingForm"><div class="form-grid"><div class="field"><label>客人名稱</label><input id="guest" placeholder="角色名稱" required></div><div class="field"><label>服務項目</label><select id="service" required>
-<option value="泡湯搓澡" data-price="150000">泡湯搓澡｜15 分鐘｜150,000 Gil</option>
-<option value="按摩服務" data-price="100000">按摩服務｜15 分鐘｜100,000 Gil</option>
-<option value="耳語陪伴" data-price="100000">耳語陪伴｜15 分鐘｜100,000 Gil</option>
-<option value="眠楓套席" data-price="300000">眠楓套席（優惠價）｜300,000 Gil</option>
-</select></div><div class="field"><label>服務金額</label><div class="booking-price" id="servicePrice">150,000 Gil</div></div><div class="field full"><label>希望時段</label><div class="booking-time-picker"><div class="time-date-row"><input id="bookingDate" type="date" required><input id="bookingStartTime" type="time" step="60" aria-label="選擇開始時間" required></div></div><input id="time" type="hidden" required><small class="field-help">僅可指名當天 21:00～24:00 之間的任意分鐘；服務需在午夜 12 點前結束。館員於前一筆指名結束 5 分鐘後，下一位客人才可開始指名。</small><div class="availability-message" id="availabilityMessage" aria-live="polite"></div></div><div class="field full"><label>備註</label><textarea id="note" rows="5" placeholder="偏好的互動節奏、第一次來館、希望安靜聊天……"></textarea></div></div><div class="booking-summary" id="bookingSummary"></div><button class="submit" id="bookingSubmit" type="submit">送出指名需求</button></form></section></div></main>
-<div class="toast"></div>
-<script src="assets/script.js"></script>
-<script src="assets/booking-v12.js"></script><script src="assets/site-content.js"></script>
-</body></html>
+<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>預約與點餐｜眠楓館</title><link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="site-header"><nav class="nav"><a class="brand" href="index.html"><span class="brand-mark">楓</span><span><strong>眠楓館</strong><small>MIANFENGKAN</small></span></a><button class="menu-btn" aria-expanded="false">☰</button><div class="nav-links"><a href="about.html">館內介紹</a><a href="services.html">服務項目</a><a href="staff.html">館員介紹</a><a href="menu.html">餐食價目</a><a href="rules.html">來館須知</a><a href="location.html">位置</a><a class="reserve-link active" href="reserve.html">預約／點餐</a></div></nav></header>
+<main class="page"><header class="page-title"><span class="eyebrow">Booking & Dining</span><h1>預約與點餐</h1><p>可選擇館員與服務，也可切換成只點餐；館員專屬拍立得會在選擇對應館員後顯示。</p></header>
+<div class="booking-shell"><aside class="booking-note"><span class="eyebrow">Choose Your Host</span><h2>今晚，想由誰陪伴您？</h2><p>指名僅限當天，開放時間為晚上 9 點至午夜 12 點。館員每筆服務結束後保留 5 分鐘。</p><div class="staff-select" id="staffSelect"></div></aside>
+<section class="form-panel"><form id="bookingForm">
+<section class="booking-mode" aria-label="本次需求">
+  <span class="eyebrow">Order Type</span><h2>本次想要什麼服務？</h2>
+  <div class="booking-mode-options">
+    <button type="button" class="booking-mode-btn active" data-mode="booking"><b>指名服務＋點餐</b><small>選擇館員與服務，也可加購餐點</small></button>
+    <button type="button" class="booking-mode-btn" data-mode="dining"><b>只想點餐</b><small>不指名館員，直接選擇餐食</small></button>
+  </div>
+</section>
+<div class="field common-guest"><label>客人名稱</label><input id="guest" placeholder="角色名稱" required></div>
+<nav class="booking-tabs" aria-label="預約步驟"><button type="button" class="booking-tab active" data-tab="booking"><span>1</span>指名與服務</button><button type="button" class="booking-tab" data-tab="dining"><span>2</span>餐點加購</button></nav>
+<section class="booking-tab-panel active" id="bookingTab" data-panel="booking"><div class="form-grid">
+<div class="field full"><label>服務項目（可複選）</label><div id="serviceChoices" class="service-check-grid">
+<label class="service-check"><input type="checkbox" name="service" value="泡湯搓澡"><span><b>泡湯搓澡</b><small>15 分鐘｜150,000 Gil</small></span></label>
+<label class="service-check"><input type="checkbox" name="service" value="按摩服務"><span><b>按摩服務</b><small>15 分鐘｜100,000 Gil</small></span></label>
+<label class="service-check"><input type="checkbox" name="service" value="耳語陪伴"><span><b>耳語陪伴</b><small>15 分鐘｜100,000 Gil</small></span></label>
+<label class="service-check package"><input type="checkbox" id="packageService" name="service" value="眠楓套席"><span><b>眠楓套席（優惠價）</b><small>包含以上三項｜45 分鐘｜300,000 Gil</small></span></label>
+</div><small class="field-help">勾選「眠楓套席」後，泡湯搓澡、按摩服務與耳語陪伴會自動勾選並鎖定。</small></div>
+<div class="field full polaroid-section" id="polaroidSection" hidden><label id="polaroidOwnerLabel">館員專屬服務</label><label class="service-check polaroid"><input type="checkbox" id="polaroid" disabled><span><b id="polaroidTitleText">指名拍立得</b><small id="polaroidHint"></small></span></label></div>
+<div class="field full"><label>希望時段</label><div class="booking-time-picker"><div class="time-date-row"><input id="bookingDate" type="date" required><input id="bookingStartTime" type="time" step="60" aria-label="選擇開始時間" required></div></div><input id="time" type="hidden" required><small class="field-help">服務需於午夜 12 點前結束；餐點不增加服務時間。</small><div class="availability-message" id="availabilityMessage" aria-live="polite"></div></div>
+<div class="field full"><label>備註</label><textarea id="note" rows="5" placeholder="偏好的互動節奏、餐點需求或其他說明……"></textarea></div>
+</div><div class="tab-actions"><button type="button" class="submit next-tab" data-goto="dining">下一步：餐點加購</button></div></section>
+<section class="booking-tab-panel" id="diningTab" data-panel="dining"><div class="dining-head"><div><span class="eyebrow">Dining Add-ons</span><h2>餐點加購</h2><p>餐點費會與服務費合併計算，也能補足所選館員拍立得的加購門檻。</p></div></div>
+<div class="field full"><div id="foodChoices" class="food-choices compact-food"></div></div>
+<div class="field full dining-only-note" hidden><label>點餐備註</label><textarea id="diningNote" rows="4" placeholder="餐點數量、入店時間或其他需求……"></textarea></div>
+<div class="dining-polaroid-status" id="diningPolaroidStatus"></div>
+<div class="booking-summary dining-summary" id="bookingSummary"></div>
+<div class="tab-actions split-actions"><button type="button" class="secondary-tab next-tab" data-goto="booking">返回指名與服務</button><button class="submit" id="bookingSubmit" type="submit">送出預約與點餐</button></div></section>
+</form></section></div></main>
+<div class="modal-backdrop" id="polaroidModal" hidden><section class="notice-modal" role="dialog" aria-modal="true" aria-labelledby="polaroidTitle"><span class="eyebrow">IMPORTANT NOTICE</span><h2 id="polaroidTitle">紀念拍立得服務提醒</h2><p>紀念拍立得為現場拍攝及簡短題字，風格為和風素雅，不含客製簽繪與大量塗鴉裝飾。</p><p>成品於約 1～2 日內上傳至專屬連結，請自行下載。</p><label class="notice-confirm"><input type="checkbox" id="polaroidRead">我已閱讀並了解紀念拍立得的製作方式與交付時間</label><div class="modal-actions"><button type="button" class="secondary" id="returnEdit">返回修改訂單</button><button type="button" class="submit" id="confirmSubmit" disabled>我已了解，確認送出</button></div></section></div>
+<div class="toast"></div><script src="assets/script.js"></script><script src="assets/booking-v17.js"></script><script src="assets/site-content.js"></script></body></html>
