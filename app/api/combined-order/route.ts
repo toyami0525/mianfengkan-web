@@ -31,10 +31,22 @@ export async function POST(request: Request) {
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
     if (!guestName || !staffId || !requestedServices.length || !startAt) return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
 
-    const services = requestedServices.includes('眠楓套席') ? ['眠楓套席'] : [...new Set(requestedServices)].filter(x => x !== '眠楓套席');
-    if (!services.length || services.some(x => !SERVICE_INFO[x])) return NextResponse.json({ error: '服務項目不正確' }, { status: 400 });
-    const servicePrice = services.reduce((n,x)=>n+SERVICE_INFO[x].price,0);
-    const duration = services.reduce((n,x)=>n+SERVICE_INFO[x].duration,0);
+    const services: string[] = requestedServices.includes('眠楓套席')
+      ? ['眠楓套席']
+      : [...new Set<string>(requestedServices)].filter((x) => x !== '眠楓套席');
+
+    if (!services.length || services.some((x) => !(x in SERVICE_INFO))) {
+      return NextResponse.json({ error: '服務項目不正確' }, { status: 400 });
+    }
+
+    const servicePrice = services.reduce(
+      (n, x) => n + SERVICE_INFO[x].price,
+      0,
+    );
+    const duration = services.reduce(
+      (n, x) => n + SERVICE_INFO[x].duration,
+      0,
+    );
 
     const cleanItems = (Array.isArray(body.items) ? body.items : []).map((item: any) => {
       const name = String(item?.name ?? '').slice(0,100);
