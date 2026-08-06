@@ -57,10 +57,8 @@ export async function POST(request: Request) {
 
     const start = new Date(startAt), now = new Date();
     if (Number.isNaN(start.getTime())) return NextResponse.json({ error: '預約時間格式不正確' }, { status: 400 });
-    const today = taipeiParts(now), selected = taipeiParts(start);
-    const sameDay = today.year===selected.year && today.month===selected.month && today.day===selected.day;
-    const startMinutes = selected.hour*60+selected.minute;
-    if (!sameDay || start <= now || startMinutes < 21*60 || startMinutes+duration > 24*60) return NextResponse.json({ error: '預約時間不在可接受範圍內' }, { status: 400 });
+    // 測試模式：不限制營業時段與日期，只要求時間尚未經過。
+    if (start <= now) return NextResponse.json({ error: '請選擇尚未經過的預約時間' }, { status: 400 });
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
