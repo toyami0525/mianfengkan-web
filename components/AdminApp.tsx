@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {supabase} from '@/lib/supabase';
 
 type Row=Record<string,any>;
@@ -30,6 +30,8 @@ export default function AdminApp(){
  const[reservationSearch,setReservationSearch]=useState(''),[orderSearch,setOrderSearch]=useState('');
  const[reservationPage,setReservationPage]=useState(1),[orderPage,setOrderPage]=useState(1);
  const[venue,setVenue]=useState<VenueSettings>(DEFAULT_VENUE),[homepage,setHomepage]=useState<HomepageSettings>(DEFAULT_HOME),[rules,setRules]=useState<RuleItem[]>(DEFAULT_RULES);
+ const[notificationSound,setNotificationSound]=useState(false),[newReservation,setNewReservation]=useState<Row|null>(null);
+ const audioContextRef=useRef<AudioContext|null>(null);
  const db=useMemo(()=>supabase(),[]);
  function syncSettings(rows:Row[]){
   const map=Object.fromEntries((rows||[]).map(r=>[r.key,r.value]));
@@ -48,7 +50,39 @@ export default function AdminApp(){
   }
   setData(out);syncSettings(out.site_settings||[]);setMsg('');
  }
- useEffect(()=>{db.auth.getUser().then(({data})=>{if(!data.user){location.href='/login';return}setReady(true);load()})},[]);
+ useEffect(()=>{
+  db.auth.getUser().then(({data})=>{
+   if(!data.user){location.href='/login';return}
+   setNotificationSound(localStorage.getItem('mf-notification-sound')==='on');
+   setReady(true);load();
+  });
+  const channel=db.channel('admin-reservation-alerts').on('postgres_changes',{event:'INSERT',schema:'public',table:'reservations'},payload=>{
+   const row=payload.new as Row;
+   setData(prev=>({...prev,reservations:[row,...(prev.reservations||[])]}));
+   setNewReservation(row);
+   if(localStorage.getItem('mf-notification-sound')==='on')playNotificationSound();
+  }).subscribe();
+  return()=>{db.removeChannel(channel)};
+ },[]);
+ function playNotificationSound(){
+  try{
+   const Ctx=window.AudioContext||(window as any).webkitAudioContext;
+   const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
+   if(ctx.state==='suspended')void ctx.resume();
+   const now=ctx.currentTime;
+   [0,0.18].forEach((delay,index)=>{
+    const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(index===0?880:1175,now+delay);
+    gain.gain.setValueAtTime(0.0001,now+delay);gain.gain.exponentialRampToValueAtTime(0.24,now+delay+0.015);gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.28);
+    oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now+delay);oscillator.stop(now+delay+0.3);
+   });
+  }catch(error){console.warn('無法播放指名提示音',error)}
+ }
+ async function toggleNotificationSound(){
+  const next=!notificationSound;
+  setNotificationSound(next);localStorage.setItem('mf-notification-sound',next?'on':'off');
+  if(next)playNotificationSound();
+ }
  async function logout(){await db.auth.signOut();location.href='/login'}
  async function status(table:string,id:string,nextStatus:string){
   const key=`${table}:${id}`;setBusy(key);setMsg('更新中…');
@@ -87,7 +121,7 @@ export default function AdminApp(){
  const orderPages=Math.max(1,Math.ceil(filteredOrders.length/PAGE_SIZE));
  const visibleReservations=filteredReservations.slice((reservationPage-1)*PAGE_SIZE,reservationPage*PAGE_SIZE);
  const visibleOrders=filteredOrders.slice((orderPage-1)*PAGE_SIZE,orderPage*PAGE_SIZE);
- return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><button className="ghost" onClick={load}>重新整理</button></header>{msg&&<p className="admin-message">{msg}</p>}
+ return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions"><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 指名提示音：開啟':'🔕 開啟指名提示音'}</button><button className="ghost" onClick={load}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
  {tab==='dashboard'&&<><section className="stats"><article><b>{todayReservations.length}</b><span>今日指名</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>今日待確認</span></article><article><b>{todayOrders.length}</b><span>今日點餐</span></article><article><b>{todayOrders.reduce((sum,x)=>sum+Number(x.total||0),0).toLocaleString('zh-TW')}</b><span>今日點餐金額（Gil）</span></article></section><Panel title="今日近期指名"><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
  {tab==='staff'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><button disabled={busy===`staff:${r.id}`} onClick={()=>remove('staff',r.id)}>刪除</button>}/></Panel>}
  {tab==='schedule'&&<Panel title="不可指名時段" action={<button onClick={()=>quickAdd('leave')}>新增請假</button>}><Table rows={data.staff_unavailability||[]} keys={['staff_id','starts_at','ends_at','reason']} actions={r=><button disabled={busy===`staff_unavailability:${r.id}`} onClick={()=>remove('staff_unavailability',r.id)}>刪除</button>}/></Panel>}
@@ -96,6 +130,7 @@ export default function AdminApp(){
  {tab==='announcements'&&<Panel title="公告" action={<button onClick={()=>quickAdd('announcement')}>新增公告</button>}><Table rows={data.announcements||[]} keys={['title','content','published','created_at']} actions={r=><button disabled={busy===`announcements:${r.id}`} onClick={()=>remove('announcements',r.id)}>刪除</button>}/></Panel>}
  {tab==='rules'&&<Panel title="來館規章" action={<button onClick={()=>setRules(prev=>[...prev,{title:'新規章',content:''}])}>新增規章</button>}><div className="rules-editor">{rules.map((rule,index)=><article className="rule-editor" key={index}><div className="rule-number">{String(index+1).padStart(2,'0')}</div><label>標題<input value={rule.title} onChange={e=>updateRule(index,'title',e.target.value)}/></label><label>內容<textarea rows={3} value={rule.content} onChange={e=>updateRule(index,'content',e.target.value)}/></label><div className="rule-actions"><button onClick={()=>moveRule(index,-1)} disabled={index===0}>上移</button><button onClick={()=>moveRule(index,1)} disabled={index===rules.length-1}>下移</button><button className="danger" onClick={()=>setRules(prev=>prev.filter((_,i)=>i!==index))}>刪除</button></div></article>)}</div><div className="form-submit"><button disabled={busy==='setting:rules'} onClick={()=>saveSetting('rules',rules)}>儲存全部規章</button></div></Panel>}
  {tab==='settings'&&<><Panel title="基本資訊"><div className="settings-grid"><label>店名<input value={venue.name} onChange={e=>setVenue({...venue,name:e.target.value})}/></label><label>住宅地址<input value={venue.address} onChange={e=>setVenue({...venue,address:e.target.value})}/></label><label>Discord／聯絡資訊<input value={venue.discord} onChange={e=>setVenue({...venue,discord:e.target.value})} placeholder="可留空"/></label><label>營業時間<input value={venue.business_hours} onChange={e=>setVenue({...venue,business_hours:e.target.value})}/></label><label>營業狀態<select value={venue.business_status} onChange={e=>setVenue({...venue,business_status:e.target.value})}><option value="open">營業中</option><option value="closed">今日休館</option><option value="preparing">準備中</option></select></label></div><div className="form-submit"><button disabled={busy==='setting:venue'} onClick={()=>saveSetting('venue',venue)}>儲存基本資訊</button></div></Panel><Panel title="首頁文字"><div className="settings-grid single"><label>首頁標語<input value={homepage.tagline} onChange={e=>setHomepage({...homepage,tagline:e.target.value})}/></label><label>服務摘要<input value={homepage.services_text} onChange={e=>setHomepage({...homepage,services_text:e.target.value})}/></label></div><div className="form-submit"><button disabled={busy==='setting:homepage'} onClick={()=>saveSetting('homepage',homepage)}>儲存首頁文字</button></div><p className="hint">本版可直接修改文字、地址、營業狀態與規章。圖片上傳會在後續版本加入。</p></Panel></>}
+ {newReservation&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="新的指名預約"><div className="reservation-alert"><div className="reservation-alert-icon">🔔</div><p className="eyebrow">NEW RESERVATION</p><h2>收到新的指名預約</h2><dl><div><dt>客人</dt><dd>{newReservation.guest_name||'未填寫'}</dd></div><div><dt>指名館員</dt><dd>{newReservation.staff_name||'未指定'}</dd></div><div><dt>服務</dt><dd>{newReservation.service_name||'—'}</dd></div><div><dt>時間</dt><dd>{formatDate(newReservation.starts_at||newReservation.start_at)}</dd></div></dl><div className="reservation-alert-actions"><button onClick={()=>{setTab('reservations');setNewReservation(null)}}>查看指名</button><button className="ghost" onClick={()=>setNewReservation(null)}>關閉</button></div></div></div>}
  </main></div>
 }
 function Panel({title,action,children}:{title:string,action?:React.ReactNode,children:React.ReactNode}){return <section className="panel"><div className="panel-head"><h2>{title}</h2>{action}</div>{children}</section>}
