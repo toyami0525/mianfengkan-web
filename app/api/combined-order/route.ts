@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     if (cleanItems.length || wantsPolaroid || wantsYukinojiPolaroid) {
       const orderItems = [...cleanItems, ...(wantsPolaroid ? [{ name:'慕斯菲露－紀念拍立得', qty:1, price:POLAROID_PRICE }] : []), ...(wantsYukinojiPolaroid ? [{ name:'雪之寺羽狩－紀念拍立得', qty:1, price:YUKINOJI_POLAROID_PRICE }] : [])];
       const total = foodTotal + (wantsPolaroid ? POLAROID_PRICE : 0) + (wantsYukinojiPolaroid ? YUKINOJI_POLAROID_PRICE : 0);
-      const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
+      const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, staff_id:staffId, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
       if (orderError) throw orderError;
     }
     return NextResponse.json({ ok:true, reservation_id:reservationId });
