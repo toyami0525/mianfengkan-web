@@ -258,3 +258,4 @@ body.modal-open{overflow:hidden}
 .dining-only-note{margin-top:20px}
 @media(max-width:760px){.booking-mode-options{grid-template-columns:1fr}.booking-mode{padding:18px}.booking-mode h2{font-size:22px}}
 
+.generated-pickup-code{margin:22px auto;padding:18px;border:1px dashed #b88b79;border-radius:16px;background:#fffaf5;font-size:clamp(26px,6vw,40px);font-weight:800;letter-spacing:.14em;color:#6e2926}.pickup-link-button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.pickup-close{margin-top:14px;border:0;background:transparent;color:#765f56;text-decoration:underline;cursor:pointer}.pickup-code-modal .modal-actions{align-items:stretch}

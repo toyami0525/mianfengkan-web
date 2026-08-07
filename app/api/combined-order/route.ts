@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { publicSupabase } from '@/lib/supabase-server';
+import { adminSupabase } from '@/lib/supabase-admin';
+import { randomBytes } from 'crypto';
 
 const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const POLAROID_PRICE = 80000;
@@ -15,6 +17,11 @@ const FOOD_PRICES: Record<string, number> = {
   '圓扇刺刺梨蛋糕':4000,'巧克力奶油蛋糕':4000,'白桃塔':6000,'蜂蜜牛角麵包':6000,'烏雞布丁':6000,
   '奶油熱巧克力':3000,'蜜瓜果汁':5000,'白桃汁':5000,'抹茶':5000,'路易波士紅茶':5000,
 };
+function makePickupCode(){
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes=randomBytes(6);
+  return 'MF-'+Array.from(bytes,b=>alphabet[b%alphabet.length]).join('');
+}
 function taipeiParts(date: Date) {
   const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
   return { year: shifted.getUTCFullYear(), month: shifted.getUTCMonth(), day: shifted.getUTCDate(), hour: shifted.getUTCHours(), minute: shifted.getUTCMinutes() };
@@ -84,7 +91,20 @@ export async function POST(request: Request) {
       const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, staff_id:staffId, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
       if (orderError) throw orderError;
     }
-    return NextResponse.json({ ok:true, reservation_id:reservationId });
+    let pickupCode:string|undefined;
+    if (wantsPolaroid || wantsYukinojiPolaroid) {
+      const admin=adminSupabase();
+      for(let attempt=0;attempt<8;attempt++){
+        const code=makePickupCode();
+        const {error:pickupError}=await admin.from('polaroid_pickups').insert({
+          reservation_id:reservationId,staff_id:staffId,staff_name:staff.name,guest_name:guestName,pickup_code:code,status:'processing'
+        });
+        if(!pickupError){pickupCode=code;break}
+        if(pickupError.code!=='23505') throw pickupError;
+      }
+      if(!pickupCode) throw new Error('無法產生拍立得取件碼，請稍後再試');
+    }
+    return NextResponse.json({ ok:true, reservation_id:reservationId, pickup_code:pickupCode });
   } catch (error) {
     const message = error instanceof Error ? error.message : '送出預約與點餐失敗';
     return NextResponse.json({ error: message }, { status: 500 });

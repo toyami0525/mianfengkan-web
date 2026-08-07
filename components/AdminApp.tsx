@@ -9,10 +9,10 @@ type Account={role:'owner'|'staff'|'frontdesk';staff_id:string|null;staff_name:s
 type HomepageSettings={tagline:string,services_text:string};
 type RuleItem={title:string,content:string};
 const PAGE_SIZE=20;
-const ownerTabs=[['dashboard','總覽'],['staff','館員管理'],['schedule','排班／請假'],['reservations','指名管理'],['orders','點餐管理'],['announcements','公告管理'],['rules','規章管理'],['settings','網站設定']];
-const staffTabs=[['dashboard','我的總覽'],['reservations','我的指名'],['orders','我的點餐']];
-const frontdeskTabs=[['dashboard','總覽'],['reservations','指名管理'],['orders','點餐管理']];
-const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',starts_at:'指名時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間'};
+const ownerTabs=[['dashboard','總覽'],['staff','館員管理'],['schedule','排班／請假'],['reservations','指名管理'],['orders','點餐管理'],['polaroids','拍立得管理'],['announcements','公告管理'],['rules','規章管理'],['settings','網站設定']];
+const staffTabs=[['dashboard','我的總覽'],['reservations','我的指名'],['orders','我的點餐'],['polaroids','我的拍立得']];
+const frontdeskTabs=[['dashboard','總覽'],['reservations','指名管理'],['orders','點餐管理'],['polaroids','拍立得管理']];
+const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',starts_at:'指名時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼'};
 const statusText:Record<string,string>={pending:'待確認',confirmed:'已確認',completed:'已完成',cancelled:'已取消',rejected:'已拒絕'};
 const dateRangeText:Record<DateRange,string>={today:'今天',yesterday:'昨天',week:'本週',month:'本月',all:'全部'};
 const DEFAULT_VENUE:VenueSettings={name:'眠楓館',address:'穹頂皓天 7區22號',discord:'',business_status:'open',business_hours:'依招募板公告為主'};
@@ -46,7 +46,7 @@ export default function AdminApp(){
  const tabs=account?.role==='staff'?staffTabs:account?.role==='frontdesk'?frontdeskTabs:ownerTabs;
  async function load(currentAccount=account){
   setMsg('讀取中…');
-  const names=['staff','staff_unavailability','reservations','orders','announcements','site_settings'];
+  const names=['staff','staff_unavailability','reservations','orders','polaroid_pickups','announcements','site_settings'];
   const out:Record<string,Row[]>={};
   for(const n of names){
    const query=db.from(n).select('*');
@@ -56,6 +56,7 @@ export default function AdminApp(){
   if(currentAccount?.role==='staff'&&currentAccount.staff_id){
    out.reservations=(out.reservations||[]).filter(r=>r.staff_id===currentAccount.staff_id);
    out.orders=(out.orders||[]).filter(r=>r.staff_id===currentAccount.staff_id);
+   out.polaroid_pickups=(out.polaroid_pickups||[]).filter(r=>r.staff_id===currentAccount.staff_id);
    out.staff=(out.staff||[]).filter(r=>r.id===currentAccount.staff_id);
   }
   setData(out);syncSettings(out.site_settings||[]);setMsg('');
@@ -91,11 +92,12 @@ export default function AdminApp(){
    const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
    if(ctx.state==='suspended')void ctx.resume();
    const now=ctx.currentTime;
-   [0,0.18].forEach((delay,index)=>{
+   // 大聲「叮咚、叮咚」兩次：高音→低音，短暫停頓後再重複。
+   [[0,988],[0.20,659],[0.72,988],[0.92,659]].forEach(([delay,freq])=>{
     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-    oscillator.type='sine';oscillator.frequency.setValueAtTime(index===0?880:1175,now+delay);
-    gain.gain.setValueAtTime(0.0001,now+delay);gain.gain.exponentialRampToValueAtTime(0.24,now+delay+0.015);gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.28);
-    oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now+delay);oscillator.stop(now+delay+0.3);
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(freq,now+delay);
+    gain.gain.setValueAtTime(0.0001,now+delay);gain.gain.exponentialRampToValueAtTime(0.48,now+delay+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.30);
+    oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now+delay);oscillator.stop(now+delay+0.32);
    });
   }catch(error){console.warn('無法播放指名提示音',error)}
  }
@@ -104,6 +106,18 @@ export default function AdminApp(){
   setNotificationSound(next);localStorage.setItem('mf-notification-sound',next?'on':'off');
   if(next)playNotificationSound();
  }
+
+ async function uploadPolaroid(id:string,file:File){
+  setBusy(`polaroid:${id}`);setMsg('上傳拍立得中…');
+  try{
+   const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效，請重新登入');
+   const form=new FormData();form.append('id',id);form.append('file',file);
+   const response=await fetch('/api/staff/polaroids',{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`},body:form});
+   const result=await response.json();if(!response.ok)throw new Error(result.error||'上傳失敗');
+   setMsg('拍立得已完成並開放客人領取。');await load();
+  }catch(error){const text=error instanceof Error?error.message:'上傳失敗';setMsg(text);alert(text)}finally{setBusy('')}
+ }
+
  async function logout(){await db.auth.signOut();location.href='/login'}
  async function toggleAvailability(){
   if(!account?.staff_id)return;
@@ -140,7 +154,7 @@ export default function AdminApp(){
  function updateRule(index:number,field:keyof RuleItem,value:string){setRules(prev=>prev.map((r,i)=>i===index?{...r,[field]:value}:r))}
  function moveRule(index:number,delta:number){setRules(prev=>{const next=[...prev],to=index+delta;if(to<0||to>=next.length)return prev;[next[index],next[to]]=[next[to],next[index]];return next})}
  if(!ready||!account)return <main className="admin-loading">確認登入狀態…</main>;
- const reservations=data.reservations||[],orders=data.orders||[],staff=data.staff||[];
+ const reservations=data.reservations||[],orders=data.orders||[],staff=data.staff||[],polaroids=data.polaroid_pickups||[];
  const todayReservations=filterRows(reservations,'today','all','');
  const todayOrders=filterRows(orders,'today','all','');
  const filteredReservations=filterRows(reservations,reservationRange,reservationStatus,reservationSearch);
@@ -155,6 +169,7 @@ export default function AdminApp(){
  {tab==='schedule'&&<Panel title="不可指名時段" action={<button onClick={()=>quickAdd('leave')}>新增請假</button>}><Table rows={data.staff_unavailability||[]} keys={['staff_id','starts_at','ends_at','reason']} actions={r=><button disabled={busy===`staff_unavailability:${r.id}`} onClick={()=>remove('staff_unavailability',r.id)}>刪除</button>}/></Panel>}
  {tab==='reservations'&&<Panel title="指名紀錄"><RecordToolbar range={reservationRange} status={reservationStatus} search={reservationSearch} onRange={v=>{setReservationRange(v);setReservationPage(1)}} onStatus={v=>{setReservationStatus(v);setReservationPage(1)}} onSearch={v=>{setReservationSearch(v);setReservationPage(1)}} statuses={['pending','confirmed','completed','cancelled','all']}/><RecordSummary total={filteredReservations.length} range={reservationRange} status={reservationStatus}/><Table rows={visibleReservations} keys={['guest_name','contact','staff_name','service_name','starts_at','status','note']} actions={r=><><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'confirmed')}>確認</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'completed')}>完成</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'cancelled')}>取消</button></>}/><Pagination page={reservationPage} pages={reservationPages} onChange={setReservationPage}/></Panel>}
  {tab==='orders'&&<Panel title="點餐紀錄"><RecordToolbar range={orderRange} status={orderStatus} search={orderSearch} onRange={v=>{setOrderRange(v);setOrderPage(1)}} onStatus={v=>{setOrderStatus(v);setOrderPage(1)}} onSearch={v=>{setOrderSearch(v);setOrderPage(1)}} statuses={['pending','completed','cancelled','all']}/><RecordSummary total={filteredOrders.length} range={orderRange} status={orderStatus}/><Table rows={visibleOrders} keys={['guest_name','items','total','status','created_at']} actions={r=><><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'completed')}>完成</button><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'cancelled')}>取消</button></>}/><Pagination page={orderPage} pages={orderPages} onChange={setOrderPage}/></Panel>}
+ {tab==='polaroids'&&<Panel title={account.role==='staff'?'我的拍立得':'拍立得管理'}><div className="record-summary">館員完成拍攝與題字後，在這裡上傳成品。上傳完成後，客人即可使用取件碼領取。</div><div className="polaroid-admin-grid">{polaroids.length?polaroids.map(r=><article className="polaroid-admin-card" key={r.id}><div><span className="eyebrow">PICKUP CODE</span><h3>{r.pickup_code}</h3><p><b>{r.staff_name}</b>・客人：{r.guest_name}</p><small>{r.status==='ready'?'已完成，可領取':'等待館員上傳'}</small></div><label className="polaroid-upload-button">{busy===`polaroid:${r.id}`?'上傳中…':r.status==='ready'?'重新上傳':'上傳拍立得'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy===`polaroid:${r.id}`} onChange={e=>{const f=e.target.files?.[0];if(f)void uploadPolaroid(r.id,f);e.currentTarget.value=''}}/></label></article>):<p className="empty-state">目前沒有拍立得訂單。</p>}</div></Panel>}
  {tab==='announcements'&&<Panel title="公告" action={<button onClick={()=>quickAdd('announcement')}>新增公告</button>}><Table rows={data.announcements||[]} keys={['title','content','published','created_at']} actions={r=><button disabled={busy===`announcements:${r.id}`} onClick={()=>remove('announcements',r.id)}>刪除</button>}/></Panel>}
  {tab==='rules'&&<Panel title="來館規章" action={<button onClick={()=>setRules(prev=>[...prev,{title:'新規章',content:''}])}>新增規章</button>}><div className="rules-editor">{rules.map((rule,index)=><article className="rule-editor" key={index}><div className="rule-number">{String(index+1).padStart(2,'0')}</div><label>標題<input value={rule.title} onChange={e=>updateRule(index,'title',e.target.value)}/></label><label>內容<textarea rows={3} value={rule.content} onChange={e=>updateRule(index,'content',e.target.value)}/></label><div className="rule-actions"><button onClick={()=>moveRule(index,-1)} disabled={index===0}>上移</button><button onClick={()=>moveRule(index,1)} disabled={index===rules.length-1}>下移</button><button className="danger" onClick={()=>setRules(prev=>prev.filter((_,i)=>i!==index))}>刪除</button></div></article>)}</div><div className="form-submit"><button disabled={busy==='setting:rules'} onClick={()=>saveSetting('rules',rules)}>儲存全部規章</button></div></Panel>}
  {tab==='settings'&&<><Panel title="基本資訊"><div className="settings-grid"><label>店名<input value={venue.name} onChange={e=>setVenue({...venue,name:e.target.value})}/></label><label>住宅地址<input value={venue.address} onChange={e=>setVenue({...venue,address:e.target.value})}/></label><label>Discord／聯絡資訊<input value={venue.discord} onChange={e=>setVenue({...venue,discord:e.target.value})} placeholder="可留空"/></label><label>營業時間<input value={venue.business_hours} onChange={e=>setVenue({...venue,business_hours:e.target.value})}/></label><label>營業狀態<select value={venue.business_status} onChange={e=>setVenue({...venue,business_status:e.target.value})}><option value="open">營業中</option><option value="closed">今日休館</option><option value="preparing">準備中</option></select></label></div><div className="form-submit"><button disabled={busy==='setting:venue'} onClick={()=>saveSetting('venue',venue)}>儲存基本資訊</button></div></Panel><Panel title="首頁文字"><div className="settings-grid single"><label>首頁標語<input value={homepage.tagline} onChange={e=>setHomepage({...homepage,tagline:e.target.value})}/></label><label>服務摘要<input value={homepage.services_text} onChange={e=>setHomepage({...homepage,services_text:e.target.value})}/></label></div><div className="form-submit"><button disabled={busy==='setting:homepage'} onClick={()=>saveSetting('homepage',homepage)}>儲存首頁文字</button></div><p className="hint">本版可直接修改文字、地址、營業狀態與規章。圖片上傳會在後續版本加入。</p></Panel></>}
