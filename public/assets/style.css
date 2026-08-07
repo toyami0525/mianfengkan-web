@@ -259,3 +259,64 @@ body.modal-open{overflow:hidden}
 @media(max-width:760px){.booking-mode-options{grid-template-columns:1fr}.booking-mode{padding:18px}.booking-mode h2{font-size:22px}}
 
 .generated-pickup-code{margin:22px auto;padding:18px;border:1px dashed #b88b79;border-radius:16px;background:#fffaf5;font-size:clamp(26px,6vw,40px);font-weight:800;letter-spacing:.14em;color:#6e2926}.pickup-link-button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.pickup-close{margin-top:14px;border:0;background:transparent;color:#765f56;text-decoration:underline;cursor:pointer}.pickup-code-modal .modal-actions{align-items:stretch}
+
+/* v2.3.2 prominent polaroid pickup entry */
+.nav-links a[href="polaroid.html"]{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:10px 15px!important;
+  border:1px solid rgba(128,44,38,.34);
+  border-radius:999px;
+  background:linear-gradient(135deg,#8a342f,#71302c);
+  color:#fff!important;
+  font-weight:700;
+  letter-spacing:.04em;
+  box-shadow:0 6px 18px rgba(92,42,36,.16);
+  transition:transform .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.nav-links a[href="polaroid.html"]::before{
+  content:"📷";
+  font-size:15px;
+  line-height:1;
+}
+.nav-links a[href="polaroid.html"]::after{display:none!important}
+.nav-links a[href="polaroid.html"]:hover{
+  transform:translateY(-1px);
+  box-shadow:0 9px 22px rgba(92,42,36,.23);
+  background:linear-gradient(135deg,#963b34,#7b302c);
+}
+.nav-links a[href="polaroid.html"].active{
+  box-shadow:0 0 0 3px rgba(138,52,47,.12),0 9px 22px rgba(92,42,36,.22);
+}
+
+.home-drawer a[href="polaroid.html"]{
+  position:relative;
+  margin:10px 0 6px;
+  padding:18px 18px!important;
+  border:1px solid rgba(255,222,198,.38)!important;
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(152,60,51,.82),rgba(105,42,38,.76));
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+}
+.home-drawer a[href="polaroid.html"]::before{
+  content:"📷";
+  display:inline-block;
+  margin-right:10px;
+  font-size:18px;
+}
+.home-drawer a[href="polaroid.html"] small{
+  padding-left:31px;
+  color:rgba(255,255,255,.68)!important;
+}
+
+@media(max-width:900px){
+  .nav-links a[href="polaroid.html"]{
+    width:100%;
+    justify-content:center;
+    margin:5px 0 8px;
+    padding:14px 16px!important;
+    font-size:15px;
+  }
+}
+
