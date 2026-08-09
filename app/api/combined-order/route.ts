@@ -20,7 +20,7 @@ const FOOD_PRICES: Record<string, number> = {
 function makePickupCode(){
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes=randomBytes(6);
-  return 'MF-'+Array.from(bytes,b=>alphabet[b%alphabet.length]).join('');
+  return 'MF-'+Array.from(bytes as Uint8Array).map((b:number)=>alphabet[b%alphabet.length]).join('');
 }
 function taipeiParts(date: Date) {
   const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
@@ -64,8 +64,12 @@ export async function POST(request: Request) {
 
     const start = new Date(startAt), now = new Date();
     if (Number.isNaN(start.getTime())) return NextResponse.json({ error: '預約時間格式不正確' }, { status: 400 });
-    // 測試模式：不限制營業時段與日期，只要求時間尚未經過。
-    if (start <= now) return NextResponse.json({ error: '請選擇尚未經過的預約時間' }, { status: 400 });
+    const today = taipeiParts(now), selectedDate = taipeiParts(start);
+    const sameDay = today.year===selectedDate.year && today.month===selectedDate.month && today.day===selectedDate.day;
+    const startMinutes = selectedDate.hour*60+selectedDate.minute;
+    if (!sameDay || start <= now || startMinutes < 21*60 || startMinutes + duration > 24*60) {
+      return NextResponse.json({ error: '可指名時間為當天 21:00～24:00，服務必須在午夜 12 點前結束' }, { status: 400 });
+    }
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });

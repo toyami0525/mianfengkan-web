@@ -20,3 +20,6 @@ create policy "admin reservations all" on public.reservations for all to authent
 create policy "admin orders all" on public.orders for all to authenticated using(true) with check(true);
 create policy "admin announcements all" on public.announcements for all to authenticated using(true) with check(true);
 create policy "admin settings all" on public.site_settings for all to authenticated using(true) with check(true);
+
+-- v2.3.0 拍立得取件資料（既有專案請執行 supabase/v2.3.0-polaroid-pickup.sql）
+create table if not exists public.polaroid_pickups(id uuid primary key default gen_random_uuid(),reservation_id uuid references public.reservations(id) on delete set null,staff_id uuid not null references public.staff(id) on delete cascade,staff_name text not null,guest_name text not null,pickup_code text not null unique,status text not null default 'processing',image_path text,created_at timestamptz not null default now(),completed_at timestamptz);

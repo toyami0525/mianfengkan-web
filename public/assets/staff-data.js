@@ -63,6 +63,15 @@ const MF_DEFAULT_STAFF = [
     photo_primary:'assets/images/staff-zixuan-01.webp',photo_secondary:'assets/images/staff-zixuan-02.webp',
     sort_order:80,active:true
   }
+  ,{
+    slug:'feitong',name:'緋瞳',role:'館員',
+    quote:'「呀齁～♥   就看我咻咻地把顧客您的不開心、不舒服全部都解決掉吧！嘻嘻 ✧*｡٩( ꈍᴗꈍ)و 猛擊！星遁天珠！、猛擊！星遁天珠！、猛擊！星遁天珠！」',
+    bio:'十分年幼的敖龍族孩子，元氣十足、總是蹦蹦跳跳的，對於任何事情都有著強烈的好奇心～ 其中最喜歡穿搭．．．以及．．．噓～不可以在這裡說 ♥ 個性古靈精怪，偶爾還有些調皮搗蛋，但絕對！絕對！是個好孩子唷 ！',
+    services:['泡湯搓澡','按摩','枕邊談心'],
+    photo_primary:'assets/images/staff-feitong-01.webp',photo_secondary:'assets/images/staff-feitong-02.webp',
+    sort_order:90,active:true
+  }
+
 
 ];
 function mfEsc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}

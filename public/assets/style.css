@@ -320,3 +320,72 @@ body.modal-open{overflow:hidden}
   }
 }
 
+
+/* v2.3.7：指名頁只顯示時間，並支援只點餐加購拍立得 */
+.page:has(#bookingForm) .booking-time-picker > input[type="time"]{
+  width:100%;
+  min-height:56px;
+  border:1px solid rgba(114,83,66,.24);
+  border-radius:12px;
+  background:#fffdf9;
+  padding:10px 13px;
+  color:var(--ink);
+  font:inherit;
+}
+.dining-only-polaroids{display:grid;gap:10px}
+.dining-only-polaroids[hidden]{display:none!important}
+/* v2.4.0 自訂晚上 21~24 時間選擇器 */
+.page:has(#bookingForm) .custom-time-picker{
+  display:grid;
+  grid-template-columns:120px minmax(120px,1fr) minmax(120px,1fr);
+  gap:10px;
+  align-items:stretch;
+}
+.page:has(#bookingForm) .custom-time-picker .time-part{
+  min-height:58px;
+  border:1px solid rgba(114,83,66,.24);
+  border-radius:12px;
+  background:#fffdf9;
+  color:var(--ink);
+}
+.page:has(#bookingForm) .custom-time-picker .time-period{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  letter-spacing:.12em;
+  color:#863932;
+}
+.page:has(#bookingForm) .custom-time-picker label.time-part{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  padding-left:14px;
+  overflow:hidden;
+}
+.page:has(#bookingForm) .custom-time-picker label.time-part>span{
+  font-size:12px;
+  color:var(--muted);
+  margin-right:8px;
+}
+.page:has(#bookingForm) .custom-time-picker select{
+  width:100%;
+  height:100%;
+  min-height:56px;
+  border:0;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-size:18px;
+  font-weight:700;
+  outline:none;
+  padding:0 34px 0 8px;
+}
+.page:has(#bookingForm) .custom-time-picker select:focus{
+  box-shadow:inset 0 0 0 2px rgba(138,52,47,.22);
+}
+@media(max-width:640px){
+  .page:has(#bookingForm) .custom-time-picker{grid-template-columns:90px 1fr 1fr;gap:7px}
+  .page:has(#bookingForm) .custom-time-picker select{font-size:16px;padding-right:24px}
+}
+
