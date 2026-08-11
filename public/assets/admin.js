@@ -1,5 +1,5 @@
 let bookings=[],orders=[];
-const SERVICE_DURATION={'泡湯搓澡':15,'按摩服務':15,'耳語陪伴':15,'眠楓套席':45};
+const SERVICE_DURATION={'泡湯洗浴':15,'按摩服務':15,'耳語陪伴':15,'眠楓套席':45};
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function load(){bookings=JSON.parse(localStorage.getItem('mianfeng_bookings')||'[]');orders=JSON.parse(localStorage.getItem('mianfeng_orders')||'[]');render()}
 function statusClass(s){return s==='已完成'?'done':s==='已取消'?'cancel':s==='已確認'?'confirmed':''}

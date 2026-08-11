@@ -10,6 +10,9 @@ const FOOD_PRICES: Record<string, number> = {
   '圓扇刺刺梨蛋糕':4000,'巧克力奶油蛋糕':4000,'白桃塔':6000,'蜂蜜牛角麵包':6000,'烏雞布丁':6000,
   '奶油熱巧克力':3000,'蜜瓜果汁':5000,'白桃汁':5000,'抹茶':5000,'路易波士紅茶':5000,
 };
+const FOOD_CATEGORIES: Record<string, string> = {
+  '蛋包飯':'主食',  '扇貝咖哩':'主食',  '加雷馬披薩':'主食',  '醬炒飯':'主食',  '懸掛番茄沙拉':'主食',  '羊駝奶油麵':'主食',  '圓扇刺刺梨蛋糕':'甜點',  '巧克力奶油蛋糕':'甜點',  '白桃塔':'甜點',  '蜂蜜牛角麵包':'甜點',  '烏雞布丁':'甜點',  '奶油熱巧克力':'飲品',  '蜜瓜果汁':'飲品',  '白桃汁':'飲品',  '抹茶':'飲品',  '路易波士紅茶':'飲品'
+};
 function makePickupCode(){
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes=randomBytes(6);
@@ -42,6 +45,8 @@ export async function POST(request: Request) {
     if (!cleanItems.length) return NextResponse.json({ error: '請至少選擇一項餐點' }, { status: 400 });
 
     const foodTotal=cleanItems.reduce((n:number,x:any)=>n+x.price*x.qty,0);
+    const mealCounts = ['主食','甜點','飲品'].map(c => cleanItems.filter((x:any)=>FOOD_CATEGORIES[x.name]===c).reduce((n:number,x:any)=>n+x.qty,0));
+    if (mealCounts.some(n=>n!==1) || cleanItems.length!==3) return NextResponse.json({ error: '本館採套餐制，請從主食、甜點、飲品各選一項' }, { status: 400 });
     if(wantsPolaroid&&foodTotal<150000)return NextResponse.json({error:'慕斯菲露紀念拍立得需本筆餐點消費滿 150,000 Gil'},{status:400});
     if(wantsYukinojiPolaroid&&foodTotal<200000)return NextResponse.json({error:'雪之寺羽狩紀念拍立得需本筆餐點消費滿 200,000 Gil'},{status:400});
 

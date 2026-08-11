@@ -7,7 +7,7 @@ const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const POLAROID_PRICE = 80000;
 const YUKINOJI_POLAROID_PRICE = 100000;
 const SERVICE_INFO: Record<string, { price: number; duration: number }> = {
-  '泡湯搓澡': { price: 150000, duration: 15 },
+  '泡湯洗浴': { price: 150000, duration: 15 },
   '按摩服務': { price: 100000, duration: 15 },
   '耳語陪伴': { price: 100000, duration: 15 },
   '眠楓套席': { price: 300000, duration: 45 },
@@ -16,6 +16,9 @@ const FOOD_PRICES: Record<string, number> = {
   '蛋包飯':5000,'扇貝咖哩':7000,'加雷馬披薩':7000,'醬炒飯':5000,'懸掛番茄沙拉':7000,'羊駝奶油麵':5000,
   '圓扇刺刺梨蛋糕':4000,'巧克力奶油蛋糕':4000,'白桃塔':6000,'蜂蜜牛角麵包':6000,'烏雞布丁':6000,
   '奶油熱巧克力':3000,'蜜瓜果汁':5000,'白桃汁':5000,'抹茶':5000,'路易波士紅茶':5000,
+};
+const FOOD_CATEGORIES: Record<string, string> = {
+  '蛋包飯':'主食',  '扇貝咖哩':'主食',  '加雷馬披薩':'主食',  '醬炒飯':'主食',  '懸掛番茄沙拉':'主食',  '羊駝奶油麵':'主食',  '圓扇刺刺梨蛋糕':'甜點',  '巧克力奶油蛋糕':'甜點',  '白桃塔':'甜點',  '蜂蜜牛角麵包':'甜點',  '烏雞布丁':'甜點',  '奶油熱巧克力':'飲品',  '蜜瓜果汁':'飲品',  '白桃汁':'飲品',  '抹茶':'飲品',  '路易波士紅茶':'飲品'
 };
 function makePickupCode(){
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -32,11 +35,10 @@ export async function POST(request: Request) {
     const guestName = String(body.guest_name ?? '').trim();
     const staffId = String(body.staff_id ?? '').trim();
     const requestedServices = Array.isArray(body.services) ? body.services.map(String) : [];
-    const startAt = String(body.start_at ?? '');
     const note = String(body.note ?? '').trim();
     const wantsPolaroid = body.polaroid === true;
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
-    if (!guestName || !staffId || !requestedServices.length || !startAt) return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
+    if (!guestName || !staffId || !requestedServices.length) return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
 
     const services: string[] = requestedServices.includes('眠楓套席')
       ? ['眠楓套席']
@@ -60,26 +62,31 @@ export async function POST(request: Request) {
       const qty = Math.max(1, Math.min(99, Math.floor(Number(item?.qty ?? 1))));
       return { name, qty, price: FOOD_PRICES[name] ?? -1 };
     }).filter((x:any)=>x.name && x.price >= 0);
-    const foodTotal = cleanItems.reduce((n:number,x:any)=>n+x.price*x.qty,0);
+    // 指名服務與餐食訂單分離：指名 API 不要求套餐，也不接收餐點。
+    cleanItems.length = 0;
+    const foodTotal = 0;
 
-    const start = new Date(startAt), now = new Date();
-    if (Number.isNaN(start.getTime())) return NextResponse.json({ error: '預約時間格式不正確' }, { status: 400 });
-    const today = taipeiParts(now), selectedDate = taipeiParts(start);
-    const sameDay = today.year===selectedDate.year && today.month===selectedDate.month && today.day===selectedDate.day;
-    const startMinutes = selectedDate.hour*60+selectedDate.minute;
-    if (!sameDay || start <= now || startMinutes < 21*60 || startMinutes + duration > 24*60) {
-      return NextResponse.json({ error: '可指名時間為當天 21:00～24:00，服務必須在午夜 12 點前結束' }, { status: 400 });
-    }
+    const now = new Date();
+    const taipeiNow = taipeiParts(now);
+    if (taipeiNow.hour < 21) return NextResponse.json({ error: '目前非指名時間，每日 21:00 起開放即時指名' }, { status: 400 });
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
+    const adminDb = adminSupabase();
+    const { data: queued } = await adminDb.from('reservations').select('ends_at,status').eq('staff_id',staffId).not('status','in','(cancelled,rejected,已取消,已拒絕)').gt('ends_at',now.toISOString()).order('ends_at',{ascending:false}).limit(1);
+    let start = new Date(now.getTime()+5000);
+    if (queued?.length) start = new Date(new Date(queued[0].ends_at).getTime()+5*60000);
+    start.setSeconds(0,0); if(start<=now) start=new Date(now.getTime()+60000);
+    const startAt=start.toISOString();
+    const startParts=taipeiParts(start), endParts=taipeiParts(new Date(start.getTime()+duration*60000));
+    if(startParts.day!==taipeiNow.day || endParts.day!==taipeiNow.day) return NextResponse.json({error:'今晚候位已排滿，服務無法在午夜前完成'},{status:400});
     if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
       return NextResponse.json({ error: '神噯雪目前僅提供耳語陪伴服務' }, { status: 400 });
     }
     if (wantsPolaroid && staff.slug !== 'musufiru') return NextResponse.json({ error: '慕斯菲露紀念拍立得僅限指名慕斯菲露' }, { status: 400 });
-    if (wantsPolaroid && servicePrice + foodTotal < 150000) return NextResponse.json({ error: '慕斯菲露紀念拍立得需單筆服務與餐點合計滿 150,000 Gil' }, { status: 400 });
+    if (wantsPolaroid && servicePrice < 150000) return NextResponse.json({ error: '慕斯菲露紀念拍立得需單筆服務費滿 150,000 Gil' }, { status: 400 });
     if (wantsYukinojiPolaroid && staff.slug !== 'yukinoji-hakari') return NextResponse.json({ error: '雪之寺羽狩紀念拍立得僅限指名雪之寺羽狩' }, { status: 400 });
-    if (wantsYukinojiPolaroid && servicePrice + foodTotal < 200000) return NextResponse.json({ error: '雪之寺羽狩紀念拍立得需單筆服務與餐點合計滿 200,000 Gil' }, { status: 400 });
+    if (wantsYukinojiPolaroid && servicePrice < 200000) return NextResponse.json({ error: '雪之寺羽狩紀念拍立得需單筆服務費滿 200,000 Gil' }, { status: 400 });
 
     const serviceName = services.join('＋');
     const fullNote = [note, wantsPolaroid ? '包含：慕斯菲露紀念拍立得' : '', wantsYukinojiPolaroid ? '包含：雪之寺羽狩紀念拍立得' : ''].filter(Boolean).join('\n');
@@ -110,7 +117,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ ok:true, reservation_id:reservationId, pickup_code:pickupCode });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '送出預約與點餐失敗';
+    const message = error instanceof Error ? error.message : '送出指名服務失敗';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

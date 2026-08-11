@@ -1,5 +1,5 @@
 const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員'},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟太大風',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'}];let staff=[],blocks=[],selected='';
-const SERVICE_INFO={'泡湯搓澡':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'眠楓套席':{price:300000,duration:45}};
+const SERVICE_INFO={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'眠楓套席':{price:300000,duration:45}};
 const OPEN_HOUR=21,CLOSE_HOUR=24,BOOKING_BUFFER_MINUTES=5;
 const $=id=>document.getElementById(id),staffBox=$('staffSelect'),serviceSelect=$('service'),servicePrice=$('servicePrice'),timeInput=$('time'),bookingDate=$('bookingDate'),bookingStartTime=$('bookingStartTime'),availabilityMessage=$('availabilityMessage'),bookingSummary=$('bookingSummary'),submitButton=$('bookingSubmit');
 const fmt=d=>new Date(d).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});

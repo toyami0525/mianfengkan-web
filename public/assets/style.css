@@ -389,3 +389,10 @@ body.modal-open{overflow:hidden}
   .page:has(#bookingForm) .custom-time-picker select{font-size:16px;padding-right:24px}
 }
 
+
+/* v2.5: larger typography + package dining */
+.page:not(:has(#bookingForm)) .page-title p,.service-row p,.rule p{font-size:18px;line-height:1.9}
+.service-row strong,.menu-group h2{font-size:26px}.service-row .price{font-size:17px}.menu-item{font-size:19px;padding:14px 0}.menu-item b{font-size:19px}.menu-item span{font-size:18px}.menu-package-note{margin:18px auto 0;max-width:760px;padding:16px 20px;border:1px solid rgba(139,76,63,.2);border-radius:14px;background:rgba(139,76,63,.06);font-weight:700;color:var(--maple-dark);font-size:19px!important}
+.food-category-title{grid-column:1/-1;margin:12px 0 0;font-size:22px;color:var(--maple-dark)}.food-row.package-choice{cursor:pointer}.food-row.package-choice input{width:22px;height:22px;min-width:22px}.food-row.package-choice:has(input:checked){border-color:var(--maple);box-shadow:0 0 0 3px rgba(139,76,63,.10);background:rgba(255,250,244,.98)}
+.staff-choice small.status-wait{color:#9b6a22}.staff-choice small.status-now{color:#397247}.staff-choice small.status-off{color:#9b3d35}
+.queue-warning{display:block;margin-top:7px;color:#9b6a22;font-weight:700}
