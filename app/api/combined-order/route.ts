@@ -78,8 +78,10 @@ export async function POST(request: Request) {
     if (queued?.length) start = new Date(new Date(queued[0].ends_at).getTime()+5*60000);
     start.setSeconds(0,0); if(start<=now) start=new Date(now.getTime()+60000);
     const startAt=start.toISOString();
-    const startParts=taipeiParts(start), endParts=taipeiParts(new Date(start.getTime()+duration*60000));
-    if(startParts.day!==taipeiNow.day || endParts.day!==taipeiNow.day) return NextResponse.json({error:'今晚候位已排滿，服務無法在午夜前完成'},{status:400});
+    // 以台北時間 24:00 為當日營業截止；剛好於 24:00 完成可以接受，超過才拒絕。
+    const closeAt = new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 16, 0, 0, 0));
+    const projectedEnd = new Date(start.getTime()+duration*60000);
+    if(start>=closeAt || projectedEnd>closeAt) return NextResponse.json({error:'今日剩餘營業時間不足，本次服務無法在 24:00 前完成'},{status:400});
     if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
       return NextResponse.json({ error: '神噯雪目前僅提供耳語陪伴服務' }, { status: 400 });
     }
