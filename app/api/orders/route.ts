@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     const guestName = String(body.guest_name ?? '').trim();
     const wantsPolaroid = body.polaroid === true;
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
+    const deliveryPreferenceStaffId = String(body.delivery_preference_staff_id ?? '').trim();
     if (!guestName) return NextResponse.json({ error: '請填寫客人名稱' }, { status: 400 });
 
     const cleanItems = (Array.isArray(body.items) ? body.items : []).map((item:any)=>{
@@ -50,6 +51,16 @@ export async function POST(request: Request) {
     if(wantsPolaroid&&foodTotal<150000)return NextResponse.json({error:'慕斯菲露紀念拍立得需本筆餐點消費滿 150,000 Gil'},{status:400});
     if(wantsYukinojiPolaroid&&foodTotal<200000)return NextResponse.json({error:'雪之寺羽狩紀念拍立得需本筆餐點消費滿 200,000 Gil'},{status:400});
 
+    let deliveryPreferenceStaff:any=null;
+    if(deliveryPreferenceStaffId){
+      const staffDb=adminSupabase();
+      const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deliveryPreferenceStaffId);
+      const query=staffDb.from('staff').select('id,name,active').eq('active',true);
+      const r=isUuid?await query.eq('id',deliveryPreferenceStaffId).single():await query.eq('slug',deliveryPreferenceStaffId).single();
+      if(r.error||!r.data)return NextResponse.json({error:'指定的希望送餐館員目前無法選擇'},{status:400});
+      deliveryPreferenceStaff=r.data;
+    }
+
     let musu:any=null,yuki:any=null;
     if(wantsPolaroid){const r=await publicSupabase().from('staff').select('id,name,slug').eq('slug','musufiru').single();if(r.error||!r.data)return NextResponse.json({error:'找不到慕斯菲露館員資料'},{status:400});musu=r.data}
     if(wantsYukinojiPolaroid){const r=await publicSupabase().from('staff').select('id,name,slug').eq('slug','yukinoji-hakari').single();if(r.error||!r.data)return NextResponse.json({error:'找不到雪之寺羽狩館員資料'},{status:400});yuki=r.data}
@@ -57,7 +68,7 @@ export async function POST(request: Request) {
     const orderItems=[...cleanItems,...(wantsPolaroid?[{name:'慕斯菲露－紀念拍立得',qty:1,price:POLAROID_PRICE}]:[]),...(wantsYukinojiPolaroid?[{name:'雪之寺羽狩－紀念拍立得',qty:1,price:YUKINOJI_POLAROID_PRICE}]:[])];
     const total=foodTotal+(wantsPolaroid?POLAROID_PRICE:0)+(wantsYukinojiPolaroid?YUKINOJI_POLAROID_PRICE:0);
     const staffId=wantsPolaroid&&!wantsYukinojiPolaroid?musu.id:wantsYukinojiPolaroid&&!wantsPolaroid?yuki.id:null;
-    const { error } = await publicSupabase().from('orders').insert({guest_name:guestName,staff_id:staffId,items:orderItems,total,note:String(body.note??'').trim(),status:'pending'});
+    const { error } = await publicSupabase().from('orders').insert({guest_name:guestName,staff_id:staffId,items:orderItems,total,note:String(body.note??'').trim(),status:'pending',delivery_preference_staff_id:deliveryPreferenceStaff?.id??null,delivery_preference_staff_name:deliveryPreferenceStaff?.name??null});
     if (error) throw error;
 
     const pickupCodes:string[]=[];

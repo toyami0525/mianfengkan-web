@@ -217,7 +217,7 @@ body.modal-open{overflow:hidden}
 .page:has(#bookingForm) .form-grid{gap:27px}
 .page:has(#bookingForm) .field{gap:11px}
 .page:has(#bookingForm) .field>label{font-size:17px;color:var(--ink);font-weight:700}
-.page:has(#bookingForm) .field input,.page:has(#bookingForm) .field textarea{font-size:17px;padding:16px 17px;border-radius:14px}
+.page:has(#bookingForm) .field input,.page:has(#bookingForm) .field select,.page:has(#bookingForm) .field textarea{font-size:17px;padding:16px 17px;border-radius:14px}
 .page:has(#bookingForm) .service-check-grid{gap:16px}
 .page:has(#bookingForm) .service-check{min-height:92px;padding:20px 22px;border-radius:18px;gap:15px}
 .page:has(#bookingForm) .service-check input{width:24px;height:24px;flex:0 0 auto}
@@ -396,3 +396,9 @@ body.modal-open{overflow:hidden}
 .food-category-title{grid-column:1/-1;margin:12px 0 0;font-size:22px;color:var(--maple-dark)}.food-row.package-choice{cursor:pointer}.food-row.package-choice input{width:22px;height:22px;min-width:22px}.food-row.package-choice:has(input:checked){border-color:var(--maple);box-shadow:0 0 0 3px rgba(139,76,63,.10);background:rgba(255,250,244,.98)}
 .staff-choice small.status-wait{color:#9b6a22}.staff-choice small.status-now{color:#397247}.staff-choice small.status-off{color:#9b3d35}
 .queue-warning{display:block;margin-top:7px;color:#9b6a22;font-weight:700}
+/* v2.5.3: no-queue live availability */
+.status-busy{color:#a45d18;font-weight:700}
+
+/* v2.5.4 delivery preference */
+.dining-delivery-preference{margin-top:8px;padding:16px;border:1px solid rgba(139,76,63,.18);border-radius:16px;background:rgba(255,255,255,.46)}
+.summary-group.delivery-line{background:rgba(139,76,63,.055);border-radius:12px;padding:12px}

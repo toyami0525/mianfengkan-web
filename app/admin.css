@@ -36,3 +36,7 @@
 @media(max-width:980px){.leave-form{grid-template-columns:1fr 1fr}.leave-form .leave-reason{grid-column:1 / -1}.leave-submit{grid-column:1 / -1}}
 @media(max-width:620px){.leave-form{grid-template-columns:1fr}.leave-form .leave-reason,.leave-submit{grid-column:auto}}
 
+
+/* v2.5.4 delivery preference */
+
+.delivery-pill{display:inline-block;padding:5px 9px;border-radius:999px;font-weight:700;white-space:nowrap}.delivery-pill.preferred{background:#f7e8dc;color:#7e302c}.delivery-pill.neutral{background:#eee9e4;color:#6f6259}.delivery-pill.claimed{background:#e3f2e7;color:#285f36}.delivery-pill.waiting{background:#f5edda;color:#745c24}
