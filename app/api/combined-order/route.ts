@@ -68,20 +68,37 @@ export async function POST(request: Request) {
 
     const now = new Date();
     const taipeiNow = taipeiParts(now);
-    if (taipeiNow.hour < 21) return NextResponse.json({ error: '目前非指名時間，每日 21:00 起開放即時指名' }, { status: 400 });
+    const adminDb = adminSupabase();
+    const {data:testSetting,error:testSettingError}=await adminDb.from('site_settings').select('value').eq('key','booking_test_mode').maybeSingle();
+    if(testSettingError) throw testSettingError;
+    const testValue=(testSetting as any)?.value;
+    const bookingTestMode=testValue===true||testValue?.enabled===true;
+    if (!bookingTestMode && taipeiNow.hour < 21) return NextResponse.json({ error: '目前非指名時間，每日 21:00 起開放即時指名' }, { status: 400 });
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
-    const adminDb = adminSupabase();
-    const { data: queued } = await adminDb.from('reservations').select('ends_at,status').eq('staff_id',staffId).not('status','in','(cancelled,rejected,已取消,已拒絕)').gt('ends_at',now.toISOString()).order('ends_at',{ascending:false}).limit(1);
+    // 不提供候位：只要本營業時段仍有未完成的指名，就暫停該館員的新指名。
+    // 這樣客人臨時續時也不會讓後續客人卡在不準確的候位時間。
+    const sessionStart = bookingTestMode
+      ? new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, -8, 0, 0, 0)) // 台北當日 00:00
+      : new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 13, 0, 0, 0)); // 台北 21:00
+    const { data: active } = await adminDb.from('reservations')
+      .select('id,starts_at,ends_at,status')
+      .eq('staff_id',staffId)
+      .gte('starts_at',sessionStart.toISOString())
+      .not('status','in','(completed,cancelled,rejected,已完成,已取消,已拒絕)')
+      .order('starts_at',{ascending:false})
+      .limit(1);
+    if(active?.length){
+      return NextResponse.json({error:'此館員目前服務中，暫不提供候位。請待本次服務完成後再重新指名。'},{status:409});
+    }
     let start = new Date(now.getTime()+5000);
-    if (queued?.length) start = new Date(new Date(queued[0].ends_at).getTime()+5*60000);
     start.setSeconds(0,0); if(start<=now) start=new Date(now.getTime()+60000);
     const startAt=start.toISOString();
     // 以台北時間 24:00 為當日營業截止；剛好於 24:00 完成可以接受，超過才拒絕。
     const closeAt = new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 16, 0, 0, 0));
     const projectedEnd = new Date(start.getTime()+duration*60000);
-    if(start>=closeAt || projectedEnd>closeAt) return NextResponse.json({error:'今日剩餘營業時間不足，本次服務無法在 24:00 前完成'},{status:400});
+    if(!bookingTestMode && (start>=closeAt || projectedEnd>closeAt)) return NextResponse.json({error:'今日剩餘營業時間不足，本次服務無法在 24:00 前完成'},{status:400});
     if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
       return NextResponse.json({ error: '神噯雪目前僅提供耳語陪伴服務' }, { status: 400 });
     }
