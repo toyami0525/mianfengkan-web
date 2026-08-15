@@ -40,3 +40,6 @@
 /* v2.5.4 delivery preference */
 
 .delivery-pill{display:inline-block;padding:5px 9px;border-radius:999px;font-weight:700;white-space:nowrap}.delivery-pill.preferred{background:#f7e8dc;color:#7e302c}.delivery-pill.neutral{background:#eee9e4;color:#6f6259}.delivery-pill.claimed{background:#e3f2e7;color:#285f36}.delivery-pill.waiting{background:#f5edda;color:#745c24}
+
+/* v2.5.6 館員續時＋服務結束前 3 分鐘提醒 */
+.extend-button{background:#9a5b2f!important}.extension-dialog{width:min(520px,100%)}.extension-select{display:grid;gap:8px;text-align:left;margin:18px 0}.extension-select span{font-size:13px;font-weight:700;color:#73584b}.extension-select select{width:100%;padding:12px;border:1px solid #d8c9bc;background:#fff;color:#302722;font:14px "Microsoft JhengHei",sans-serif}.extension-summary{display:grid;gap:5px;padding:14px 16px;background:#faf1e8;border:1px solid #ead4c3;border-radius:14px;text-align:left}.extension-summary span,.extension-summary small{color:#80675a}.extension-summary strong{font-size:1.15rem;color:#6e352f}.service-ending-alert{border-color:#d4b782;box-shadow:0 26px 80px rgba(55,37,12,.35)}.service-ending-alert .reservation-alert-icon{background:#75582b}.service-ending-alert>.hint{margin:16px 0 0;text-align:left;line-height:1.7}

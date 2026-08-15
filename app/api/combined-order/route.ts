@@ -77,8 +77,7 @@ export async function POST(request: Request) {
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
-    // 不提供候位：只要本營業時段仍有未完成的指名，就暫停該館員的新指名。
-    // 這樣客人臨時續時也不會讓後續客人卡在不準確的候位時間。
+    // 只要本營業時段仍有未完成的指名，就暫停該館員的新指名；服務完成後才重新開放。
     const sessionStart = bookingTestMode
       ? new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, -8, 0, 0, 0)) // 台北當日 00:00
       : new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 13, 0, 0, 0)); // 台北 21:00
@@ -90,7 +89,7 @@ export async function POST(request: Request) {
       .order('starts_at',{ascending:false})
       .limit(1);
     if(active?.length){
-      return NextResponse.json({error:'此館員目前服務中，暫不提供候位。請待本次服務完成後再重新指名。'},{status:409});
+      return NextResponse.json({error:'此館員目前服務中，請待本次服務完成後再重新指名。'},{status:409});
     }
     let start = new Date(now.getTime()+5000);
     start.setSeconds(0,0); if(start<=now) start=new Date(now.getTime()+60000);
