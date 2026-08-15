@@ -43,3 +43,12 @@
 
 /* v2.5.6 館員續時＋服務結束前 3 分鐘提醒 */
 .extend-button{background:#9a5b2f!important}.extension-dialog{width:min(520px,100%)}.extension-select{display:grid;gap:8px;text-align:left;margin:18px 0}.extension-select span{font-size:13px;font-weight:700;color:#73584b}.extension-select select{width:100%;padding:12px;border:1px solid #d8c9bc;background:#fff;color:#302722;font:14px "Microsoft JhengHei",sans-serif}.extension-summary{display:grid;gap:5px;padding:14px 16px;background:#faf1e8;border:1px solid #ead4c3;border-radius:14px;text-align:left}.extension-summary span,.extension-summary small{color:#80675a}.extension-summary strong{font-size:1.15rem;color:#6e352f}.service-ending-alert{border-color:#d4b782;box-shadow:0 26px 80px rgba(55,37,12,.35)}.service-ending-alert .reservation-alert-icon{background:#75582b}.service-ending-alert>.hint{margin:16px 0 0;text-align:left;line-height:1.7}
+
+/* v2.5.7：點餐／指名合併為營運管理雙欄 */
+.operations-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.operations-column{min-width:0;max-height:calc(100vh - 190px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:3px}
+.operations-column>.panel{margin:0;min-width:0}
+.operations-column .table-wrap{max-width:100%;overflow:auto}
+.operations-column .record-toolbar{margin-top:12px}
+.operations-column .actions{flex-wrap:wrap;min-width:150px}
+@media(max-width:1180px){.operations-grid{grid-template-columns:1fr}.operations-column{max-height:none;overflow:visible;padding-right:0}.operations-column>.panel{margin:0 0 18px}}
