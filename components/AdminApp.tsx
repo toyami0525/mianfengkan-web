@@ -14,6 +14,8 @@ const staffTabs=[['dashboard','我的總覽'],['reservations','我的指名'],['
 const frontdeskTabs=[['dashboard','總覽'],['reservations','指名管理'],['orders','點餐管理'],['polaroids','拍立得管理']];
 const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐'};
 const EXTENSION_INFO:Record<string,{price:number;duration:number}>={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15}};
+// 真實 Common Loon（潛鳥）叫聲，來源：Wikimedia Commons / PDSounds，Public Domain。
+const LOON_SOUND_URL='/assets/sounds/common-loon.mp3';
 const statusText:Record<string,string>={pending:'待確認',confirmed:'已確認',completed:'已完成',cancelled:'已取消',rejected:'已拒絕'};
 const dateRangeText:Record<DateRange,string>={today:'今天',yesterday:'昨天',week:'本週',month:'本月',all:'全部'};
 const DEFAULT_VENUE:VenueSettings={name:'眠楓館',address:'穹頂皓天 7區22號',discord:'',business_status:'open',business_hours:'依招募板公告為主'};
@@ -158,21 +160,11 @@ export default function AdminApp(){
  }
  function playServiceEndingSound(phase:'ending'|'ended'='ending'){
   try{
-   const Ctx=window.AudioContext||(window as any).webkitAudioContext;
-   const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
-   const play=()=>{
-    const now=ctx.currentTime;
-    // 與新指名叮咚不同：以較長、滑音的「潛鳥 Wail」風格提醒。
-    // 到達結束時間時多一段較低的收尾音，讓館員能分辨「快到了」與「時間已到」。
-    const notes=phase==='ended'?[[0,430,650,1.05],[1.18,520,760,1.15],[2.48,500,330,0.95]]:[[0,430,650,1.05],[1.18,520,760,1.15]];
-    notes.forEach(([delay,from,to,duration])=>{
-     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-     oscillator.type='triangle';oscillator.frequency.setValueAtTime(from,now+delay);oscillator.frequency.exponentialRampToValueAtTime(to,now+delay+duration*.52);oscillator.frequency.exponentialRampToValueAtTime(Math.max(120,from*.92),now+delay+duration);
-     gain.gain.setValueAtTime(0.0001,now+delay);gain.gain.exponentialRampToValueAtTime(0.38,now+delay+.08);gain.gain.setValueAtTime(0.26,now+delay+duration*.65);gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+duration);
-     oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now+delay);oscillator.stop(now+delay+duration+.03);
-    });
-   };
-   if(ctx.state==='suspended')void ctx.resume().then(play);else play();
+   // 使用真正的 Common Loon 錄音，不再用 Web Audio 三角波模擬，避免出現像笛子的合成音。
+   const audio=new Audio(LOON_SOUND_URL);
+   audio.preload='auto';
+   audio.volume=phase==='ended'?1:0.82;
+   void audio.play().catch(error=>console.warn('無法播放潛鳥服務提醒音',error));
   }catch(error){console.warn('無法播放服務結束提醒音',error)}
  }
  async function toggleNotificationSound(){
