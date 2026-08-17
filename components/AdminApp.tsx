@@ -245,12 +245,9 @@ export default function AdminApp(){
    }
   }catch(error){const text=error instanceof Error?error.message:'更新失敗';console.error(error);setMsg(`更新失敗：${text}`);alert(`更新失敗：${text}`)}finally{setBusy('')}
  }
- function extensionOptionsFor(reservation:Row){
-  const staffRow=(data.staff||[]).find(s=>s.id===reservation.staff_id);
-  const declared=Array.isArray(staffRow?.services)?staffRow.services.map(String):[];
-  const options=Object.keys(EXTENSION_INFO).filter(name=>!declared.length||declared.includes(name));
-  if(staffRow?.slug==='shenaixue')return ['耳語陪伴'];
-  return options.length?options:Object.keys(EXTENSION_INFO);
+ function extensionOptionsFor(_reservation:Row){
+  // 續時視為「追加服務」：不綁原本服務，也不受館員 services 欄位限制。
+  return Object.keys(EXTENSION_INFO);
  }
  function canExtendReservation(reservation:Row){
   if(!account||account.role==='frontdesk')return false;

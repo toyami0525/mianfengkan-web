@@ -35,10 +35,8 @@ export async function POST(req:NextRequest){
     if(Number.isNaN(start.getTime())||Number.isNaN(oldEnd.getTime()))return NextResponse.json({error:'原服務時間資料不正確'},{status:400});
     if(now<start)return NextResponse.json({error:'服務尚未開始，開始後才能續時'},{status:400});
 
-    const{data:staff,error:staffError}=await db.from('staff').select('id,slug,name,services').eq('id',reservation.staff_id).maybeSingle();
-    if(staffError)throw staffError;if(!staff)return NextResponse.json({error:'找不到館員資料'},{status:404});
-    const declared=Array.isArray(staff.services)?staff.services.map(String):[];
-    if((declared.length&&!declared.includes(serviceName))||(staff.slug==='shenaixue'&&serviceName!=='耳語陪伴'))return NextResponse.json({error:`${staff.name} 目前沒有提供「${serviceName}」續時`},{status:400});
+    // 續時視為追加服務：只要是系統支援的續時項目就可自由選擇，
+    // 不綁原本服務，也不再以 staff.services / 特定館員服務限制阻擋。
 
     const newEnd=new Date(oldEnd.getTime()+info.duration*60000);
     const{data:testSetting,error:testError}=await db.from('site_settings').select('value').eq('key','booking_test_mode').maybeSingle();if(testError)throw testError;
