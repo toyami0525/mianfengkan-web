@@ -44,7 +44,9 @@ export default function AdminApp(){
  const[payrollStaffIds,setPayrollStaffIds]=useState<string[]>([]);
  const[account,setAccount]=useState<Account|null>(null);
  const audioContextRef=useRef<AudioContext|null>(null);
+ const publicBookingChannelRef=useRef<any>(null);
  const db=useMemo(()=>supabase(),[]);
+ function notifyPublicBookingChange(event='booking_changed'){const channel=publicBookingChannelRef.current;if(!channel)return;void channel.send({type:'broadcast',event,payload:{at:new Date().toISOString()}}).catch((error:any)=>console.warn('前台 Realtime 廣播失敗，10 秒輪詢仍會補上。',error))}
  function syncSettings(rows:Row[]){
   const map=Object.fromEntries((rows||[]).map(r=>[r.key,r.value]));
   setVenue({...DEFAULT_VENUE,...(map.venue||{})});
@@ -84,6 +86,8 @@ export default function AdminApp(){
    setNotificationSound(localStorage.getItem('mf-notification-sound')==='on');
    setReady(true);await load(currentAccount);
   });
+  const publicBookingChannel=db.channel('public-booking-live').subscribe();
+  publicBookingChannelRef.current=publicBookingChannel;
   const channel=db.channel('admin-live-alerts')
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'reservations'},payload=>{
     const row=payload.new as Row;
@@ -112,7 +116,7 @@ export default function AdminApp(){
     setData(prev=>({...prev,orders:(prev.orders||[]).map(x=>x.id===row.id?row:x)}));
    })
    .subscribe();
-  return()=>{mounted=false;db.removeChannel(channel)};
+  return()=>{mounted=false;db.removeChannel(channel);db.removeChannel(publicBookingChannel);if(publicBookingChannelRef.current===publicBookingChannel)publicBookingChannelRef.current=null};
  },[]);
  useEffect(()=>{
   if(!ready||!account||account.role!=='owner')return;
@@ -226,7 +230,7 @@ export default function AdminApp(){
   if(!account?.staff_id)return;
   const next=!account.accepting_reservations;setBusy('availability');
   const{error}=await db.from('staff').update({accepting_reservations:next}).eq('id',account.staff_id);
-  if(error){alert(`更新失敗：${error.message}`)}else setAccount({...account,accepting_reservations:next});
+  if(error){alert(`更新失敗：${error.message}`)}else{setAccount({...account,accepting_reservations:next});notifyPublicBookingChange('availability_changed')}
   setBusy('');
  }
  async function status(table:string,id:string,nextStatus:string){
@@ -237,10 +241,11 @@ export default function AdminApp(){
     const response=await fetch('/api/staff/reservations/confirm',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({reservation_id:id})});
     const result=await response.json();if(!response.ok)throw new Error(result.error||'開始服務失敗');
     if(result.reservation)setData(prev=>({...prev,reservations:(prev.reservations||[]).map(x=>x.id===result.reservation.id?result.reservation:x)}));
-    setMsg(`服務已開始：${formatDate(result.reservation?.starts_at)} → ${formatDate(result.reservation?.ends_at)}。`);await load();
+    setMsg(`服務已開始：${formatDate(result.reservation?.starts_at)} → ${formatDate(result.reservation?.ends_at)}。`);notifyPublicBookingChange('booking_changed');await load();
    }else{
     const{error}=await db.from(table).update({status:nextStatus}).eq('id',id).select('id').single();
     if(error)throw error;
+    if(table==='reservations')notifyPublicBookingChange('booking_changed');
     setMsg(`狀態已更新為「${statusText[nextStatus]||nextStatus}」`);await load();
    }
   }catch(error){const text=error instanceof Error?error.message:'更新失敗';console.error(error);setMsg(`更新失敗：${text}`);alert(`更新失敗：${text}`)}finally{setBusy('')}
@@ -267,7 +272,7 @@ export default function AdminApp(){
    const response=await fetch('/api/staff/reservations/extend',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({reservation_id:extendTarget.id,service_name:extendService})});
    const result=await response.json();if(!response.ok)throw new Error(result.error||'續時失敗');
    if(result.reservation)setData(prev=>({...prev,reservations:(prev.reservations||[]).map(x=>x.id===result.reservation.id?result.reservation:x)}));
-   setExtendTarget(null);setEndingReservation(null);setMsg(`續時完成：${extendService} +${EXTENSION_INFO[extendService].duration} 分鐘，新的結束時間 ${formatDate(result.reservation?.ends_at)}。`);await load();
+   setExtendTarget(null);setEndingReservation(null);setMsg(`續時完成：${extendService} +${EXTENSION_INFO[extendService].duration} 分鐘，新的結束時間 ${formatDate(result.reservation?.ends_at)}。`);notifyPublicBookingChange('booking_changed');await load();
   }catch(error){const text=error instanceof Error?error.message:'續時失敗';setMsg(text);alert(text)}finally{setBusy('')}
  }
  async function claimDelivery(order:Row){
@@ -283,7 +288,7 @@ export default function AdminApp(){
  async function remove(table:string,id:string){
   if(!confirm('確定刪除？'))return;setBusy(`${table}:${id}`);
   const{error}=await db.from(table).delete().eq('id',id);
-  if(error){setMsg(`刪除失敗：${error.message}`);alert(`刪除失敗：${error.message}`);}else await load();
+  if(error){setMsg(`刪除失敗：${error.message}`);alert(`刪除失敗：${error.message}`);}else{if(table==='staff_unavailability'||table==='staff')notifyPublicBookingChange('availability_changed');await load();}
   setBusy('');
  }
  function payrollOwnerInfo(){
@@ -321,6 +326,7 @@ export default function AdminApp(){
  async function quickAdd(kind:string){
   if(kind==='staff'){const name=prompt('館員姓名');if(name)await db.from('staff').insert({name,role:'館員',active:true,accepting_reservations:true})}
   if(kind==='announcement'){const title=prompt('公告標題');const content=prompt('公告內容');if(title)await db.from('announcements').insert({title,content,published:true})}
+  if(kind==='staff')notifyPublicBookingChange('availability_changed');
   await load();
  }
  async function addLeave(e:React.FormEvent){
@@ -333,13 +339,13 @@ export default function AdminApp(){
   setBusy('leave:add');setMsg('儲存請假時段中…');
   const{error}=await db.from('staff_unavailability').insert({staff_id:leaveStaffId,starts_at:startsAt,ends_at:endsAt,reason:leaveReason.trim()||'請假'});
   if(error){console.error(error);setMsg(`新增請假失敗：${error.message}`);alert(`新增請假失敗：${error.message}`)}
-  else{setMsg('請假時段已新增，客人端會自動避開此時段。');setLeaveReason('請假');await load()}
+  else{setMsg('請假時段已新增，客人端會自動避開此時段。');setLeaveReason('請假');notifyPublicBookingChange('availability_changed');await load()}
   setBusy('');
  }
  async function saveSetting(key:string,value:any){
   setBusy(`setting:${key}`);setMsg('儲存中…');
   const{error}=await db.from('site_settings').upsert({key,value,updated_at:new Date().toISOString()},{onConflict:'key'});
-  if(error){setMsg(`儲存失敗：${error.message}`);alert(`儲存失敗：${error.message}`);}else{setMsg('已儲存，前台重新整理後會套用最新內容。');await load()}
+  if(error){setMsg(`儲存失敗：${error.message}`);alert(`儲存失敗：${error.message}`);}else{if(key==='booking_test_mode')notifyPublicBookingChange('settings_changed');setMsg('已儲存，前台會套用最新內容。');await load()}
   setBusy('');
  }
  function updateRule(index:number,field:keyof RuleItem,value:string){setRules(prev=>prev.map((r,i)=>i===index?{...r,[field]:value}:r))}
