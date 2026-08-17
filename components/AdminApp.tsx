@@ -32,6 +32,7 @@ const DEFAULT_RULES:RuleItem[]=[
 ];
 
 export default function AdminApp(){
+ console.info('眠楓館後台 v2.5.9d loaded');
  const[ready,setReady]=useState(false),[tab,setTab]=useState('dashboard'),[data,setData]=useState<Record<string,Row[]>>({}),[msg,setMsg]=useState(''),[busy,setBusy]=useState('');
  const[reservationRange,setReservationRange]=useState<DateRange>('today'),[orderRange,setOrderRange]=useState<DateRange>('today');
  const[reservationStatus,setReservationStatus]=useState('pending'),[orderStatus,setOrderStatus]=useState('pending');

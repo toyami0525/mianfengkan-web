@@ -1,2 +1,2 @@
-import AdminAppV259d from '@/components/AdminAppV259d';
-export default function Admin(){return <AdminAppV259d/>}
+import AdminApp from '@/components/AdminApp';
+export default function Admin(){return <AdminApp/>}
