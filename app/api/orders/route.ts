@@ -22,7 +22,7 @@ async function createPickup(staff:{id:string;name:string},guestName:string){
   const db=adminSupabase();
   for(let attempt=0;attempt<8;attempt++){
     const code=makePickupCode();
-    const {error}=await db.from('polaroid_pickups').insert({reservation_id:null,staff_id:staff.id,staff_name:staff.name,guest_name:guestName,pickup_code:code,status:'processing'});
+    const {error}=await db.from('polaroid_pickups').insert({reservation_id:null,staff_id:staff.id,staff_name:String(staff?.name ?? ''),guest_name:guestName,pickup_code:code,status:'processing'});
     if(!error)return code;
     if(error.code!=='23505')throw error;
   }
