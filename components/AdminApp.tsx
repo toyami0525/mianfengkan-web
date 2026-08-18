@@ -17,7 +17,7 @@ const frontdeskTabs=[['dashboard','總覽'],['operations','營運管理'],['pola
 const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐'};
 const EXTENSION_INFO:Record<string,{price:number;duration:number}>={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15}};
 // 服務快結束／結束提示音：使用館主提供的「和風慶雲 - Release」前 6 秒。
-const SERVICE_END_SOUND_URL='/assets/sounds/wafu-keiun-release-first6-v261.mp3';
+const SERVICE_END_SOUND_URL='/assets/sounds/wafu-keiun-release-first7-v263.mp3';
 // 餐點送餐提示音：只有被客人指定送餐的館員會聽到。
 const FOOD_ORDER_SOUND_URL='/assets/sounds/doorbell-order-v262.mp3';
 const statusText:Record<string,string>={pending:'待確認',acknowledged:'已確認・待開始',confirmed:'服務中',completed:'已完成',cancelled:'已取消',rejected:'已拒絕'};
@@ -219,7 +219,7 @@ export default function AdminApp(){
  }
  function playServiceEndingSound(phase:'ending'|'ended'='ending'){
   try{
-   // 快結束與正式結束都使用同一段 6 秒提示音。
+   // 快結束與正式結束都使用同一段 7 秒提示音。
    const audio=new Audio(SERVICE_END_SOUND_URL);
    audio.preload='auto';
    audio.volume=1;
