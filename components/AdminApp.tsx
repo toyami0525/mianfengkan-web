@@ -121,6 +121,21 @@ export default function AdminApp(){
    .subscribe();
   return()=>{mounted=false;db.removeChannel(channel);db.removeChannel(publicBookingChannel);if(publicBookingChannelRef.current===publicBookingChannel)publicBookingChannelRef.current=null};
  },[]);
+ // 瀏覽器可能在重新整理／重新登入後暫停 Web Audio。
+ // 只要通知音已開啟，館員下一次點擊或按鍵時就主動恢復指名音效的 AudioContext。
+ useEffect(()=>{
+  const unlockReservationAudio=()=>{
+   if(localStorage.getItem('mf-notification-sound')!=='on')return;
+   try{
+    const Ctx=window.AudioContext||(window as any).webkitAudioContext;
+    const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
+    if(ctx.state==='suspended')void ctx.resume();
+   }catch(error){console.warn('無法解鎖指名提示音',error)}
+  };
+  window.addEventListener('pointerdown',unlockReservationAudio);
+  window.addEventListener('keydown',unlockReservationAudio);
+  return()=>{window.removeEventListener('pointerdown',unlockReservationAudio);window.removeEventListener('keydown',unlockReservationAudio)};
+ },[]);
  useEffect(()=>{
   if(!ready||!account||account.role!=='owner')return;
   const allStaff=(data.staff||[]).filter(r=>r.active!==false);
@@ -187,13 +202,13 @@ export default function AdminApp(){
   };
   tick();const timer=window.setInterval(tick,3000);return()=>window.clearInterval(timer);
  },[ready,account?.role,account?.staff_id,bookingTestMode,data.reservations]);
- function playNotificationSound(){
+ async function playNotificationSound(){
   try{
    const Ctx=window.AudioContext||(window as any).webkitAudioContext;
    const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
-   if(ctx.state==='suspended')void ctx.resume();
-   const now=ctx.currentTime;
-   // 大聲「叮咚、叮咚」兩次：高音→低音，短暫停頓後再重複。
+   if(ctx.state==='suspended')await ctx.resume();
+   const now=ctx.currentTime+0.02;
+   // 新服務指名專用：大聲「叮咚、叮咚」兩次。
    [[0,988],[0.20,659],[0.72,988],[0.92,659]].forEach(([delay,freq])=>{
     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
     oscillator.type='sine';oscillator.frequency.setValueAtTime(freq,now+delay);
@@ -222,7 +237,8 @@ export default function AdminApp(){
  async function toggleNotificationSound(){
   const next=!notificationSound;
   setNotificationSound(next);localStorage.setItem('mf-notification-sound',next?'on':'off');
-  // 開啟通知音時不另外播放測試音，避免與服務結束提示音混淆。
+  // 從使用者點擊事件中直接播放一次新指名音，順便解鎖瀏覽器 Web Audio。
+  if(next)await playNotificationSound();
  }
 
  async function uploadPolaroid(id:string,file:File){
