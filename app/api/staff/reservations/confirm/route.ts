@@ -30,7 +30,7 @@ export async function POST(req:NextRequest){
     if(reservationError)throw reservationError;if(!reservation)return NextResponse.json({error:'找不到這筆指名服務'},{status:404});
     if(account.role!=='owner'&&account.staff_id!==reservation.staff_id)return NextResponse.json({error:'只能開始自己的指名服務'},{status:403});
     if(TERMINAL.includes(String(reservation.status)))return NextResponse.json({error:'這筆服務已經結束或取消'},{status:400});
-    if(String(reservation.status)!=='accepted')return NextResponse.json({error:'請先按「確認」，確認後才能開始服務計時'},{status:409});
+    if(String(reservation.status)!=='acknowledged')return NextResponse.json({error:'請先按「確認」，再按「開始」正式計時'},{status:409});
 
     const oldStart=new Date(reservation.starts_at),oldEnd=new Date(reservation.ends_at),now=new Date();
     if(Number.isNaN(oldStart.getTime())||Number.isNaN(oldEnd.getTime())||oldEnd<=oldStart)return NextResponse.json({error:'原服務時間資料不正確'},{status:400});
@@ -43,8 +43,8 @@ export async function POST(req:NextRequest){
 
     const startLine=`[實際開始 ${taipeiStamp(now)}] 館員按下開始後正式計時；原預約時間 ${taipeiStamp(oldStart)}`;
     const nextNote=[reservation.note,startLine].filter(Boolean).join('\n');
-    const{data:updated,error:updateError}=await db.from('reservations').update({status:'confirmed',starts_at:newStart.toISOString(),ends_at:newEnd.toISOString(),note:nextNote}).eq('id',reservation.id).eq('status','accepted').select('*').maybeSingle();
+    const{data:updated,error:updateError}=await db.from('reservations').update({status:'confirmed',starts_at:newStart.toISOString(),ends_at:newEnd.toISOString(),note:nextNote}).eq('id',reservation.id).eq('status','acknowledged').select('*').maybeSingle();
     if(updateError)throw updateError;if(!updated)return NextResponse.json({error:'這筆服務剛剛已被其他人更新，請重新整理後再試'},{status:409});
     return NextResponse.json({ok:true,reservation:updated,duration_minutes:Math.round(durationMs/60000)});
-  }catch(error){console.error('start reservation failed',error);return NextResponse.json({error:error instanceof Error?error.message:'開始服務失敗，請稍後再試'},{status:500})}
+  }catch(error){console.error('confirm reservation failed',error);return NextResponse.json({error:error instanceof Error?error.message:'開始服務失敗，請稍後再試'},{status:500})}
 }

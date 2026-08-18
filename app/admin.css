@@ -60,8 +60,8 @@
 /* v2.5.8a 館主薪資入口 */
 .payroll-dashboard-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:18px;align-items:center;margin:0 0 20px;padding:18px 20px;border:1px solid #d8bda6;background:#fff8ef;box-shadow:0 8px 24px #4b37250a}.payroll-dashboard-card>div{display:grid;gap:4px}.payroll-dashboard-card span{font:12px sans-serif;color:#806b5a}.payroll-dashboard-card strong{font:24px/1.2 Georgia,"Noto Serif TC",serif;color:#7e302c}.payroll-dashboard-card small{font:11px/1.5 sans-serif;color:#8b796e}.payroll-dashboard-card button{border:0;background:#713a31;color:white;padding:12px 18px;cursor:pointer;white-space:nowrap}@media(max-width:900px){.payroll-dashboard-card{grid-template-columns:1fr}.payroll-dashboard-card button{justify-self:start}}
 
-/* v2.5.9c：指名確認／開始拆分＋操作欄固定左側 */
-.status-accepted{background:#eee5f4;color:#674978}.start-button{background:#2f7044!important}
-.actions-sticky-head,.actions-sticky-cell{position:sticky;left:0;background:#fff;box-shadow:9px 0 14px -13px rgba(48,35,28,.75)}
-.actions-sticky-head{z-index:6;min-width:168px}.actions-sticky-cell{z-index:5;min-width:168px}.actions-sticky-cell .actions{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-.operations-column .actions-sticky-head,.operations-column .actions-sticky-cell{background:#fff}
+/* v2.6.0: 操作欄固定在最左側，館員不必橫向捲到最右邊 */
+.table-wrap.has-actions .actions-head,.table-wrap.has-actions td.actions{position:sticky;left:0;z-index:3;background:#fff;box-shadow:5px 0 8px rgba(75,55,37,.06)}
+.table-wrap.has-actions .actions-head{z-index:4;background:#fffaf6;min-width:118px}
+.table-wrap.has-actions td.actions{min-width:118px}
+.status-acknowledged{background:#eee6f5;color:#62447a}

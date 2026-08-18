@@ -30,7 +30,7 @@ export async function POST(req:NextRequest){
     if(reservationError)throw reservationError;if(!reservation)return NextResponse.json({error:'找不到這筆指名服務'},{status:404});
     if(account.role!=='owner'&&account.staff_id!==reservation.staff_id)return NextResponse.json({error:'只能替自己的指名服務續時'},{status:403});
     if(TERMINAL.includes(String(reservation.status)))return NextResponse.json({error:'已結束或取消的服務不能續時'},{status:400});
-    if(!['confirmed','已確認'].includes(String(reservation.status)))return NextResponse.json({error:'請先按「確認並開始」，服務開始後才能續時'},{status:400});
+    if(!['confirmed','已確認'].includes(String(reservation.status)))return NextResponse.json({error:'請先按「開始」，服務開始後才能續時'},{status:400});
     const start=new Date(reservation.starts_at),oldEnd=new Date(reservation.ends_at),now=new Date();
     if(Number.isNaN(start.getTime())||Number.isNaN(oldEnd.getTime()))return NextResponse.json({error:'原服務時間資料不正確'},{status:400});
     if(now<start)return NextResponse.json({error:'服務尚未開始，開始後才能續時'},{status:400});
