@@ -25,9 +25,9 @@ const MF_DEFAULT_STAFF = [
   },
   {
     slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',
-    quote:'「活殺自在、地之印、人之印、冰晶亂流之術！客人，還有哪裡需要加強嗎？……客、客人？」',
-    bio:'黃金港忍者部隊退役的優閒忍者，沒事就會參與狩獵怪物的傭兵招募，最喜歡的事情是揮舞雙刃享受戰鬥，今天也會用25萬的傷害給客人的雙肩來上一場華麗的按摩。',
-    services:['泡湯洗浴','按摩','枕邊談心','拍立得'],
+    quote:'「要是有忍術畫圖之術一瞬間完成就好了…啊、啊！客人您在啊。」',
+    bio:'黃金港忍者部隊退役的優閒忍者，沒事就會參與狩獵怪物的傭兵招募，最喜歡的事情是揮舞雙刃享受戰鬥，但在眠楓館卻以繪師的姿態現身……？',
+    services:['枕邊談心','駐店繪師(公版)','拍立得'],
     photo_primary:'assets/images/staff-yukinoji-01.webp',photo_secondary:'assets/images/staff-yukinoji-02.webp',
     sort_order:40,active:true
   },
@@ -75,7 +75,7 @@ const MF_DEFAULT_STAFF = [
 
 ];
 function mfEsc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function tagClass(x){return {'接待':'service-reception','餐食':'service-food','泡湯':'service-bath','泡湯洗浴':'service-bath','按摩':'service-massage','按摩服務':'service-massage','枕邊談心':'service-talk','耳語陪伴':'service-talk','小遊戲':'service-game','拍立得':'service-polaroid'}[x]||''}
+function tagClass(x){return {'接待':'service-reception','餐食':'service-food','泡湯':'service-bath','泡湯洗浴':'service-bath','按摩':'service-massage','按摩服務':'service-massage','枕邊談心':'service-talk','耳語陪伴':'service-talk','小遊戲':'service-game','拍立得':'service-polaroid','駐店繪師(公版)':'service-art'}[x]||''}
 function staffCard(x,i){
  const reverse=i%2===1?' host-card-reverse':'';
  const visual=x.photo_primary?`<div class="host-visual host-photo"><img class="host-photo-main" src="${mfEsc(x.photo_primary)}" alt="${mfEsc(x.name)}館員照">${x.photo_secondary?`<figure class="host-photo-secondary"><img src="${mfEsc(x.photo_secondary)}" alt="${mfEsc(x.name)}第二張館員照"></figure>`:''}<div class="host-nameplate"><small>${mfEsc(x.role||'館員')}</small><strong>${mfEsc(x.name)}</strong></div></div>`:`<div class="host-visual host-pink"><span class="host-monogram">${mfEsc((x.name||'楓').slice(0,1))}</span><div class="host-nameplate"><small>${mfEsc(x.role||'館員')}</small><strong>${mfEsc(x.name)}</strong></div></div>`;
