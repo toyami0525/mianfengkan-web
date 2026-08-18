@@ -16,8 +16,10 @@ const staffTabs=[['dashboard','我的總覽'],['operations','營運管理'],['po
 const frontdeskTabs=[['dashboard','總覽'],['operations','營運管理'],['polaroids','拍立得管理']];
 const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐'};
 const EXTENSION_INFO:Record<string,{price:number;duration:number}>={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15}};
-// 真實 Common Loon（潛鳥）叫聲，來源：Wikimedia Commons / PDSounds，Public Domain。
-const LOON_SOUND_URL='/assets/sounds/common-loon-harry-collins-trimmed-v256h.mp3';
+// 服務快結束／結束提示音：使用館主提供的「和風慶雲 - Release」前 6 秒。
+const SERVICE_END_SOUND_URL='/assets/sounds/wafu-keiun-release-first6-v261.mp3';
+// 餐點送餐提示音：只有被客人指定送餐的館員會聽到。
+const FOOD_ORDER_SOUND_URL='/assets/sounds/doorbell-order-v262.mp3';
 const statusText:Record<string,string>={pending:'待確認',acknowledged:'已確認・待開始',confirmed:'服務中',completed:'已完成',cancelled:'已取消',rejected:'已拒絕'};
 const dateRangeText:Record<DateRange,string>={today:'今天',yesterday:'昨天',week:'本週',month:'本月',all:'全部'};
 const DEFAULT_VENUE:VenueSettings={name:'眠楓館',address:'穹頂皓天 7區22號',discord:'',business_status:'open',business_hours:'依招募板公告為主'};
@@ -108,7 +110,8 @@ export default function AdminApp(){
     if(!currentAccount)return;
     setData(prev=>({...prev,orders:[row,...(prev.orders||[]).filter(x=>x.id!==row.id)]}));
     setNewOrder(row);
-    if(localStorage.getItem('mf-notification-sound')==='on')playNotificationSound();
+    const assignedToMe=Boolean(currentAccount.staff_id)&&String(row.delivery_preference_staff_id||'')===String(currentAccount.staff_id);
+    if(assignedToMe&&hasFoodItems(row)&&localStorage.getItem('mf-notification-sound')==='on')playFoodOrderSound();
    })
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders'},payload=>{
     const row=payload.new as Row;
@@ -201,17 +204,25 @@ export default function AdminApp(){
  }
  function playServiceEndingSound(phase:'ending'|'ended'='ending'){
   try{
-   // 使用真正的 Common Loon 錄音，不再用 Web Audio 三角波模擬，避免出現像笛子的合成音。
-   const audio=new Audio(LOON_SOUND_URL);
+   // 快結束與正式結束都使用同一段 6 秒提示音。
+   const audio=new Audio(SERVICE_END_SOUND_URL);
    audio.preload='auto';
-   audio.volume=phase==='ended'?1:0.82;
-   void audio.play().catch(error=>console.warn('無法播放潛鳥服務提醒音',error));
+   audio.volume=1;
+   void audio.play().catch(error=>console.warn('無法播放服務結束提示音',error));
   }catch(error){console.warn('無法播放服務結束提醒音',error)}
+ }
+ function playFoodOrderSound(){
+  try{
+   const audio=new Audio(FOOD_ORDER_SOUND_URL);
+   audio.preload='auto';
+   audio.volume=1;
+   void audio.play().catch(error=>console.warn('無法播放餐點送餐提示音',error));
+  }catch(error){console.warn('無法播放餐點送餐提示音',error)}
  }
  async function toggleNotificationSound(){
   const next=!notificationSound;
   setNotificationSound(next);localStorage.setItem('mf-notification-sound',next?'on':'off');
-  // 開啟通知音時不再播放新指名的合成叮咚，避免誤以為那是服務結束的潛鳥音。
+  // 開啟通知音時不另外播放測試音，避免與服務結束提示音混淆。
  }
 
  async function uploadPolaroid(id:string,file:File){
@@ -381,7 +392,7 @@ export default function AdminApp(){
  const payrollPerPerson=BASE_DAILY_PAY+payrollFoodShare;
  const payrollEmployeeCount=selectedPayrollPeople.filter(p=>!p.isOwner).length;
  const payrollCashOut=payrollPerPerson*payrollEmployeeCount;
- return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><div className="role-caption">{account.role==='owner'?'完整管理權限':account.role==='frontdesk'?'櫃台處理權限':'個人指名／全館點餐'}</div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions">{account.role==='owner'&&bookingTestMode&&<div className="identity-badge"><strong>⚠ 指名測試模式啟用中</strong></div>}<div className="identity-badge">目前身份：<strong>{account.staff_name}</strong>（{account.role==='owner'?'館主':account.role==='frontdesk'?'櫃台':'館員'}）</div><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 通知音：開啟':'🔕 開啟通知音'}</button>{account.role==='owner'&&<button className="ghost" onClick={()=>playServiceEndingSound('ended')}>🔊 測試潛鳥音</button>}<button className="ghost" onClick={()=>load()}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
+ return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><div className="role-caption">{account.role==='owner'?'完整管理權限':account.role==='frontdesk'?'櫃台處理權限':'個人指名／全館點餐'}</div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions">{account.role==='owner'&&bookingTestMode&&<div className="identity-badge"><strong>⚠ 指名測試模式啟用中</strong></div>}<div className="identity-badge">目前身份：<strong>{account.staff_name}</strong>（{account.role==='owner'?'館主':account.role==='frontdesk'?'櫃台':'館員'}）</div><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 通知音：開啟':'🔕 開啟通知音'}</button>{account.role==='owner'&&<button className="ghost" onClick={()=>playServiceEndingSound('ended')}>🔊 測試結束提示音</button>}<button className="ghost" onClick={()=>load()}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
  {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={busy==='availability'} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div></>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的今日指名':'今日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>今日待確認</span></article><article><b>{todayOrders.length}</b><span>今日點餐</span></article><article><b>{todayOrders.reduce((sum,x)=>sum+Number(x.total||0),0).toLocaleString('zh-TW')}</b><span>今日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・今日薪資</span><strong>{payrollPerPerson.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資 150,000 ＋ 每人餐點分紅 {payrollFoodShare.toLocaleString('zh-TW')} Gil</small></div><div><span>今天需發給其他館員</span><strong>{payrollCashOut.toLocaleString('zh-TW')} Gil</strong><small>目前計入 {payrollHeadcount} 位上班人員（含館主）</small></div><button onClick={()=>setTab('payroll')}>查看薪資明細</button></section>}<Panel title={account.role==='staff'?'我的今日近期指名':'今日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
  {tab==='staff'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><button disabled={busy===`staff:${r.id}`} onClick={()=>remove('staff',r.id)}>刪除</button>}/></Panel>}
  {tab==='schedule'&&<><Panel title="新增請假／不可指名時段"><form className="leave-form" onSubmit={addLeave}><label><span>館員</span><select value={leaveStaffId} onChange={e=>setLeaveStaffId(e.target.value)} required><option value="">請選擇館員</option>{activeStaff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label><span>日期</span><input type="date" value={leaveDate} onChange={e=>setLeaveDate(e.target.value)} required/></label><label><span>開始時間</span><select value={leaveStart} onChange={e=>setLeaveStart(e.target.value)}>{leaveTimeOptions.slice(0,-1).map(t=><option key={`start-${t}`} value={t}>{t}</option>)}</select></label><label><span>結束時間</span><select value={leaveEnd} onChange={e=>setLeaveEnd(e.target.value)}>{leaveTimeOptions.slice(1).map(t=><option key={`end-${t}`} value={t}>{t}</option>)}</select></label><label className="leave-reason"><span>原因／備註</span><input value={leaveReason} onChange={e=>setLeaveReason(e.target.value)} placeholder="例如：請假、休息、暫停指名"/></label><button className="leave-submit" type="submit" disabled={busy==='leave:add'}>{busy==='leave:add'?'儲存中…':'新增請假'}</button></form><p className="hint">新增後，該館員在這段時間內會自動顯示為不可指名。營業時段以 21:00～24:00 為主。</p></Panel><Panel title="已設定的不可指名時段"><Table rows={leaveRows} keys={['staff_name','starts_at','ends_at','reason']} actions={r=><button disabled={busy===`staff_unavailability:${r.id}`} onClick={()=>remove('staff_unavailability',r.id)}>刪除</button>}/></Panel></>}
@@ -409,6 +420,13 @@ function toTaipeiIso(date:string,time:string){if(!/^\d{4}-\d{2}-\d{2}$/.test(dat
 function buildLeaveTimes(){const values:string[]=[];for(let minutes=21*60;minutes<=24*60;minutes++){const h=Math.floor(minutes/60),m=minutes%60;values.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)}return values}
 function startOfLocalDay(d:Date){return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
 function inDateRange(value:any,range:DateRange){if(range==='all')return true;const d=new Date(value);if(Number.isNaN(d.getTime()))return false;const now=new Date();const today=startOfLocalDay(now);const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);if(range==='today')return d>=today&&d<tomorrow;const yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);if(range==='yesterday')return d>=yesterday&&d<today;if(range==='week'){const weekStart=new Date(today);const day=(weekStart.getDay()+6)%7;weekStart.setDate(weekStart.getDate()-day);return d>=weekStart&&d<tomorrow}if(range==='month'){const monthStart=new Date(now.getFullYear(),now.getMonth(),1);return d>=monthStart&&d<tomorrow}return true}
+function hasFoodItems(order:Row){
+ let items=order?.items;
+ try{if(typeof items==='string')items=JSON.parse(items)}catch{return false}
+ if(!Array.isArray(items))return false;
+ return items.some((item:any)=>{const name=String(item?.name||'').trim();return Boolean(name)&&!name.includes('拍立得')});
+}
+
 function filterRows(rows:Row[],range:DateRange,status:string,search:string){const q=search.trim().toLowerCase();return rows.filter(r=>{const time=r.created_at||r.starts_at;const dateOk=inDateRange(time,range);const statusOk=status==='all'||r.status===status;let searchOk=true;if(q){const items=Array.isArray(r.items)?r.items:[];const hay=[r.guest_name,r.contact,r.staff_name,r.service_name,r.note,r.delivery_preference_staff_name,r.delivery_staff_name,...items.map((x:any)=>x?.name)].filter(Boolean).join(' ').toLowerCase();searchOk=hay.includes(q)}return dateOk&&statusOk&&searchOk})}
 function formatDate(value:any){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}
 function foodOnlyOrderTotal(row:Row){let items=row?.items;try{if(typeof items==='string')items=JSON.parse(items)}catch{}if(Array.isArray(items)){const food=items.filter((item:any)=>!String(item?.name||'').includes('拍立得')).reduce((sum:number,item:any)=>sum+Math.max(0,Number(item?.price||0))*Math.max(1,Number(item?.qty||1)),0);if(food>0)return food}return Math.max(0,Number(row?.total||0))}
