@@ -15,12 +15,12 @@ export async function POST(req:NextRequest){
   try{
     const auth=await accountFrom(req);if(!auth)return NextResponse.json({error:'請重新登入館員後台'},{status:401});
     const form=await req.formData();const id=String(form.get('id')||'');const file=form.get('file');
-    if(!id||!(file instanceof File))return NextResponse.json({error:'請選擇拍立得圖片'},{status:400});
+    if(!id||!(file instanceof File))return NextResponse.json({error:'請選擇要上傳的成品圖片'},{status:400});
     if(!['image/jpeg','image/png','image/webp'].includes(file.type))return NextResponse.json({error:'僅支援 JPG、PNG、WEBP'},{status:400});
     if(file.size>15*1024*1024)return NextResponse.json({error:'圖片不可超過 15MB'},{status:400});
     const {db,account}=auth;
-    const {data:pickup,error}=await db.from('polaroid_pickups').select('id,staff_id,pickup_code,image_path').eq('id',id).maybeSingle();
-    if(error)throw error;if(!pickup)return NextResponse.json({error:'找不到拍立得訂單'},{status:404});
+    const {data:pickup,error}=await db.from('polaroid_pickups').select('id,staff_id,pickup_code,image_path,item_type').eq('id',id).maybeSingle();
+    if(error)throw error;if(!pickup)return NextResponse.json({error:'找不到成品訂單'},{status:404});
     if(account.role!=='owner'&&account.staff_id!==pickup.staff_id)return NextResponse.json({error:'沒有權限上傳此拍立得'},{status:403});
     const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
     const path=`${pickup.staff_id}/${pickup.pickup_code}-${Date.now()}.${ext}`;

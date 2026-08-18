@@ -402,3 +402,6 @@ body.modal-open{overflow:hidden}
 /* v2.5.4 delivery preference */
 .dining-delivery-preference{margin-top:8px;padding:16px;border:1px solid rgba(139,76,63,.18);border-radius:16px;background:rgba(255,255,255,.46)}
 .summary-group.delivery-line{background:rgba(139,76,63,.055);border-radius:12px;padding:12px}
+
+/* v2.7.0 Q版繪圖 */
+.service-art{background:#ede3f2!important;color:#5d3d69!important;border-color:#d3bfdc!important}.yukinoji-chibi-service{border-color:rgba(111,73,124,.28)!important;background:rgba(244,237,248,.72)!important}.pickup-code-item{display:grid;gap:4px;padding:8px 0}.pickup-code-item+ .pickup-code-item{border-top:1px dashed #d8c0b3}.pickup-code-item small{font-size:12px;letter-spacing:.04em;color:#7b6259}.pickup-code-item b{font-size:clamp(22px,5vw,34px);letter-spacing:.12em;color:#6e2926}

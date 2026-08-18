@@ -65,3 +65,6 @@
 .table-wrap.has-actions .actions-head{z-index:4;background:#fffaf6;min-width:118px}
 .table-wrap.has-actions td.actions{min-width:118px}
 .status-acknowledged{background:#eee6f5;color:#62447a}
+
+/* v2.7.0 Yukinoji Q-art switch */
+.chibi-availability{margin-top:12px;border-color:#d8c7df;background:#faf6fc}.chibi-availability>div{display:grid;gap:4px}.chibi-availability small{font-size:12px;color:#7b687f}
