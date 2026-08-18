@@ -10,6 +10,7 @@ const SERVICE_INFO: Record<string, { price: number; duration: number }> = {
   '泡湯洗浴': { price: 150000, duration: 15 },
   '按摩服務': { price: 100000, duration: 15 },
   '耳語陪伴': { price: 100000, duration: 15 },
+  'Q版繪圖(公版)': { price: 350000, duration: 15 },
   '眠楓套席': { price: 300000, duration: 45 },
 };
 const FOOD_PRICES: Record<string, number> = {
@@ -40,6 +41,9 @@ export async function POST(request: Request) {
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
     if (!guestName || !staffId || !requestedServices.length) return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
 
+    if(requestedServices.includes('眠楓套席')&&requestedServices.includes('Q版繪圖(公版)')) {
+      return NextResponse.json({error:'Q版繪圖(公版)不可與眠楓套席同時選擇'},{status:400});
+    }
     const services: string[] = requestedServices.includes('眠楓套席')
       ? ['眠楓套席']
       : [...new Set<string>(requestedServices)].filter((x) => x !== '眠楓套席');
@@ -69,14 +73,18 @@ export async function POST(request: Request) {
     const now = new Date();
     const taipeiNow = taipeiParts(now);
     const adminDb = adminSupabase();
-    const {data:testSetting,error:testSettingError}=await adminDb.from('site_settings').select('value').eq('key','booking_test_mode').maybeSingle();
-    if(testSettingError) throw testSettingError;
-    const testValue=(testSetting as any)?.value;
+    const {data:settings,error:settingsError}=await adminDb.from('site_settings').select('key,value').in('key',['booking_test_mode','yukinoji_chibi_accepting']);
+    if(settingsError) throw settingsError;
+    const settingMap=Object.fromEntries((settings||[]).map((row:any)=>[row.key,row.value]));
+    const testValue=settingMap.booking_test_mode;
     const bookingTestMode=testValue===true||testValue?.enabled===true;
+    const chibiValue=settingMap.yukinoji_chibi_accepting;
+    const yukinojiChibiAccepting=chibiValue===undefined?true:(chibiValue===true||chibiValue?.enabled===true);
     if (!bookingTestMode && taipeiNow.hour < 21) return NextResponse.json({ error: '目前非指名時間，每日 21:00 起開放即時指名' }, { status: 400 });
 
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
+    const staffName = staff.name;
     // 只要本營業時段仍有未完成的指名，就暫停該館員的新指名；服務完成後才重新開放。
     const sessionStart = bookingTestMode
       ? new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, -8, 0, 0, 0)) // 台北當日 00:00
@@ -101,6 +109,13 @@ export async function POST(request: Request) {
     if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
       return NextResponse.json({ error: '神噯雪目前僅提供耳語陪伴服務' }, { status: 400 });
     }
+    if (staff.slug === 'yukinoji-hakari') {
+      const allowed=new Set(['耳語陪伴','Q版繪圖(公版)']);
+      if(services.some((name)=>!allowed.has(name))) return NextResponse.json({error:'雪之寺羽狩目前僅提供耳語陪伴與 Q版繪圖(公版)'},{status:400});
+    }
+    const wantsChibi=services.includes('Q版繪圖(公版)');
+    if(wantsChibi&&staff.slug!=='yukinoji-hakari') return NextResponse.json({error:'Q版繪圖(公版)僅限指名雪之寺羽狩'},{status:400});
+    if(wantsChibi&&!yukinojiChibiAccepting) return NextResponse.json({error:'Q版繪圖(公版)目前暫停接單，請稍後再查看'},{status:409});
     if (wantsPolaroid && staff.slug !== 'musufiru') return NextResponse.json({ error: '慕斯菲露紀念拍立得僅限指名慕斯菲露' }, { status: 400 });
     if (wantsPolaroid && servicePrice < 150000) return NextResponse.json({ error: '慕斯菲露紀念拍立得需單筆服務費滿 150,000 Gil' }, { status: 400 });
     if (wantsYukinojiPolaroid && staff.slug !== 'yukinoji-hakari') return NextResponse.json({ error: '雪之寺羽狩紀念拍立得僅限指名雪之寺羽狩' }, { status: 400 });
@@ -120,20 +135,22 @@ export async function POST(request: Request) {
       const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, staff_id:staffId, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
       if (orderError) throw orderError;
     }
-    let pickupCode:string|undefined;
-    if (wantsPolaroid || wantsYukinojiPolaroid) {
+    const pickupItems:{code:string;type:string;label:string}[]=[];
+    async function createPickup(itemType:'polaroid'|'chibi_public',label:string){
       const admin=adminSupabase();
       for(let attempt=0;attempt<8;attempt++){
         const code=makePickupCode();
         const {error:pickupError}=await admin.from('polaroid_pickups').insert({
-          reservation_id:reservationId,staff_id:staffId,staff_name:staff.name,guest_name:guestName,pickup_code:code,status:'processing'
+          reservation_id:reservationId,staff_id:staffId,staff_name:staffName,guest_name:guestName,pickup_code:code,status:'processing',item_type:itemType
         });
-        if(!pickupError){pickupCode=code;break}
+        if(!pickupError){pickupItems.push({code,type:itemType,label});return}
         if(pickupError.code!=='23505') throw pickupError;
       }
-      if(!pickupCode) throw new Error('無法產生拍立得取件碼，請稍後再試');
+      throw new Error('無法產生成品取件碼，請稍後再試');
     }
-    return NextResponse.json({ ok:true, reservation_id:reservationId, pickup_code:pickupCode });
+    if(wantsChibi) await createPickup('chibi_public','Q版繪圖(公版)');
+    if(wantsPolaroid||wantsYukinojiPolaroid) await createPickup('polaroid','紀念拍立得');
+    return NextResponse.json({ ok:true, reservation_id:reservationId, pickup_code:pickupItems[0]?.code, pickup_codes:pickupItems.map(x=>x.code), pickup_items:pickupItems });
   } catch (error) {
     const message = error instanceof Error ? error.message : '送出指名服務失敗';
     return NextResponse.json({ error: message }, { status: 500 });
