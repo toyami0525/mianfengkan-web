@@ -112,9 +112,12 @@ export default function AdminApp(){
     const row=payload.new as Row;
     if(!currentAccount)return;
     setData(prev=>({...prev,orders:[row,...(prev.orders||[]).filter(x=>x.id!==row.id)]}));
-    setNewOrder(row);
-    const assignedToMe=Boolean(currentAccount.staff_id)&&String(row.delivery_preference_staff_id||'')===String(currentAccount.staff_id);
-    if(assignedToMe&&hasFoodItems(row)&&localStorage.getItem('mf-notification-sound')==='on')playFoodOrderSound();
+    // 拍立得加購屬於指名／服務營收，不當成新餐點訂單提示。
+    if(hasFoodItems(row)){
+     setNewOrder(foodDisplayOrder(row));
+     const assignedToMe=Boolean(currentAccount.staff_id)&&String(row.delivery_preference_staff_id||'')===String(currentAccount.staff_id);
+     if(assignedToMe&&localStorage.getItem('mf-notification-sound')==='on')playFoodOrderSound();
+    }
    })
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders'},payload=>{
     const row=payload.new as Row;
@@ -410,12 +413,26 @@ export default function AdminApp(){
  function updateRule(index:number,field:keyof RuleItem,value:string){setRules(prev=>prev.map((r,i)=>i===index?{...r,[field]:value}:r))}
  function moveRule(index:number,delta:number){setRules(prev=>{const next=[...prev],to=index+delta;if(to<0||to>=next.length)return prev;[next[index],next[to]]=[next[to],next[index]];return next})}
  if(!ready||!account)return <main className="admin-loading">確認登入狀態…</main>;
- const reservations=data.reservations||[],orders=data.orders||[],staff=data.staff||[],polaroids=data.polaroid_pickups||[];
+ const rawReservations=data.reservations||[],rawOrders=data.orders||[],staff=data.staff||[],polaroids=data.polaroid_pickups||[];
  const activeStaff=staff.filter(r=>r.active!==false);
  const leaveRows=(data.staff_unavailability||[]).map(r=>({...r,staff_name:staff.find(s=>s.id===r.staff_id)?.name||'未知館員'}));
  const leaveTimeOptions=buildLeaveTimes();
+ // 歷史版本曾把「指名加購拍立得」另外寫進 orders。後台改為會計分類：
+ // 拍立得金額回到對應指名，餐點列表與餐點金額只保留真正餐食。
+ const reservationAddonById=new Map<string,number>();
+ for(const order of rawOrders){
+  if(isCancelledRevenueRow(order))continue;
+  const reservationId=linkedReservationId(order),addon=polaroidAddonOrderTotal(order);
+  if(reservationId&&addon>0)reservationAddonById.set(reservationId,(reservationAddonById.get(reservationId)||0)+addon);
+ }
+ const reservations=rawReservations.map(r=>{const addon=reservationAddonById.get(String(r.id))||0;return addon?{...r,price:Math.max(0,Number(r.price||0))+addon}:r});
+ const orders=rawOrders.filter(hasFoodItems).map(foodDisplayOrder);
+ const todayRawOrders=filterRows(rawOrders,'today','all','');
  const todayReservations=filterRows(reservations,'today','all','');
  const todayOrders=filterRows(orders,'today','all','');
+ const todayFoodRevenue=todayRawOrders.filter(r=>!isCancelledRevenueRow(r)).reduce((sum,r)=>sum+foodOnlyOrderTotal(r),0);
+ const todayUnlinkedPolaroidRevenue=todayRawOrders.filter(r=>!isCancelledRevenueRow(r)&&!linkedReservationId(r)&&(account.role!=='staff'||String(r.staff_id||'')===String(account.staff_id||''))).reduce((sum,r)=>sum+polaroidAddonOrderTotal(r),0);
+ const todayReservationRevenue=todayReservations.filter(r=>!isCancelledRevenueRow(r)).reduce((sum,r)=>sum+Math.max(0,Number(r.price||0)),0)+todayUnlinkedPolaroidRevenue;
  const filteredReservations=filterRows(reservations,reservationRange,reservationStatus,reservationSearch);
  const filteredOrders=filterRows(orders,orderRange,orderStatus,orderSearch);
  const reservationPages=Math.max(1,Math.ceil(filteredReservations.length/PAGE_SIZE));
@@ -427,7 +444,7 @@ export default function AdminApp(){
  const payrollPeople=[...activeStaff.map(r=>({id:String(r.id),name:String(r.name||'未命名館員'),isOwner:String(r.id)===ownerPayrollId})),...(ownerStaffRow?[]:[{id:ownerPayrollId,name:account.staff_name||'館主',isOwner:true}])];
  const selectedPayrollPeople=payrollPeople.filter(p=>payrollStaffIds.includes(p.id)||p.id===ownerPayrollId);
  const payrollHeadcount=Math.max(1,selectedPayrollPeople.length);
- const payrollOrders=todayOrders.filter(r=>!['cancelled','rejected','已取消','已拒絕'].includes(String(r.status)));
+ const payrollOrders=todayRawOrders.filter(r=>!isCancelledRevenueRow(r));
  const payrollFoodRevenue=payrollOrders.reduce((sum,r)=>sum+foodOnlyOrderTotal(r),0);
  const payrollFoodShare=Math.floor(payrollFoodRevenue/payrollHeadcount);
  const payrollRemainder=payrollFoodRevenue-payrollFoodShare*payrollHeadcount;
@@ -435,7 +452,7 @@ export default function AdminApp(){
  const payrollEmployeeCount=selectedPayrollPeople.filter(p=>!p.isOwner).length;
  const payrollCashOut=payrollPerPerson*payrollEmployeeCount;
  return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><div className="role-caption">{account.role==='owner'?'完整管理權限':account.role==='frontdesk'?'櫃台處理權限':'個人指名／全館點餐'}</div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions">{account.role==='owner'&&bookingTestMode&&<div className="identity-badge"><strong>⚠ 指名測試模式啟用中</strong></div>}<div className="identity-badge">目前身份：<strong>{account.staff_name}</strong>（{account.role==='owner'?'館主':account.role==='frontdesk'?'櫃台':'館員'}）</div><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 通知音：開啟':'🔕 開啟通知音'}</button>{account.role==='owner'&&<button className="ghost" onClick={()=>playServiceEndingSound('ended')}>🔊 測試結束提示音</button>}<button className="ghost" onClick={()=>load()}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
- {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={busy==='availability'} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div>{account.staff_slug==='yukinoji-hakari'&&<div className="staff-availability chibi-availability"><div><strong>Q版繪圖(公版)</strong><span>{yukinojiChibiAccepting?'目前接單中':'目前暫停接單'}</span><small>切換後會即時反映到客人的指名介面。</small></div><button disabled={busy==='yukinoji-chibi'} className={yukinojiChibiAccepting?'offline':'online'} onClick={toggleYukinojiChibi}>{yukinojiChibiAccepting?'暫停 Q版接單':'恢復 Q版接單'}</button></div>}</>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的本營業日指名':'本營業日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>本營業日待確認</span></article><article><b>{todayOrders.length}</b><span>本營業日點餐</span></article><article><b>{todayOrders.reduce((sum,x)=>sum+Number(x.total||0),0).toLocaleString('zh-TW')}</b><span>本營業日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・本營業日薪資</span><strong>{payrollPerPerson.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資 150,000 ＋ 每人餐點分紅 {payrollFoodShare.toLocaleString('zh-TW')} Gil</small></div><div><span>本營業日需發給其他館員</span><strong>{payrollCashOut.toLocaleString('zh-TW')} Gil</strong><small>目前計入 {payrollHeadcount} 位上班人員（含館主）</small></div><button onClick={()=>setTab('payroll')}>查看薪資明細</button></section>}<Panel title={account.role==='staff'?'我的本營業日近期指名':'本營業日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
+ {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={busy==='availability'} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div>{account.staff_slug==='yukinoji-hakari'&&<div className="staff-availability chibi-availability"><div><strong>Q版繪圖(公版)</strong><span>{yukinojiChibiAccepting?'目前接單中':'目前暫停接單'}</span><small>切換後會即時反映到客人的指名介面。</small></div><button disabled={busy==='yukinoji-chibi'} className={yukinojiChibiAccepting?'offline':'online'} onClick={toggleYukinojiChibi}>{yukinojiChibiAccepting?'暫停 Q版接單':'恢復 Q版接單'}</button></div>}</>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的本營業日指名':'本營業日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>本營業日待確認</span></article><article><b>{todayReservationRevenue.toLocaleString('zh-TW')}</b><span>本營業日指名金額（含拍立得・Gil）</span></article><article><b>{todayOrders.length}</b><span>本營業日點餐</span></article><article><b>{todayFoodRevenue.toLocaleString('zh-TW')}</b><span>本營業日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・本營業日薪資</span><strong>{payrollPerPerson.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資 150,000 ＋ 每人餐點分紅 {payrollFoodShare.toLocaleString('zh-TW')} Gil</small></div><div><span>本營業日需發給其他館員</span><strong>{payrollCashOut.toLocaleString('zh-TW')} Gil</strong><small>目前計入 {payrollHeadcount} 位上班人員（含館主）</small></div><button onClick={()=>setTab('payroll')}>查看薪資明細</button></section>}<Panel title={account.role==='staff'?'我的本營業日近期指名':'本營業日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
  {tab==='staff'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><button disabled={busy===`staff:${r.id}`} onClick={()=>remove('staff',r.id)}>刪除</button>}/></Panel>}
  {tab==='schedule'&&<><Panel title="新增請假／不可指名時段"><form className="leave-form" onSubmit={addLeave}><label><span>館員</span><select value={leaveStaffId} onChange={e=>setLeaveStaffId(e.target.value)} required><option value="">請選擇館員</option>{activeStaff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label><span>日期</span><input type="date" value={leaveDate} onChange={e=>setLeaveDate(e.target.value)} required/></label><label><span>開始時間</span><select value={leaveStart} onChange={e=>setLeaveStart(e.target.value)}>{leaveTimeOptions.slice(0,-1).map(t=><option key={`start-${t}`} value={t}>{t}</option>)}</select></label><label><span>結束時間</span><select value={leaveEnd} onChange={e=>setLeaveEnd(e.target.value)}>{leaveTimeOptions.slice(1).map(t=><option key={`end-${t}`} value={t}>{t}</option>)}</select></label><label className="leave-reason"><span>原因／備註</span><input value={leaveReason} onChange={e=>setLeaveReason(e.target.value)} placeholder="例如：請假、休息、暫停指名"/></label><button className="leave-submit" type="submit" disabled={busy==='leave:add'}>{busy==='leave:add'?'儲存中…':'新增請假'}</button></form><p className="hint">新增後，該館員在這段時間內會自動顯示為不可指名。營業時段以 21:00～24:00 為主。</p></Panel><Panel title="已設定的不可指名時段"><Table rows={leaveRows} keys={['staff_name','starts_at','ends_at','reason']} actions={r=><button disabled={busy===`staff_unavailability:${r.id}`} onClick={()=>remove('staff_unavailability',r.id)}>刪除</button>}/></Panel></>}
  {tab==='operations'&&<div className="operations-grid">
@@ -475,7 +492,12 @@ function isChibiReservation(row:Row){return String(row?.service_name||'').includ
 function pickupTypeText(value:any){const type=String(value);if(type==='chibi_public')return 'Q版繪圖(公版)';if(type==='lina_signed_polaroid')return '簽繪拍立得';return '紀念拍立得'}
 function filterRows(rows:Row[],range:DateRange,status:string,search:string){const q=search.trim().toLowerCase();return rows.filter(r=>{const time=r.created_at||r.starts_at;const dateOk=inDateRange(time,range);const statusOk=status==='all'||r.status===status;let searchOk=true;if(q){const items=Array.isArray(r.items)?r.items:[];const hay=[r.guest_name,r.contact,r.staff_name,r.service_name,r.note,r.delivery_preference_staff_name,r.delivery_staff_name,...items.map((x:any)=>x?.name)].filter(Boolean).join(' ').toLowerCase();searchOk=hay.includes(q)}return dateOk&&statusOk&&searchOk})}
 function formatDate(value:any){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}
-function foodOnlyOrderTotal(row:Row){let items=row?.items;try{if(typeof items==='string')items=JSON.parse(items)}catch{}if(Array.isArray(items)){const food=items.filter((item:any)=>!String(item?.name||'').includes('拍立得')).reduce((sum:number,item:any)=>sum+Math.max(0,Number(item?.price||0))*Math.max(1,Number(item?.qty||1)),0);if(food>0)return food}return Math.max(0,Number(row?.total||0))}
+function parsedOrderItems(row:Row){let items=row?.items;try{if(typeof items==='string')items=JSON.parse(items)}catch{return null}return Array.isArray(items)?items:null}
+function foodOnlyOrderTotal(row:Row){const items=parsedOrderItems(row);if(items)return items.filter((item:any)=>!String(item?.name||'').includes('拍立得')).reduce((sum:number,item:any)=>sum+Math.max(0,Number(item?.price||0))*Math.max(1,Number(item?.qty||1)),0);return Math.max(0,Number(row?.total||0))}
+function polaroidAddonOrderTotal(row:Row){const items=parsedOrderItems(row);if(!items)return 0;return items.filter((item:any)=>String(item?.name||'').includes('拍立得')).reduce((sum:number,item:any)=>sum+Math.max(0,Number(item?.price||0))*Math.max(1,Number(item?.qty||1)),0)}
+function linkedReservationId(row:Row){const match=String(row?.note||'').match(/關聯預約：([^\s\n]+)/);return match?.[1]||''}
+function isCancelledRevenueRow(row:Row){return ['cancelled','rejected','已取消','已拒絕'].includes(String(row?.status||''))}
+function foodDisplayOrder(row:Row){const items=parsedOrderItems(row);if(!items)return {...row,total:foodOnlyOrderTotal(row)};const foodItems=items.filter((item:any)=>!String(item?.name||'').includes('拍立得'));return {...row,items:foodItems,total:foodOnlyOrderTotal(row)}}
 function formatItems(value:any){let items=value;try{if(typeof items==='string')items=JSON.parse(items)}catch{}if(!Array.isArray(items))return String(value??'—');return <div className="order-items">{items.map((item:any,i:number)=><div key={i}><strong>{item.name||'未命名品項'}</strong><span> × {item.qty??1}</span>{item.price!=null&&<small>（{Number(item.price).toLocaleString('zh-TW')} Gil）</small>}</div>)}</div>}
 function formatCell(key:string,value:any){
  if(key==='items')return formatItems(value);
