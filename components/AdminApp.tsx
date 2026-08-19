@@ -469,7 +469,7 @@ function hasFoodItems(order:Row){
 }
 
 function isChibiReservation(row:Row){return String(row?.service_name||'').includes('Q版繪圖(公版)')}
-function pickupTypeText(value:any){return String(value)==='chibi_public'?'Q版繪圖(公版)':'紀念拍立得'}
+function pickupTypeText(value:any){const type=String(value);if(type==='chibi_public')return 'Q版繪圖(公版)';if(type==='lina_signed_polaroid')return '簽繪拍立得';return '紀念拍立得'}
 function filterRows(rows:Row[],range:DateRange,status:string,search:string){const q=search.trim().toLowerCase();return rows.filter(r=>{const time=r.created_at||r.starts_at;const dateOk=inDateRange(time,range);const statusOk=status==='all'||r.status===status;let searchOk=true;if(q){const items=Array.isArray(r.items)?r.items:[];const hay=[r.guest_name,r.contact,r.staff_name,r.service_name,r.note,r.delivery_preference_staff_name,r.delivery_staff_name,...items.map((x:any)=>x?.name)].filter(Boolean).join(' ').toLowerCase();searchOk=hay.includes(q)}return dateOk&&statusOk&&searchOk})}
 function formatDate(value:any){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}
 function foodOnlyOrderTotal(row:Row){let items=row?.items;try{if(typeof items==='string')items=JSON.parse(items)}catch{}if(Array.isArray(items)){const food=items.filter((item:any)=>!String(item?.name||'').includes('拍立得')).reduce((sum:number,item:any)=>sum+Math.max(0,Number(item?.price||0))*Math.max(1,Number(item?.qty||1)),0);if(food>0)return food}return Math.max(0,Number(row?.total||0))}

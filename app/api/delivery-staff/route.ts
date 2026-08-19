@@ -7,6 +7,7 @@ export async function GET() {
     const { data, error } = await db.from('staff')
       .select('id,slug,name,role,sort_order')
       .eq('active', true)
+      .neq('slug', 'lina')
       .order('sort_order', { ascending: true });
     if (error) throw error;
     return NextResponse.json({ staff: data || [] }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
