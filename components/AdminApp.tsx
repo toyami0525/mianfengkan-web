@@ -294,7 +294,20 @@ export default function AdminApp(){
   const isReservation=table==='reservations';
   setMsg(isReservation&&nextStatus==='acknowledged'?'確認指名中…':isReservation&&nextStatus==='confirmed'?'開始服務並重新計時中…':'更新中…');
   try{
-   if(isReservation&&(nextStatus==='acknowledged'||nextStatus==='confirmed')){
+   if(isReservation&&nextStatus==='cancelled'){
+    const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效，請重新登入');
+    const response=await fetch('/api/staff/reservations/cancel',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({reservation_id:id})});
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||'取消指名失敗');
+    setData(prev=>({
+     ...prev,
+     reservations:result.reservation?(prev.reservations||[]).map(x=>x.id===result.reservation.id?result.reservation:x):(prev.reservations||[]),
+     polaroid_pickups:(prev.polaroid_pickups||[]).filter(x=>String(x.reservation_id||'')!==String(id))
+    }));
+    notifyPublicBookingChange('booking_changed');
+    setMsg(result.removed_pickups>0?`指名已取消，成品管理中的 ${result.removed_pickups} 筆等待上傳紀錄已刪除。`:'指名已取消。');
+    await load();
+   }else if(isReservation&&(nextStatus==='acknowledged'||nextStatus==='confirmed')){
     const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效，請重新登入');
     const endpoint=nextStatus==='acknowledged'?'/api/staff/reservations/acknowledge':'/api/staff/reservations/confirm';
     const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({reservation_id:id})});
