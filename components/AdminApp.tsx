@@ -17,10 +17,11 @@ const staffTabs=[['dashboard','我的總覽'],['operations','營運管理'],['po
 const frontdeskTabs=[['dashboard','總覽'],['operations','營運管理'],['polaroids','成品管理']];
 const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐',item_type:'成品類型'};
 const EXTENSION_INFO:Record<string,{price:number;duration:number}>={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15}};
-// 服務快結束／結束提示音：使用館主提供的「和風慶雲 - Release」前 6.7 秒。
-const SERVICE_END_SOUND_URL='/assets/sounds/wafu-keiun-release-first6p7-v264.mp3';
-// 餐點送餐提示音：只有被客人指定送餐的館員會聽到。
-const FOOD_ORDER_SOUND_URL='/assets/sounds/doorbell-order-v262.mp3';
+// 館主提供的四組正式語音提示音。
+const RESERVATION_SOUND_URL='/assets/sounds/reservation-new-v279.mp3';
+const FOOD_ORDER_SOUND_URL='/assets/sounds/food-order-v279.mp3';
+const SERVICE_ENDING_SOUND_URL='/assets/sounds/service-ending-v279.mp3';
+const SERVICE_ENDED_SOUND_URL='/assets/sounds/service-ended-v279.mp3';
 const MANUAL_PRODUCT_OPTIONS=[
  {staff_slug:'musufiru',staff_name:'慕斯菲露',item_type:'polaroid',label:'紀念拍立得'},
  {staff_slug:'yukinoji-hakari',staff_name:'雪之寺羽狩',item_type:'polaroid',label:'紀念拍立得'},
@@ -134,8 +135,8 @@ export default function AdminApp(){
    .subscribe();
   return()=>{mounted=false;db.removeChannel(channel);db.removeChannel(publicBookingChannel);if(publicBookingChannelRef.current===publicBookingChannel)publicBookingChannelRef.current=null};
  },[]);
- // 瀏覽器可能在重新整理／重新登入後暫停 Web Audio。
- // 只要通知音已開啟，館員下一次點擊或按鍵時就主動恢復指名音效的 AudioContext。
+ // 瀏覽器可能在重新整理／重新登入後限制自動播放。
+ // 通知音已開啟時，保留既有使用者互動解鎖機制。
  useEffect(()=>{
   const unlockReservationAudio=()=>{
    if(localStorage.getItem('mf-notification-sound')!=='on')return;
@@ -217,27 +218,19 @@ export default function AdminApp(){
  },[ready,account?.role,account?.staff_id,bookingTestMode,data.reservations]);
  async function playNotificationSound(){
   try{
-   const Ctx=window.AudioContext||(window as any).webkitAudioContext;
-   const ctx=audioContextRef.current||new Ctx();audioContextRef.current=ctx;
-   if(ctx.state==='suspended')await ctx.resume();
-   const now=ctx.currentTime+0.02;
-   // 新服務指名專用：大聲「叮咚、叮咚」兩次。
-   [[0,988],[0.20,659],[0.72,988],[0.92,659]].forEach(([delay,freq])=>{
-    const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-    oscillator.type='sine';oscillator.frequency.setValueAtTime(freq,now+delay);
-    gain.gain.setValueAtTime(0.0001,now+delay);gain.gain.exponentialRampToValueAtTime(0.48,now+delay+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.30);
-    oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now+delay);oscillator.stop(now+delay+0.32);
-   });
+   const audio=new Audio(RESERVATION_SOUND_URL);
+   audio.preload='auto';
+   audio.volume=1;
+   await audio.play();
   }catch(error){console.warn('無法播放指名提示音',error)}
  }
  function playServiceEndingSound(phase:'ending'|'ended'='ending'){
   try{
-   // 快結束與正式結束都使用同一段 6.7 秒提示音。
-   const audio=new Audio(SERVICE_END_SOUND_URL);
+   const audio=new Audio(phase==='ended'?SERVICE_ENDED_SOUND_URL:SERVICE_ENDING_SOUND_URL);
    audio.preload='auto';
    audio.volume=1;
-   void audio.play().catch(error=>console.warn('無法播放服務結束提示音',error));
-  }catch(error){console.warn('無法播放服務結束提醒音',error)}
+   void audio.play().catch(error=>console.warn(phase==='ended'?'無法播放服務結束提示音':'無法播放服務快結束提示音',error));
+  }catch(error){console.warn('無法播放服務時間提醒音',error)}
  }
  function playFoodOrderSound(){
   try{
@@ -250,7 +243,7 @@ export default function AdminApp(){
  async function toggleNotificationSound(){
   const next=!notificationSound;
   setNotificationSound(next);localStorage.setItem('mf-notification-sound',next?'on':'off');
-  // 從使用者點擊事件中直接播放一次新指名音，順便解鎖瀏覽器 Web Audio。
+  // 從使用者點擊事件中直接播放一次新指名語音，順便取得瀏覽器媒體播放權限。
   if(next)await playNotificationSound();
  }
 
