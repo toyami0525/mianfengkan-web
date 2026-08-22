@@ -526,8 +526,22 @@ function linkedReservationId(row:Row){const match=String(row?.note||'').match(/�
 function isCancelledRevenueRow(row:Row){return ['cancelled','rejected','已取消','已拒絕'].includes(String(row?.status||''))}
 function foodDisplayOrder(row:Row){const items=parsedOrderItems(row);if(!items)return {...row,total:foodOnlyOrderTotal(row)};const foodItems=items.filter((item:any)=>!String(item?.name||'').includes('拍立得'));return {...row,items:foodItems,total:foodOnlyOrderTotal(row)}}
 function formatItems(value:any){let items=value;try{if(typeof items==='string')items=JSON.parse(items)}catch{}if(!Array.isArray(items))return String(value??'—');return <div className="order-items">{items.map((item:any,i:number)=><div key={i}><strong>{item.name||'未命名品項'}</strong><span> × {item.qty??1}</span>{item.price!=null&&<small>（{Number(item.price).toLocaleString('zh-TW')} Gil）</small>}</div>)}</div>}
+function formatSpecialServiceText(value:any){
+ const text=String(value??'—');
+ const pattern=/(慕斯菲露紀念拍立得|雪之寺羽狩紀念拍立得|拍立得\(無簽繪\)|簽繪拍立得|紀念拍立得|Q版繪圖\(公版\)|Q版繪圖|拍立得)/g;
+ const parts=text.split(pattern);
+ return <>{parts.map((part,i)=>{
+  if(!part)return null;
+  const isQ=/Q版繪圖/.test(part);
+  const isPolaroid=/拍立得/.test(part);
+  if(isQ)return <span key={i} className="special-service-mark special-service-qart">{part}</span>;
+  if(isPolaroid)return <span key={i} className="special-service-mark special-service-polaroid">{part}</span>;
+  return <span key={i}>{part}</span>;
+ })}</>;
+}
 function formatCell(key:string,value:any){
  if(key==='items')return formatItems(value);
+ if(key==='note'||key==='service_name')return formatSpecialServiceText(value);
  if(key==='delivery_preference_staff_name')return <span className={`delivery-pill ${value?'preferred':'neutral'}`}>{value||'不指定／館內安排'}</span>;
  if(key==='delivery_staff_name')return <span className={`delivery-pill ${value?'claimed':'waiting'}`}>{value||'尚未接單'}</span>;
  if(key==='total'||key==='price')return `${Number(value||0).toLocaleString('zh-TW')} Gil`;
