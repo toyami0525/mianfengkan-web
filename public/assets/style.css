@@ -778,3 +778,50 @@ body:not(.homepage) .venue-copy p{
 @media(max-width:820px){
   body:not(.homepage) .venue-copy{padding:24px 20px !important}
 }
+
+
+/* v2.7.16c — 公開頁標題提亮＋館員介紹標題深色玻璃底 */
+body:not(.homepage) .venue-intro .story h2{
+  color:#ffffff !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.38);
+}
+
+/* 餐食價目 */
+body:not(.homepage) .page-title h1,
+body:not(.homepage) .page-title p,
+body:not(.homepage) .menu-package-note{
+  color:#ffffff !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.34);
+}
+body:not(.homepage) .page-title .eyebrow{
+  color:#e1bf81 !important;
+}
+
+/* 來館須知標題區 */
+body:not(.homepage) .rules-title h1,
+body:not(.homepage) .rules-title p{
+  color:#ffffff !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.34);
+}
+
+/* 館員介紹標題區：半透明深色底 */
+body:not(.homepage) .staff-title{
+  padding:34px 28px !important;
+  border:1px solid rgba(215,183,121,.14) !important;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(8,12,24,.74),rgba(30,16,21,.64)) !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.18);
+  backdrop-filter:blur(10px);
+}
+body:not(.homepage) .staff-title h1,
+body:not(.homepage) .staff-title p{
+  color:#ffffff !important;
+  text-shadow:0 3px 14px rgba(0,0,0,.34);
+}
+body:not(.homepage) .staff-title .eyebrow{
+  color:#e1bf81 !important;
+}
+
+@media(max-width:700px){
+  body:not(.homepage) .staff-title{padding:26px 20px !important}
+}
