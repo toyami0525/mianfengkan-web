@@ -650,3 +650,105 @@ body.homepage{
     background-attachment:scroll !important;
   }
 }
+
+
+/* v2.7.16a — 公開頁面紅背景可讀性修正 */
+body:not(.homepage) .site-header{
+  background:linear-gradient(180deg,rgba(11,12,22,.88),rgba(18,11,19,.78)) !important;
+  backdrop-filter:blur(14px) !important;
+  border-bottom:1px solid rgba(215,183,121,.12) !important;
+  box-shadow:0 10px 26px rgba(0,0,0,.18);
+}
+body:not(.homepage) .brand strong,
+body:not(.homepage) .nav-links a,
+body:not(.homepage) .reserve-link,
+body:not(.homepage) .brand-mark{color:#f4e8d7 !important}
+body:not(.homepage) .brand small{color:#c9b8a0 !important}
+body:not(.homepage) .brand-mark{border-color:rgba(215,183,121,.36) !important;background:rgba(255,255,255,.04) !important}
+body:not(.homepage) .reserve-link{border-color:rgba(215,183,121,.34) !important;background:rgba(255,255,255,.03)}
+body:not(.homepage) .nav-links a:after{background:#d8b77a !important}
+
+body:not(.homepage) .page-title,
+body:not(.homepage) .section-head,
+body:not(.homepage) .booking-note h2,
+body:not(.homepage) .booking-note p,
+body:not(.homepage) .page-title h1,
+body:not(.homepage) .page-title p,
+body:not(.homepage) .section h2,
+body:not(.homepage) .section-head p,
+body:not(.homepage) .eyebrow{
+  color:#f6ede1 !important;
+}
+body:not(.homepage) .eyebrow{color:#e1bf81 !important}
+body:not(.homepage) .page-title,
+body:not(.homepage) .section-head{
+  text-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+body:not(.homepage) .page-title{
+  border-bottom-color:rgba(240,223,197,.18) !important;
+}
+
+body:not(.homepage) .story,
+body:not(.homepage) .card,
+body:not(.homepage) .menu-group,
+body:not(.homepage) .info-card,
+body:not(.homepage) .rule,
+body:not(.homepage) .service-row,
+body:not(.homepage) .staff,
+body:not(.homepage) .booking-note,
+body:not(.homepage) .form-panel{
+  background:linear-gradient(145deg,rgba(11,14,26,.72),rgba(28,18,23,.66)) !important;
+  border-color:rgba(215,183,121,.14) !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.16);
+  backdrop-filter:blur(10px);
+}
+body:not(.homepage) .story p,
+body:not(.homepage) .card p,
+body:not(.homepage) .menu-item,
+body:not(.homepage) .info-card dt,
+body:not(.homepage) .rule p,
+body:not(.homepage) .service-row p,
+body:not(.homepage) .staff-copy p,
+body:not(.homepage) .booking-note p,
+body:not(.homepage) .field label,
+body:not(.homepage) .field-help,
+body:not(.homepage) .service-check small,
+body:not(.homepage) .booking-mode-btn small,
+body:not(.homepage) .staff-copy small,
+body:not(.homepage) .tag{
+  color:#ddd1c2 !important;
+}
+body:not(.homepage) .card h3,
+body:not(.homepage) .menu-group h2,
+body:not(.homepage) .service-row strong,
+body:not(.homepage) .staff-copy h3,
+body:not(.homepage) .info-card dd,
+body:not(.homepage) .rule:before,
+body:not(.homepage) .service-check b,
+body:not(.homepage) .booking-mode-btn b,
+body:not(.homepage) .booking-tab,
+body:not(.homepage) .dining-head h2{
+  color:#f6ede1 !important;
+}
+body:not(.homepage) .tag{border-color:rgba(215,183,121,.18) !important;background:rgba(255,255,255,.04)}
+
+body:not(.homepage) .field input,
+body:not(.homepage) .field select,
+body:not(.homepage) .field textarea{
+  background:rgba(7,12,27,.82) !important;
+  color:#f6ede1 !important;
+  border-color:rgba(215,183,121,.16) !important;
+}
+body:not(.homepage) .field input::placeholder,
+body:not(.homepage) .field textarea::placeholder{color:#aea399 !important}
+body:not(.homepage) .availability-message,
+body:not(.homepage) .booking-summary,
+body:not(.homepage) .dining-polaroid-status{
+  background:rgba(11,14,26,.58) !important;
+  color:#f2e7d9 !important;
+  border-color:rgba(215,183,121,.14) !important;
+}
+
+@media(max-width:900px){
+  body:not(.homepage) .site-header{background:linear-gradient(180deg,rgba(11,12,22,.94),rgba(18,11,19,.88)) !important}
+}
