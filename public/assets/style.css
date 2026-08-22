@@ -638,3 +638,28 @@ body.modal-open{overflow:hidden}
     background-attachment:scroll!important;
   }
 }
+
+
+/* v2.7.14c — front background hard guarantee */
+html:has(body.reserve-night-theme){
+  background:#0b1020!important;
+}
+html body.reserve-night-theme,
+body:has(#bookingForm){
+  background-color:#0b1020!important;
+  background-image:
+    linear-gradient(rgba(5,10,24,.22),rgba(5,10,24,.42)),
+    url("bg-night-sky-maple.jpg")!important;
+  background-size:cover!important;
+  background-position:center top!important;
+  background-repeat:no-repeat!important;
+  background-attachment:fixed!important;
+}
+body:has(#bookingForm)::after{display:none!important;}
+@media(max-width:760px){
+  html body.reserve-night-theme,
+  body:has(#bookingForm){
+    background-position:68% top!important;
+    background-attachment:scroll!important;
+  }
+}
