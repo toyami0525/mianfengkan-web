@@ -72,3 +72,245 @@
 
 /* v2.7.13：指名備註欄固定寬度並自動換行，避免長備註撐開表格 */
 .table-wrap td.cell-note{white-space:normal!important;min-width:180px;width:220px;max-width:240px;line-height:1.6;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+
+
+/* v2.7.14 — 全館後台：楓紅 × 夜空主題 */
+:root{
+  --mf-night-0:#0d1122;
+  --mf-night-1:#151b2d;
+  --mf-night-2:#1b2338;
+  --mf-maple-0:#7a1f1f;
+  --mf-maple-1:#b73a2e;
+  --mf-wine:#2b1b24;
+  --mf-gold:#d7b779;
+  --mf-cream:#f5ede2;
+  --mf-muted:#b9b6c2;
+  color:var(--mf-cream);
+  background:var(--mf-night-0);
+}
+html,body{min-height:100%;background:var(--mf-night-0);color:var(--mf-cream)}
+body{
+  background:
+    radial-gradient(circle at 8% 8%,rgba(183,58,46,.27) 0,rgba(183,58,46,0) 31%),
+    radial-gradient(circle at 92% 78%,rgba(122,31,31,.22) 0,rgba(122,31,31,0) 34%),
+    linear-gradient(135deg,var(--mf-night-0) 0%,var(--mf-night-1) 43%,var(--mf-wine) 72%,#35191f 100%);
+  background-attachment:fixed;
+}
+.auth{
+  background:
+    radial-gradient(circle at 18% 18%,rgba(183,58,46,.34),transparent 34%),
+    radial-gradient(circle at 82% 75%,rgba(55,67,111,.28),transparent 36%),
+    linear-gradient(145deg,#080d1b,#151b2d 48%,#2b1b24 74%,#681f20 120%)!important;
+}
+.login-card{
+  color:var(--mf-cream)!important;
+  background:linear-gradient(155deg,rgba(24,30,50,.96),rgba(28,20,31,.96))!important;
+  border:1px solid rgba(215,183,121,.22)!important;
+  box-shadow:0 34px 95px rgba(0,0,0,.55)!important;
+}
+.login-card input{background:#0f1629!important;color:#f7efe4!important;border-color:rgba(215,183,121,.22)!important}
+.login-card>a{color:#d6bd95!important}.seal,.admin-brand>span{border-color:rgba(215,183,121,.52)!important;color:#e7c47f!important}
+.eyebrow{color:#d6b77b!important}
+.admin-shell{background:transparent!important}
+.admin-side{
+  background:
+    radial-gradient(circle at 10% 8%,rgba(183,58,46,.18),transparent 28%),
+    linear-gradient(180deg,#0a0f1e 0%,#11182a 52%,#241820 100%)!important;
+  border-right:1px solid rgba(215,183,121,.13);
+  box-shadow:14px 0 42px rgba(0,0,0,.22);
+}
+.admin-brand strong{color:#f7ead8}.admin-brand small{color:#9ca4b8!important}
+.admin-side nav button,.side-bottom button,.side-bottom a{color:#c8c6ce!important;border-radius:10px}
+.admin-side nav button.active,.admin-side nav button:hover{
+  background:linear-gradient(90deg,rgba(183,58,46,.52),rgba(74,37,48,.46))!important;
+  color:#fff4e7!important;
+  box-shadow:inset 3px 0 0 #d7b779;
+}
+.admin-main{
+  color:var(--mf-cream)!important;
+  background:
+    radial-gradient(circle at 12% 5%,rgba(183,58,46,.18),transparent 29%),
+    radial-gradient(circle at 92% 86%,rgba(65,79,128,.20),transparent 36%),
+    linear-gradient(135deg,rgba(13,17,34,.92),rgba(21,27,45,.93) 48%,rgba(43,27,36,.91) 78%,rgba(77,27,31,.88) 125%)!important;
+  background-attachment:fixed!important;
+}
+.admin-main h1,.admin-main h2,.admin-main h3,.admin-main strong{color:#f5ecdf}
+.panel,.stats article,.payroll-stats article,.payroll-dashboard-card,.payroll-payout{
+  color:#eee9e4!important;
+  background:linear-gradient(145deg,rgba(25,32,53,.9),rgba(22,22,38,.88))!important;
+  border-color:rgba(215,183,121,.16)!important;
+  box-shadow:0 15px 38px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)!important;
+  backdrop-filter:blur(10px);
+}
+.stats span,.payroll-stats span,.payroll-stats em,.payroll-dashboard-card span,.payroll-dashboard-card small,.hint,.record-summary,.panel small{color:var(--mf-muted)!important}
+.stats b,.payroll-stats b{color:#f1d59f!important}
+.panel-head{border-color:rgba(215,183,121,.14)}
+.admin-message,.permission-note,.record-toolbar,.staff-availability,.chibi-availability,.payroll-formula,.rule-editor,.extension-summary{
+  background:rgba(11,17,33,.58)!important;
+  color:#e8e1d9!important;
+  border-color:rgba(215,183,121,.16)!important;
+}
+.record-toolbar button{
+  background:rgba(42,49,72,.82)!important;
+  color:#d9d7dd!important;
+  border-color:rgba(151,159,186,.12)!important;
+}
+.record-toolbar button.selected{
+  background:linear-gradient(135deg,#8f2b27,#64242a)!important;
+  color:#fff4e7!important;
+  border-color:rgba(215,183,121,.28)!important;
+}
+.record-search input,.settings-grid input,.settings-grid select,.rule-editor input,.rule-editor textarea,.leave-form input,.leave-form select,.extension-select select{
+  background:#0d1528!important;
+  color:#f4eee6!important;
+  border-color:rgba(151,159,186,.24)!important;
+}
+.record-search input::placeholder,.settings-grid input::placeholder,.rule-editor textarea::placeholder{color:#7f879a!important}
+select option{background:#11182a;color:#f4eee6}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(215,183,121,.58)!important;
+  box-shadow:0 0 0 3px rgba(215,183,121,.08)!important;
+  outline:none!important;
+}
+input[type="checkbox"]{accent-color:#b73a2e}
+button,.panel button,.login-card button,.payroll-dashboard-card button{
+  background:linear-gradient(135deg,#923028,#6e2429)!important;
+  color:#fff3e4!important;
+  border-color:rgba(215,183,121,.16)!important;
+}
+button:hover{filter:brightness(1.08)}
+button.ghost,.ghost,.sound-toggle{
+  background:rgba(20,28,49,.7)!important;
+  color:#e6ded5!important;
+  border-color:rgba(215,183,121,.24)!important;
+}
+.sound-toggle.enabled{background:linear-gradient(135deg,#983128,#71242a)!important;color:#fff4e7!important}
+.extend-button{background:linear-gradient(135deg,#a5532c,#743226)!important}
+.leave-submit,.polaroid-upload-button{background:linear-gradient(135deg,#9b3029,#6c2329)!important;color:#fff2e3!important}
+.table-wrap{border-color:rgba(215,183,121,.10)}
+table{color:#e7e3e1!important}
+th,td{border-bottom-color:rgba(183,190,211,.10)!important}
+th{color:#d9bd89!important;background:rgba(11,17,34,.28)}
+td{color:#e8e4e1!important}
+.table-wrap.has-actions .actions-head{background:#1d1c2b!important;color:#d9bd89!important}
+.table-wrap.has-actions td.actions{background:#181b2d!important;box-shadow:6px 0 12px rgba(0,0,0,.18)!important}
+.order-items div+div{border-top-color:rgba(183,190,211,.12)!important}.order-items small{color:#aaa9b5!important}
+.status-pill{border:1px solid rgba(255,255,255,.05)}
+.status-pending{background:#4d3d22!important;color:#f4d38c!important}
+.status-acknowledged{background:#3c3050!important;color:#ddc6f2!important}
+.status-confirmed{background:#243c59!important;color:#bedaf5!important}
+.status-completed{background:#234232!important;color:#bce5c8!important}
+.status-cancelled,.status-rejected{background:#542b31!important;color:#f0bdc1!important}
+.delivery-pill.neutral{background:#313344!important;color:#d4d2dc!important}.delivery-pill.preferred{background:#552b2d!important;color:#efc3ad!important}.delivery-pill.claimed{background:#234232!important;color:#bee2c6!important}.delivery-pill.waiting{background:#4c3c22!important;color:#f1cf87!important}
+.polaroid-admin-card,.payroll-roster label,.payroll-roster label.owner{
+  background:rgba(13,19,35,.58)!important;
+  color:#eee8e1!important;
+  border-color:rgba(215,183,121,.15)!important;
+}
+.polaroid-admin-card small,.empty-state{color:#aaa8b2!important}
+.identity-badge{
+  background:rgba(15,22,40,.82)!important;
+  color:#e6e0db!important;
+  border-color:rgba(215,183,121,.20)!important;
+}
+.identity-badge strong{color:#efb98f!important}
+.rule-number{color:#d7b779!important}.settings-grid label,.rule-editor label,.extension-select span{color:#c8c1bb!important}
+.payroll-formula strong,.payroll-table td:last-child strong,.payroll-dashboard-card strong,.payroll-payout .total strong{color:#efb08e!important}
+.payroll-stats .payroll-highlight,.payroll-remainder{
+  background:rgba(109,48,33,.35)!important;
+  border-color:rgba(215,183,121,.22)!important;
+  color:#ead8c0!important;
+}
+.reservation-alert-backdrop{background:rgba(5,8,17,.74)!important;backdrop-filter:blur(8px)!important}
+.reservation-alert{
+  color:#f4ece4!important;
+  background:linear-gradient(150deg,#1b2237,#241821)!important;
+  border-color:rgba(215,183,121,.24)!important;
+  box-shadow:0 32px 95px rgba(0,0,0,.58)!important;
+}
+.reservation-alert-icon{background:linear-gradient(145deg,#b73a2e,#6f2529)!important;color:#fff0df!important}
+.reservation-alert dl,.reservation-alert dl>div{border-color:rgba(215,183,121,.13)!important}.reservation-alert dt{color:#b9b3b3!important}.reservation-alert dd{color:#f3ebe4!important}
+.reservation-alert-actions .ghost{background:#25293b!important;color:#ddd8d6!important}
+.service-ending-alert{border-color:rgba(215,183,121,.34)!important}.service-ending-alert .reservation-alert-icon{background:linear-gradient(145deg,#b47b36,#6b4727)!important}
+.extension-summary strong{color:#efb28e!important}
+.chibi-availability{background:rgba(58,39,70,.43)!important;border-color:rgba(167,126,184,.22)!important}
+.chibi-availability small{color:#c4b4ca!important}
+.cell-note{color:#ddd8d5!important}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:#0e1425}::-webkit-scrollbar-thumb{background:linear-gradient(#57303b,#7a2928);border-radius:999px;border:2px solid #0e1425}::-webkit-scrollbar-thumb:hover{background:#984038}
+@media(max-width:900px){
+  body{background-attachment:scroll}
+  .admin-main{background-attachment:scroll!important}
+  .admin-side{border-right:0;border-bottom:1px solid rgba(215,183,121,.14)}
+}
+
+/* v2.7.14a — 楓紅 × 夜空裝飾：月牙＋楓葉 */
+body{
+  background-image:
+    url('/assets/decor-admin-maple-moon.svg'),
+    radial-gradient(circle at 8% 8%,rgba(183,58,46,.27) 0,rgba(183,58,46,0) 31%),
+    radial-gradient(circle at 92% 78%,rgba(122,31,31,.22) 0,rgba(122,31,31,0) 34%),
+    linear-gradient(135deg,var(--mf-night-0) 0%,var(--mf-night-1) 43%,var(--mf-wine) 72%,#35191f 100%)!important;
+  background-repeat:no-repeat,no-repeat,no-repeat,no-repeat!important;
+  background-position:top right,center,center,center!important;
+  background-size:min(1120px,82vw) auto,auto,auto,auto!important;
+  background-attachment:fixed!important;
+}
+.admin-main{
+  background-image:
+    url('/assets/decor-admin-maple-moon.svg'),
+    radial-gradient(circle at 12% 5%,rgba(183,58,46,.18),transparent 29%),
+    radial-gradient(circle at 92% 86%,rgba(65,79,128,.20),transparent 36%),
+    linear-gradient(135deg,rgba(13,17,34,.90),rgba(21,27,45,.91) 48%,rgba(43,27,36,.89) 78%,rgba(77,27,31,.86) 125%)!important;
+  background-repeat:no-repeat,no-repeat,no-repeat,no-repeat!important;
+  background-position:top right,center,center,center!important;
+  background-size:min(1080px,82vw) auto,auto,auto,auto!important;
+  background-attachment:fixed!important;
+}
+.auth{
+  background-image:
+    url('/assets/decor-admin-maple-moon.svg'),
+    radial-gradient(circle at 18% 18%,rgba(183,58,46,.34),transparent 34%),
+    radial-gradient(circle at 82% 75%,rgba(55,67,111,.28),transparent 36%),
+    linear-gradient(145deg,#080d1b,#151b2d 48%,#2b1b24 74%,#681f20 120%)!important;
+  background-repeat:no-repeat,no-repeat,no-repeat,no-repeat!important;
+  background-position:top right,center,center,center!important;
+  background-size:min(1000px,88vw) auto,auto,auto,auto!important;
+}
+@media(max-width:900px){
+  body,.admin-main,.auth{background-size:135vw auto,auto,auto,auto!important;background-position:top -10px right -42vw,center,center,center!important;background-attachment:scroll!important}
+}
+
+
+/* v2.7.14b — 全館後台：直接套用參考圖的楓紅 × 夜空月牙＋楓葉背景 */
+body{
+  background-image:
+    linear-gradient(rgba(7,10,23,.28),rgba(18,9,18,.38)),
+    url('/assets/bg-admin-maple-night.jpg')!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  background-attachment:fixed!important;
+}
+.admin-main{
+  background-image:
+    linear-gradient(rgba(9,13,28,.34),rgba(31,11,18,.28)),
+    url('/assets/bg-admin-maple-night.jpg')!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  background-attachment:fixed!important;
+}
+.auth{
+  background-image:
+    linear-gradient(rgba(7,10,23,.30),rgba(31,10,17,.34)),
+    url('/assets/bg-admin-maple-night.jpg')!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+}
+@media(max-width:900px){
+  body,.admin-main,.auth{
+    background-position:68% center!important;
+    background-attachment:scroll!important;
+  }
+}
