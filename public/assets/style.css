@@ -825,3 +825,17 @@ body:not(.homepage) .staff-title .eyebrow{
 @media(max-width:700px){
   body:not(.homepage) .staff-title{padding:26px 20px !important}
 }
+
+
+/* v2.7.16d — 餐食品項名稱／來館須知規則標題提亮 */
+body:not(.homepage) .menu-item b{
+  color:#f6ede1 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.28);
+}
+body:not(.homepage) .rule h2{
+  color:#f6ede1 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.28);
+}
+body:not(.homepage) .rule p{
+  color:#eadfce !important;
+}
