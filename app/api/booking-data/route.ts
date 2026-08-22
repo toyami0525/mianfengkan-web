@@ -9,24 +9,19 @@ export async function GET() {
   try {
     const db = adminSupabase();
     const today=taipeiDateKey();
-    const [{data:staff,error:staffError},{data:unavailability,error:leaveError},{data:reservations,error:reservationError},{data:settings,error:settingsError},{data:closure,error:closureError},{data:calendarOff,error:calendarOffError}] = await Promise.all([
+    const [{data:staff,error:staffError},{data:reservations,error:reservationError},{data:settings,error:settingsError},{data:closure,error:closureError},{data:calendarOff,error:calendarOffError}] = await Promise.all([
       db.from('staff').select('id,slug,name,role,services,sort_order').eq('active',true).eq('accepting_reservations',true).order('sort_order',{ascending:true}),
-      db.from('staff_unavailability').select('staff_id,starts_at,ends_at,recurrence'),
       db.from('reservations').select('staff_id,starts_at,ends_at,status').not('status','in',`(${INACTIVE_STATUSES.join(',')})`).order('starts_at',{ascending:true}),
       db.from('site_settings').select('key,value').in('key',['booking_test_mode','yukinoji_chibi_accepting']),
       db.from('venue_closures').select('work_date,reason').eq('work_date',today).maybeSingle(),
       db.from('staff_work_calendar').select('staff_id').eq('work_date',today).eq('status','off'),
     ]);
     if(staffError) throw staffError;
-    if(leaveError) throw leaveError;
     if(reservationError) throw reservationError;
     if(settingsError) throw settingsError;
     if(closureError) throw closureError;
     if(calendarOffError) throw calendarOffError;
-    const blocks=[
-      ...(unavailability||[]).map((x:any)=>({staff_id:x.staff_id,start_at:x.starts_at,end_at:x.ends_at,recurrence:x.recurrence,block_type:'unavailable'})),
-      ...(reservations||[]).map((x:any)=>({staff_id:x.staff_id,start_at:x.starts_at,end_at:x.ends_at,status:x.status,block_type:'reservation'})),
-    ];
+    const blocks=(reservations||[]).map((x:any)=>({staff_id:x.staff_id,start_at:x.starts_at,end_at:x.ends_at,status:x.status,block_type:'reservation'}));
     const settingMap=Object.fromEntries((settings||[]).map((row:any)=>[row.key,row.value]));
     const testValue=settingMap.booking_test_mode;
     const testMode=testValue===true||testValue?.enabled===true;
