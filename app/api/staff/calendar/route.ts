@@ -8,6 +8,9 @@ function monthBounds(month:string){
  const next=`${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth()+1).padStart(2,'0')}-01`;
  return {start,next};
 }
+function taipeiDateKey(date=new Date()){
+ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+}
 async function accountFrom(req:NextRequest){
  const token=(req.headers.get('authorization')||'').replace(/^Bearer\s+/i,'');if(!token)return null;
  const db=adminSupabase();const{data:{user}}=await db.auth.getUser(token);if(!user)return null;
@@ -22,23 +25,36 @@ export async function GET(req:NextRequest){
   let staffQuery=auth.db.from('staff').select('id,name,slug,active').eq('active',true).order('name',{ascending:true});
   if(auth.account.role==='staff'){if(!auth.account.staff_id)return NextResponse.json({error:'帳號未綁定館員'},{status:403});staffQuery=staffQuery.eq('id',auth.account.staff_id)}
   const{data:staff,error:staffError}=await staffQuery;if(staffError)throw staffError;const ids=(staff||[]).map(x=>x.id);
-  if(!ids.length)return NextResponse.json({staff:[],rows:[]});
-  const{data:rows,error}=await auth.db.from('staff_work_calendar').select('id,staff_id,work_date,status,updated_at').in('staff_id',ids).gte('work_date',bounds.start).lt('work_date',bounds.next).order('work_date',{ascending:true});if(error)throw error;
-  return NextResponse.json({staff:staff||[],rows:rows||[]});
+  const today=taipeiDateKey();
+  const [rowsResult,closuresResult,todayClosureResult]=await Promise.all([
+   ids.length?auth.db.from('staff_work_calendar').select('id,staff_id,work_date,status,updated_at').in('staff_id',ids).eq('status','off').gte('work_date',bounds.start).lt('work_date',bounds.next).order('work_date',{ascending:true}):Promise.resolve({data:[],error:null} as any),
+   auth.db.from('venue_closures').select('id,work_date,reason,updated_at').gte('work_date',bounds.start).lt('work_date',bounds.next).order('work_date',{ascending:true}),
+   auth.db.from('venue_closures').select('id,work_date,reason,updated_at').eq('work_date',today).maybeSingle(),
+  ]);
+  if(rowsResult.error)throw rowsResult.error;if(closuresResult.error)throw closuresResult.error;if(todayClosureResult.error)throw todayClosureResult.error;
+  return NextResponse.json({staff:staff||[],rows:rowsResult.data||[],closures:closuresResult.data||[],today,today_closure:todayClosureResult.data||null});
  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'讀取排班月曆失敗'},{status:500})}
 }
 export async function POST(req:NextRequest){
  try{
   const auth=await accountFrom(req);if(!auth)return NextResponse.json({error:'請重新登入館員後台'},{status:401});
   if(!['owner','staff'].includes(String(auth.account.role)))return NextResponse.json({error:'沒有修改排班權限'},{status:403});
-  const body=await req.json();let staffId=String(body?.staff_id||'');const workDate=String(body?.work_date||''),status=body?.status==null?null:String(body.status);
+  const body=await req.json();let staffId=String(body?.staff_id||'');const workDate=String(body?.work_date||''),rawStatus=body?.status==null?null:String(body.status);
   if(!/^\d{4}-\d{2}-\d{2}$/.test(workDate))return NextResponse.json({error:'日期格式錯誤'},{status:400});
-  if(status!==null&&!['working','off'].includes(status))return NextResponse.json({error:'排班狀態錯誤'},{status:400});
+  if(rawStatus!==null&&!['working','off'].includes(rawStatus))return NextResponse.json({error:'排班狀態錯誤'},{status:400});
+  const weekday=new Date(`${workDate}T12:00:00+08:00`).getUTCDay();
+  if(weekday===1)return NextResponse.json({error:'每週一為全館固定休館，不需另外設定館員休假'},{status:400});
+  const{data:closure,error:closureError}=await auth.db.from('venue_closures').select('id').eq('work_date',workDate).maybeSingle();if(closureError)throw closureError;
+  if(closure)return NextResponse.json({error:'此日期已設定全館臨時休館，不需另外設定館員休假'},{status:400});
   if(auth.account.role==='staff'){staffId=String(auth.account.staff_id||'');if(!staffId)return NextResponse.json({error:'帳號未綁定館員'},{status:403})}
   if(!staffId)return NextResponse.json({error:'請選擇館員'},{status:400});
   const{data:staff}=await auth.db.from('staff').select('id').eq('id',staffId).eq('active',true).maybeSingle();if(!staff)return NextResponse.json({error:'找不到館員'},{status:404});
-  if(status===null){const{error}=await auth.db.from('staff_work_calendar').delete().eq('staff_id',staffId).eq('work_date',workDate);if(error)throw error;return NextResponse.json({ok:true,row:null})}
-  const now=new Date().toISOString();const{data:row,error}=await auth.db.from('staff_work_calendar').upsert({staff_id:staffId,work_date:workDate,status,updated_at:now},{onConflict:'staff_id,work_date'}).select('id,staff_id,work_date,status,updated_at').single();if(error)throw error;
+  // 週二～週日預設上班，因此 working/null 都代表刪除休假覆寫；只有 off 才寫入資料表。
+  if(rawStatus===null||rawStatus==='working'){
+   const{error}=await auth.db.from('staff_work_calendar').delete().eq('staff_id',staffId).eq('work_date',workDate);if(error)throw error;
+   return NextResponse.json({ok:true,row:null,status:'working'});
+  }
+  const now=new Date().toISOString();const{data:row,error}=await auth.db.from('staff_work_calendar').upsert({staff_id:staffId,work_date:workDate,status:'off',updated_at:now},{onConflict:'staff_id,work_date'}).select('id,staff_id,work_date,status,updated_at').single();if(error)throw error;
   return NextResponse.json({ok:true,row});
  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'更新排班失敗'},{status:500})}
 }

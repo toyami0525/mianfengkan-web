@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { publicSupabase } from '@/lib/supabase-server';
+import { adminSupabase } from '@/lib/supabase-admin';
 
 const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
+function taipeiDateKey(date=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(date)}
+function isMonday(dateKey:string){return new Date(`${dateKey}T12:00:00+08:00`).getUTCDay()===1}
 
 function taipeiParts(date: Date) {
   const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
@@ -31,6 +34,7 @@ export async function POST(request: Request) {
 
     const start = new Date(startAt);
     const now = new Date();
+    const todayKey=taipeiDateKey(now);const closureDb=adminSupabase();const{data:venueClosure,error:venueClosureError}=await closureDb.from('venue_closures').select('work_date,reason').eq('work_date',todayKey).maybeSingle();if(venueClosureError)throw venueClosureError;if(isMonday(todayKey)||venueClosure)return NextResponse.json({error:isMonday(todayKey)?'今日為每週一固定休館':'今日臨時休館，暫停接受指名'},{status:400});
     if (Number.isNaN(start.getTime())) {
       return NextResponse.json({ error: '指名時間格式不正確' }, { status: 400 });
     }

@@ -362,3 +362,13 @@ body{
 .work-calendar-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px}.work-calendar-legend .working{color:#9bd2ae}.work-calendar-legend .off{color:#efaaa9}.work-calendar-legend .unset{color:#a7adbd}
 .work-calendar{display:grid;gap:8px}.work-calendar-weekdays,.work-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.work-calendar-weekdays b{text-align:center;padding:7px;color:#d8bd8a;font-size:12px}.calendar-day{min-height:82px;border-radius:14px!important;padding:10px!important;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start!important;background:rgba(18,25,43,.72)!important;border:1px solid rgba(151,159,186,.14)!important;color:#ece8e3!important}.calendar-day strong{font-size:18px}.calendar-day small{font-size:11px}.calendar-day.working{background:rgba(35,78,55,.62)!important;border-color:rgba(118,193,142,.35)!important}.calendar-day.working small{color:#b9e7c7}.calendar-day.off{background:rgba(92,39,44,.65)!important;border-color:rgba(218,104,105,.34)!important}.calendar-day.off small{color:#f1b9b9}.calendar-day.unset small{color:#9ca4b8}.calendar-day.empty{visibility:hidden}.calendar-day:disabled{opacity:.55}
 @media(max-width:720px){.calendar-month-actions{width:100%;justify-content:space-between}.work-calendar-weekdays,.work-calendar-grid{gap:4px}.calendar-day{min-height:66px;padding:7px!important}.calendar-day strong{font-size:15px}.calendar-day small{font-size:9px}}
+
+
+/* v2.8.1 排班簡化＋全館臨時休館 */
+.work-calendar-legend .closed{color:#e7c17e}
+.calendar-day.closed{background:linear-gradient(145deg,rgba(98,57,35,.76),rgba(70,34,39,.72))!important;border-color:rgba(222,177,104,.38)!important;cursor:not-allowed}
+.calendar-day.closed small{color:#f1cf94!important}
+.venue-closure-control{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px;border:1px solid rgba(218,178,105,.2);border-radius:16px;background:rgba(20,25,42,.58)}
+.venue-closure-control>div{display:grid;gap:5px}.venue-closure-control strong{color:#f5ede5}.venue-closure-control small{color:#c8c1bb}
+.venue-close-btn{border:1px solid rgba(235,125,121,.4)!important;background:linear-gradient(135deg,#8e3739,#682b31)!important;color:#fff0ec!important;border-radius:999px!important;padding:11px 18px!important}
+@media(max-width:680px){.venue-closure-control{align-items:stretch;flex-direction:column}.venue-closure-control button{width:100%}}

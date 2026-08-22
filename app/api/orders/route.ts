@@ -5,13 +5,15 @@ import { randomBytes } from 'crypto';
 
 const POLAROID_PRICE = 80000;
 const YUKINOJI_POLAROID_PRICE = 100000;
+function taipeiDateKey(date=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(date)}
+function isMonday(dateKey:string){return new Date(`${dateKey}T12:00:00+08:00`).getUTCDay()===1}
 const FOOD_PRICES: Record<string, number> = {
-  '蛋包飯':7000,'扇貝咖哩':9000,'加雷馬披薩':9000,'醬炒飯':7000,'懸掛番茄沙拉':9000,'羊駝奶油麵':7000,'犎牛牛排':9000,
+  '蛋包飯':7000,'扇貝咖哩':9000,'加雷馬披薩':9000,'醬炒飯':7000,'懸掛番茄沙拉':9000,'羊駝奶油麵':7000,
   '圓扇刺刺梨蛋糕':6000,'巧克力奶油蛋糕':6000,'白桃塔':8000,'蜂蜜牛角麵包':8000,'烏雞布丁':8000,
   '奶油熱巧克力':5000,'蜜瓜果汁':7000,'白桃汁':7000,'抹茶':7000,'路易波士紅茶':7000,
 };
 const FOOD_CATEGORIES: Record<string, string> = {
-  '蛋包飯':'主食',  '扇貝咖哩':'主食',  '加雷馬披薩':'主食',  '醬炒飯':'主食',  '懸掛番茄沙拉':'主食',  '羊駝奶油麵':'主食',  '犎牛牛排':'主食',  '圓扇刺刺梨蛋糕':'甜點',  '巧克力奶油蛋糕':'甜點',  '白桃塔':'甜點',  '蜂蜜牛角麵包':'甜點',  '烏雞布丁':'甜點',  '奶油熱巧克力':'飲品',  '蜜瓜果汁':'飲品',  '白桃汁':'飲品',  '抹茶':'飲品',  '路易波士紅茶':'飲品'
+  '蛋包飯':'主食',  '扇貝咖哩':'主食',  '加雷馬披薩':'主食',  '醬炒飯':'主食',  '懸掛番茄沙拉':'主食',  '羊駝奶油麵':'主食',  '圓扇刺刺梨蛋糕':'甜點',  '巧克力奶油蛋糕':'甜點',  '白桃塔':'甜點',  '蜂蜜牛角麵包':'甜點',  '烏雞布丁':'甜點',  '奶油熱巧克力':'飲品',  '蜜瓜果汁':'飲品',  '白桃汁':'飲品',  '抹茶':'飲品',  '路易波士紅茶':'飲品'
 };
 function makePickupCode(){
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -37,6 +39,7 @@ export async function POST(request: Request) {
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
     const deliveryPreferenceStaffId = String(body.delivery_preference_staff_id ?? '').trim();
     if (!guestName) return NextResponse.json({ error: '請填寫客人名稱' }, { status: 400 });
+    const todayKey=taipeiDateKey();const closureDb=adminSupabase();const{data:venueClosure,error:venueClosureError}=await closureDb.from('venue_closures').select('work_date,reason').eq('work_date',todayKey).maybeSingle();if(venueClosureError)throw venueClosureError;if(isMonday(todayKey)||venueClosure)return NextResponse.json({error:isMonday(todayKey)?'今日為每週一固定休館':'今日臨時休館，暫停接受點餐'},{status:400});
 
     const cleanItems = (Array.isArray(body.items) ? body.items : []).map((item:any)=>{
       const name=String(item?.name??'').slice(0,100);
@@ -58,6 +61,7 @@ export async function POST(request: Request) {
       const query=staffDb.from('staff').select('id,name,active').eq('active',true);
       const r=isUuid?await query.eq('id',deliveryPreferenceStaffId).single():await query.eq('slug',deliveryPreferenceStaffId).single();
       if(r.error||!r.data)return NextResponse.json({error:'指定的希望送餐館員目前無法選擇'},{status:400});
+      const{data:deliveryOff,error:deliveryOffError}=await staffDb.from('staff_work_calendar').select('staff_id').eq('staff_id',r.data.id).eq('work_date',todayKey).eq('status','off').maybeSingle();if(deliveryOffError)throw deliveryOffError;if(deliveryOff)return NextResponse.json({error:'希望送餐的館員今日休假，請改選其他館員或不指定'},{status:400});
       deliveryPreferenceStaff=r.data;
     }
 
