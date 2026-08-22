@@ -616,50 +616,37 @@ body.modal-open{overflow:hidden}
 }
 
 
-/* v2.7.14b — 前台指名：直接套用參考圖的夜空月牙＋楓葉背景 */
-.reserve-night-theme{
+/* v2.7.16 — 公開頁面改用紅色楓夜背景（首頁除外） */
+body:not(.homepage){
   background-image:
-    linear-gradient(rgba(5,10,24,.34),rgba(5,10,24,.50)),
-    url("bg-night-sky-maple.jpg")!important;
-  background-size:cover!important;
-  background-position:center top!important;
-  background-repeat:no-repeat!important;
-  background-attachment:fixed!important;
+    linear-gradient(rgba(12,8,16,.36),rgba(18,7,15,.48)),
+    url("bg-public-red-maple-moon.png") !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
 }
-.reserve-night-theme::before{
-  opacity:.16!important;
-}
-.reserve-night-theme::after{
-  display:none!important;
-}
-@media(max-width:760px){
-  .reserve-night-theme{
-    background-position:68% top!important;
-    background-attachment:scroll!important;
-  }
-}
-
-
-/* v2.7.14c — front background hard guarantee */
-html:has(body.reserve-night-theme){
-  background:#0b1020!important;
-}
-html body.reserve-night-theme,
-body:has(#bookingForm){
-  background-color:#0b1020!important;
+body:not(.homepage)::before{opacity:.10 !important}
+body.reserve-night-theme,
+body.reserve-night-theme:not(.homepage){
   background-image:
-    linear-gradient(rgba(5,10,24,.22),rgba(5,10,24,.42)),
-    url("bg-night-sky-maple.jpg")!important;
-  background-size:cover!important;
-  background-position:center top!important;
-  background-repeat:no-repeat!important;
-  background-attachment:fixed!important;
+    linear-gradient(rgba(12,8,16,.34),rgba(18,7,15,.48)),
+    url("bg-public-red-maple-moon.png") !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
 }
-body:has(#bookingForm)::after{display:none!important;}
-@media(max-width:760px){
-  html body.reserve-night-theme,
-  body:has(#bookingForm){
-    background-position:68% top!important;
-    background-attachment:scroll!important;
+body.homepage{
+  background:
+    radial-gradient(circle at 10% 0%,rgba(190,127,78,.16),transparent 32%),
+    radial-gradient(circle at 92% 8%,rgba(159,67,57,.14),transparent 30%),
+    linear-gradient(145deg,#fbf7ef,#eee2d1) !important;
+}
+@media(max-width:900px){
+  body:not(.homepage),
+  body.reserve-night-theme:not(.homepage){
+    background-position:62% center !important;
+    background-attachment:scroll !important;
   }
 }

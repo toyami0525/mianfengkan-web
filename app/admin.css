@@ -281,36 +281,49 @@ body{
 }
 
 
-/* v2.7.14b — 全館後台：直接套用參考圖的楓紅 × 夜空月牙＋楓葉背景 */
+/* v2.7.16 — 所有人後台改用藍色夜空楓影背景 */
+html,body{
+  background-image:
+    linear-gradient(rgba(6,10,24,.42),rgba(6,10,24,.58)),
+    url('/assets/bg-admin-blue-maple-moon.png') !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
+}
 body{
   background-image:
-    linear-gradient(rgba(7,10,23,.28),rgba(18,9,18,.38)),
-    url('/assets/bg-admin-maple-night.jpg')!important;
-  background-size:cover!important;
-  background-position:center center!important;
-  background-repeat:no-repeat!important;
-  background-attachment:fixed!important;
-}
-.admin-main{
-  background-image:
-    linear-gradient(rgba(9,13,28,.34),rgba(31,11,18,.28)),
-    url('/assets/bg-admin-maple-night.jpg')!important;
-  background-size:cover!important;
-  background-position:center center!important;
-  background-repeat:no-repeat!important;
-  background-attachment:fixed!important;
+    linear-gradient(rgba(6,10,24,.42),rgba(6,10,24,.58)),
+    url('/assets/bg-admin-blue-maple-moon.png') !important;
 }
 .auth{
   background-image:
-    linear-gradient(rgba(7,10,23,.30),rgba(31,10,17,.34)),
-    url('/assets/bg-admin-maple-night.jpg')!important;
-  background-size:cover!important;
-  background-position:center center!important;
-  background-repeat:no-repeat!important;
+    linear-gradient(rgba(6,10,24,.40),rgba(6,10,24,.60)),
+    url('/assets/bg-admin-blue-maple-moon.png') !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+}
+.admin-main{
+  background-image:
+    linear-gradient(rgba(8,12,28,.68),rgba(8,12,28,.76)),
+    url('/assets/bg-admin-blue-maple-moon.png') !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
+}
+.admin-side{
+  background-image:
+    linear-gradient(rgba(7,11,24,.88),rgba(7,11,24,.94)),
+    url('/assets/bg-admin-blue-maple-moon.png') !important;
+  background-size:cover !important;
+  background-position:left center !important;
+  background-repeat:no-repeat !important;
 }
 @media(max-width:900px){
-  body,.admin-main,.auth{
-    background-position:68% center!important;
-    background-attachment:scroll!important;
+  html,body,.auth,.admin-main,.admin-side{
+    background-position:60% center !important;
+    background-attachment:scroll !important;
   }
 }
