@@ -372,3 +372,13 @@ body{
 .venue-closure-control>div{display:grid;gap:5px}.venue-closure-control strong{color:#f5ede5}.venue-closure-control small{color:#c8c1bb}
 .venue-close-btn{border:1px solid rgba(235,125,121,.4)!important;background:linear-gradient(135deg,#8e3739,#682b31)!important;color:#fff0ec!important;border-radius:999px!important;padding:11px 18px!important}
 @media(max-width:680px){.venue-closure-control{align-items:stretch;flex-direction:column}.venue-closure-control button{width:100%}}
+
+
+/* v2.8.7：酒品依寶藥瓶色標示，避免後台辨識錯誤 */
+.order-items .liquor-admin-item,.new-order-items .liquor-admin-item{display:block;margin:4px 0;padding:7px 9px;border:1px solid transparent;border-radius:9px;white-space:nowrap}
+.liquor-admin-item.liquor-red{background:rgba(180,58,64,.24)!important;border-color:rgba(241,118,124,.58)!important;box-shadow:inset 4px 0 0 #d85d63}
+.liquor-admin-item.liquor-blue{background:rgba(55,96,170,.27)!important;border-color:rgba(108,151,225,.58)!important;box-shadow:inset 4px 0 0 #5685d3}
+.liquor-admin-item.liquor-green{background:rgba(54,122,77,.27)!important;border-color:rgba(101,181,126,.58)!important;box-shadow:inset 4px 0 0 #58a873}
+.liquor-admin-item.liquor-purple{background:rgba(112,67,148,.28)!important;border-color:rgba(169,119,207,.60)!important;box-shadow:inset 4px 0 0 #9162b5}
+.liquor-admin-item.liquor-yellow{background:rgba(181,139,39,.25)!important;border-color:rgba(231,192,90,.62)!important;box-shadow:inset 4px 0 0 #d8ad43}
+.new-order-items{display:flex;flex-wrap:wrap;gap:5px}.new-order-items .liquor-admin-item{display:inline-block;margin:0}

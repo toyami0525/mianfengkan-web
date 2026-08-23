@@ -48,13 +48,13 @@ export async function POST(req:NextRequest){
       const{data,error}=await db.from('polaroid_pickups').insert({
         reservation_id:null,
         staff_id:staff.id,
-        staff_name:staff.name,
+        staff_name:String(staff?.name ?? ''),
         guest_name:guestName,
         pickup_code:pickupCode,
         status:'processing',
         item_type:itemType,
       }).select('id,pickup_code,staff_id,staff_name,guest_name,status,item_type,created_at').single();
-      if(!error)return NextResponse.json({ok:true,pickup_code:pickupCode,pickup:data,staff_name:staff.name,item_label:itemLabel});
+      if(!error)return NextResponse.json({ok:true,pickup_code:pickupCode,pickup:data,staff_name:String(staff?.name ?? ''),item_label:itemLabel});
       if(error.code==='23505')continue;
       if(itemType==='lina_signed_polaroid'&&String(error.message||'').includes('Lina 簽繪拍立得今日已達 3 張上限')){
         return NextResponse.json({error:'Lina 簽繪拍立得今日 3 張已額滿'},{status:409});

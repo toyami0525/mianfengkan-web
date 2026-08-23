@@ -15,6 +15,14 @@ const FOOD_PRICES: Record<string, number> = {
 const FOOD_CATEGORIES: Record<string, string> = {
   '蛋包飯':'主食',  '扇貝咖哩':'主食',  '加雷馬披薩':'主食',  '醬炒飯':'主食',  '懸掛番茄沙拉':'主食',  '羊駝奶油麵':'主食',  '犎牛牛排':'主食',  '圓扇刺刺梨蛋糕':'甜點',  '巧克力奶油蛋糕':'甜點',  '白桃塔':'甜點',  '蜂蜜牛角麵包':'甜點',  '烏雞布丁':'甜點',  '奶油熱巧克力':'飲品',  '蜜瓜果汁':'飲品',  '白桃汁':'飲品',  '抹茶':'飲品',  '路易波士紅茶':'飲品'
 };
+const LIQUOR_PRICES: Record<string, number> = {
+  '純米酒・宵紅葉':15000,
+  '純米吟釀・月白':15000,
+  '本釀造・青嵐':15000,
+  '生酒・夢紫':15000,
+  '梅酒・金梅':15000,
+};
+const LIQUOR_LIMIT = 2;
 function makePickupCode(){
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes=randomBytes(6);
@@ -44,15 +52,22 @@ export async function POST(request: Request) {
     const cleanItems = (Array.isArray(body.items) ? body.items : []).map((item:any)=>{
       const name=String(item?.name??'').slice(0,100);
       const qty=Math.max(1,Math.min(99,Math.floor(Number(item?.qty??1))));
-      return {name,qty,price:FOOD_PRICES[name]??-1};
+      return {name,qty,price:FOOD_PRICES[name]??LIQUOR_PRICES[name]??-1};
     }).filter((item:any)=>item.name&&item.price>=0);
-    if (!cleanItems.length) return NextResponse.json({ error: '請至少選擇一項餐點' }, { status: 400 });
+    if (!cleanItems.length) return NextResponse.json({ error: '請選擇一份套餐或至少 1 瓶酒品' }, { status: 400 });
 
-    const foodTotal=cleanItems.reduce((n:number,x:any)=>n+x.price*x.qty,0);
-    const mealCounts = ['主食','甜點','飲品'].map(c => cleanItems.filter((x:any)=>FOOD_CATEGORIES[x.name]===c).reduce((n:number,x:any)=>n+x.qty,0));
-    if (mealCounts.some(n=>n!==1) || cleanItems.length!==3) return NextResponse.json({ error: '本館採套餐制，請從主食、甜點、飲品各選一項' }, { status: 400 });
-    if(wantsPolaroid&&foodTotal<150000)return NextResponse.json({error:'慕斯菲露紀念拍立得需本筆餐點消費滿 150,000 Gil'},{status:400});
-    if(wantsYukinojiPolaroid&&foodTotal<200000)return NextResponse.json({error:'雪之寺羽狩紀念拍立得需本筆餐點消費滿 200,000 Gil'},{status:400});
+    const mealItems=cleanItems.filter((x:any)=>FOOD_CATEGORIES[x.name]);
+    const liquorItems=cleanItems.filter((x:any)=>LIQUOR_PRICES[x.name]!=null);
+    const liquorCount=liquorItems.reduce((n:number,x:any)=>n+x.qty,0);
+    if(liquorCount>LIQUOR_LIMIT)return NextResponse.json({error:`每次點餐酒品合計最多 ${LIQUOR_LIMIT} 瓶`},{status:400});
+    if(mealItems.length){
+      const mealCounts=['主食','甜點','飲品'].map(c=>mealItems.filter((x:any)=>FOOD_CATEGORIES[x.name]===c).reduce((n:number,x:any)=>n+x.qty,0));
+      if(mealCounts.some(n=>n!==1)||mealItems.length!==3)return NextResponse.json({error:'套餐若有選擇，請從主食、甜點、飲品各選一項'},{status:400});
+    }
+    const foodTotal=mealItems.reduce((n:number,x:any)=>n+x.price*x.qty,0);
+    const liquorTotal=liquorItems.reduce((n:number,x:any)=>n+x.price*x.qty,0);
+    if(wantsPolaroid&&foodTotal<150000)return NextResponse.json({error:'慕斯菲露紀念拍立得需本筆套餐餐點消費滿 150,000 Gil（酒品不列入）'},{status:400});
+    if(wantsYukinojiPolaroid&&foodTotal<200000)return NextResponse.json({error:'雪之寺羽狩紀念拍立得需本筆套餐餐點消費滿 200,000 Gil（酒品不列入）'},{status:400});
 
     let deliveryPreferenceStaff:any=null;
     if(deliveryPreferenceStaffId){
@@ -70,7 +85,7 @@ export async function POST(request: Request) {
     if(wantsYukinojiPolaroid){const r=await publicSupabase().from('staff').select('id,name,slug').eq('slug','yukinoji-hakari').single();if(r.error||!r.data)return NextResponse.json({error:'找不到雪之寺羽狩館員資料'},{status:400});yuki=r.data}
 
     const orderItems=[...cleanItems,...(wantsPolaroid?[{name:'慕斯菲露－紀念拍立得',qty:1,price:POLAROID_PRICE}]:[]),...(wantsYukinojiPolaroid?[{name:'雪之寺羽狩－紀念拍立得',qty:1,price:YUKINOJI_POLAROID_PRICE}]:[])];
-    const total=foodTotal+(wantsPolaroid?POLAROID_PRICE:0)+(wantsYukinojiPolaroid?YUKINOJI_POLAROID_PRICE:0);
+    const total=foodTotal+liquorTotal+(wantsPolaroid?POLAROID_PRICE:0)+(wantsYukinojiPolaroid?YUKINOJI_POLAROID_PRICE:0);
     const staffId=wantsPolaroid&&!wantsYukinojiPolaroid?musu.id:wantsYukinojiPolaroid&&!wantsPolaroid?yuki.id:null;
     const { error } = await publicSupabase().from('orders').insert({guest_name:guestName,staff_id:staffId,items:orderItems,total,note:String(body.note??'').trim(),status:'pending',delivery_preference_staff_id:deliveryPreferenceStaff?.id??null,delivery_preference_staff_name:deliveryPreferenceStaff?.name??null});
     if (error) throw error;

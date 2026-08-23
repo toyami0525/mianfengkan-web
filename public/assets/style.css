@@ -934,3 +934,22 @@ body:not(.homepage) .rule p{
     background:rgba(255,255,255,.035) !important;
   }
 }
+
+
+/* v2.8.7：獨立酒品菜單／每筆點餐最多兩瓶 */
+.liquor-menu-group{grid-column:1/-1}
+.liquor-menu-note{margin:-6px 0 12px;color:var(--muted);font-size:14px;line-height:1.7}
+.liquor-menu-item{position:relative;padding-left:20px!important}
+.liquor-menu-item:before{content:"";position:absolute;left:0;top:50%;width:9px;height:9px;border-radius:50%;transform:translateY(-50%);box-shadow:0 0 0 4px rgba(255,255,255,.08)}
+.liquor-menu-item.liquor-red:before{background:#b94b4b}.liquor-menu-item.liquor-blue:before{background:#4d78bd}.liquor-menu-item.liquor-green:before{background:#4f8b63}.liquor-menu-item.liquor-purple:before{background:#845da8}.liquor-menu-item.liquor-yellow:before{background:#d7ad45}
+.liquor-order-section{margin-top:4px;padding:20px;border:1px solid rgba(216,189,134,.24);border-radius:18px;background:rgba(14,20,37,.48)}
+.liquor-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.liquor-choice{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 15px;border:1px solid rgba(216,189,134,.18);border-radius:14px;background:rgba(19,26,47,.78)}
+.liquor-choice .liquor-color-dot{width:12px;height:36px;border-radius:999px;background:#999;box-shadow:0 0 12px rgba(255,255,255,.08)}
+.liquor-choice.liquor-red .liquor-color-dot{background:#b94b4b}.liquor-choice.liquor-blue .liquor-color-dot{background:#4d78bd}.liquor-choice.liquor-green .liquor-color-dot{background:#4f8b63}.liquor-choice.liquor-purple .liquor-color-dot{background:#845da8}.liquor-choice.liquor-yellow .liquor-color-dot{background:#d7ad45}
+.liquor-copy{display:grid;gap:2px}.liquor-copy small{font-size:11px;color:#b9c0d1}.liquor-copy b{font-size:16px;color:#f7f1e8}.liquor-copy em{font-size:12px;color:#d9bd89;font-style:normal}
+.page:has(#bookingForm) .liquor-choice .liquor-qty{width:92px;min-width:92px;padding:10px 12px;font-size:15px;background:#11182b;color:#f6f0e7;border:1px solid rgba(216,189,134,.30)}
+.liquor-limit-note{margin-top:12px;padding:9px 12px;border-radius:10px;background:rgba(216,189,134,.08);color:#d9bd89;font-size:13px;font-weight:700}.liquor-limit-note.limit-reached{background:rgba(185,75,75,.13);color:#f0b5b5}
+.liquor-summary-line{border-left:3px solid #d9bd89;padding-left:12px}
+.alcohol-notice-modal{border:1px solid rgba(216,189,134,.28)!important}.alcohol-warning-main{font-size:22px!important;font-weight:800;color:#f0d59c!important;letter-spacing:.04em}
+@media(max-width:720px){.liquor-choices{grid-template-columns:1fr}.liquor-choice{grid-template-columns:12px minmax(0,1fr) 88px}.alcohol-warning-main{font-size:19px!important}}
