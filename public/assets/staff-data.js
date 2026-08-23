@@ -75,7 +75,7 @@ const MF_DEFAULT_STAFF = [
 
 ];
 function mfEsc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function tagClass(x){return {'接待':'service-reception','餐食':'service-food','泡湯':'service-bath','泡湯洗浴':'service-bath','按摩':'service-massage','按摩服務':'service-massage','枕邊談心':'service-talk','耳語陪伴':'service-talk','小遊戲':'service-game','拍立得':'service-polaroid','駐店繪師(公版)':'service-art'}[x]||''}
+function tagClass(x){const s=String(x||'');if(s.includes('拍立得'))return 'service-polaroid';if(s==='駐店繪師(公版)'||s.includes('Q版繪圖'))return 'service-art';return {'接待':'service-reception','餐食':'service-food','泡湯':'service-bath','泡湯洗浴':'service-bath','按摩':'service-massage','按摩服務':'service-massage','枕邊談心':'service-talk','耳語陪伴':'service-talk','小遊戲':'service-game'}[s]||''}
 function staffCard(x,i){
  const reverse=i%2===1?' host-card-reverse':'';
  const visual=x.photo_primary?`<div class="host-visual host-photo"><img class="host-photo-main" src="${mfEsc(x.photo_primary)}" alt="${mfEsc(x.name)}館員照">${x.photo_secondary?`<figure class="host-photo-secondary"><img src="${mfEsc(x.photo_secondary)}" alt="${mfEsc(x.name)}第二張館員照"></figure>`:''}<div class="host-nameplate"><small>${mfEsc(x.role||'館員')}</small><strong>${mfEsc(x.name)}</strong></div></div>`:`<div class="host-visual host-pink"><span class="host-monogram">${mfEsc((x.name||'楓').slice(0,1))}</span><div class="host-nameplate"><small>${mfEsc(x.role||'館員')}</small><strong>${mfEsc(x.name)}</strong></div></div>`;

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720">
+  <defs>
+    <mask id="crescent"><rect width="100%" height="100%" fill="black"/><circle cx="780" cy="126" r="68" fill="white"/><circle cx="808" cy="101" r="67" fill="black"/></mask>
+    <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <g id="leaf"><path d="M50 1 L58 27 L80 14 L73 38 L98 42 L76 57 L90 78 L62 69 L58 99 L50 82 L42 99 L38 69 L10 78 L24 57 L2 42 L27 38 L20 14 L42 27 Z"/></g>
+  </defs>
+  <g opacity=".95" filter="url(#glow)"><circle cx="780" cy="126" r="68" fill="#D7B779" mask="url(#crescent)"/></g>
+  <g fill="#f1d99f" opacity=".65">
+    <circle cx="682" cy="74" r="2.1"/><circle cx="895" cy="68" r="1.7"/><circle cx="850" cy="194" r="1.4"/><circle cx="616" cy="180" r="1.3"/><circle cx="938" cy="251" r="1.2"/>
+  </g>
+  <g fill="#070c18" opacity=".72">
+    <use href="#leaf" transform="translate(760 290) scale(1.18) rotate(-20 50 50)"/>
+    <use href="#leaf" transform="translate(875 330) scale(.82) rotate(18 50 50)"/>
+    <use href="#leaf" transform="translate(690 385) scale(.68) rotate(-48 50 50)"/>
+    <use href="#leaf" transform="translate(845 470) scale(1.05) rotate(34 50 50)"/>
+    <use href="#leaf" transform="translate(590 515) scale(.55) rotate(-8 50 50)"/>
+  </g>
+  <g fill="#1a2238" opacity=".55">
+    <use href="#leaf" transform="translate(715 255) scale(.45) rotate(20 50 50)"/>
+    <use href="#leaf" transform="translate(920 425) scale(.58) rotate(-25 50 50)"/>
+  </g>
+  <path d="M655 315 C760 290 845 325 965 280" fill="none" stroke="#121a2a" stroke-width="5" opacity=".55"/>
+  <path d="M690 410 C790 365 870 382 1000 338" fill="none" stroke="#111827" stroke-width="3" opacity=".42"/>
+</svg>

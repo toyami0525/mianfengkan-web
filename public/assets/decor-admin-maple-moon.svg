@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820">
+  <defs>
+    <mask id="crescent"><rect width="100%" height="100%" fill="black"/><circle cx="1000" cy="116" r="62" fill="white"/><circle cx="1027" cy="92" r="62" fill="black"/></mask>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <g id="leaf"><path d="M50 1 L58 27 L80 14 L73 38 L98 42 L76 57 L90 78 L62 69 L58 99 L50 82 L42 99 L38 69 L10 78 L24 57 L2 42 L27 38 L20 14 L42 27 Z"/></g>
+    <linearGradient id="redLeaf" x1="0" x2="1"><stop stop-color="#B73A2E"/><stop offset="1" stop-color="#7A1F1F"/></linearGradient>
+  </defs>
+  <circle cx="1000" cy="116" r="62" fill="#D7B779" mask="url(#crescent)" opacity=".92" filter="url(#glow)"/>
+  <g fill="#f0d59b" opacity=".46"><circle cx="866" cy="60" r="1.8"/><circle cx="1120" cy="208" r="1.2"/><circle cx="948" cy="248" r="1.4"/><circle cx="765" cy="145" r="1.2"/></g>
+  <g fill="url(#redLeaf)" opacity=".72">
+    <use href="#leaf" transform="translate(20 34) scale(1.15) rotate(-24 50 50)"/>
+    <use href="#leaf" transform="translate(115 8) scale(.78) rotate(18 50 50)"/>
+    <use href="#leaf" transform="translate(58 138) scale(.62) rotate(42 50 50)"/>
+    <use href="#leaf" transform="translate(1020 610) scale(1.22) rotate(20 50 50)"/>
+    <use href="#leaf" transform="translate(930 688) scale(.83) rotate(-18 50 50)"/>
+    <use href="#leaf" transform="translate(1095 710) scale(.64) rotate(45 50 50)"/>
+  </g>
+  <g fill="#10182b" opacity=".72">
+    <use href="#leaf" transform="translate(210 80) scale(.56) rotate(38 50 50)"/>
+    <use href="#leaf" transform="translate(850 640) scale(.58) rotate(-32 50 50)"/>
+    <use href="#leaf" transform="translate(1050 520) scale(.48) rotate(10 50 50)"/>
+  </g>
+  <path d="M0 170 C110 132 190 150 280 112" fill="none" stroke="#7A1F1F" stroke-width="5" opacity=".34"/>
+  <path d="M882 760 C1000 710 1080 735 1200 688" fill="none" stroke="#B73A2E" stroke-width="4" opacity=".28"/>
+</svg>
