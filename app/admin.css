@@ -387,3 +387,16 @@ body{
 .order-items .liquor-admin-item{padding:7px 10px!important;border-radius:9px!important;margin:4px 0!important;background-clip:padding-box!important}
 .order-items .liquor-admin-item strong,.order-items .liquor-admin-item span,.order-items .liquor-admin-item small,.new-order-items .liquor-admin-item{color:#fff7ef!important}
 .liquor-admin-item.liquor-yellow,.liquor-admin-item.liquor-yellow strong,.liquor-admin-item.liquor-yellow span,.liquor-admin-item.liquor-yellow small{color:#fff4c8!important}
+
+/* v2.8.8：固定基本薪資＋餐點分紅分段結算 */
+.payroll-settlement-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.payroll-settlement-wrap{overflow:auto}
+.payroll-settlement-table{min-width:980px}
+.payroll-row-settled{opacity:.72}
+.payroll-status{display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent}
+.payroll-status.pending{background:rgba(161,112,41,.25);color:#f0cf91;border-color:rgba(222,177,104,.28)}
+.payroll-status.settled{background:rgba(45,112,73,.28);color:#bce7c8;border-color:rgba(105,188,132,.3)}
+.payroll-roster label.settled{background:rgba(31,72,52,.42)!important;border-color:rgba(100,174,124,.26)!important}
+.payroll-warning{margin-top:12px;padding:12px 14px;border:1px solid rgba(224,115,115,.35);border-left:4px solid #c55a5d;background:rgba(109,40,45,.3);color:#f0c4c4;line-height:1.65}
+.payroll-settlement-table button:disabled{opacity:.58;cursor:default}
+@media(max-width:720px){.payroll-settlement-actions{width:100%;justify-content:stretch}.payroll-settlement-actions button{flex:1}.payroll-formula{align-items:flex-start}.payroll-settlement-wrap{margin-left:-4px;margin-right:-4px}}
