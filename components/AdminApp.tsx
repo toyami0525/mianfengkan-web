@@ -541,7 +541,7 @@ export default function AdminApp(){
  const payrollHasSettlementActivity=payrollSettledIds.size>0||payrollDistributedFood>0;
  const payrollPaidOtherStaff=selectedPayrollPeople.filter(p=>!p.isOwner&&payrollSettledIds.has(p.id)).reduce((sum,p)=>sum+Math.max(0,Number(payrollSettlement.settled[p.id]?.payout||0)),0);
  function settlePayrollPerson(personId:string){
-  if(account.role!=='owner'||payrollSettledIds.has(personId))return;
+  if(account?.role!=='owner'||payrollSettledIds.has(personId))return;
   const person=selectedPayrollPeople.find(p=>p.id===personId);
   if(!person)return;
   const recipients=selectedPayrollPeople.filter(p=>!payrollSettledIds.has(p.id));
@@ -564,7 +564,7 @@ export default function AdminApp(){
   setMsg(`${person.name} 已結算：${payout.toLocaleString('zh-TW')} Gil（餐點分紅 ${foodShare.toLocaleString('zh-TW')} Gil）。`);
  }
  function settleAllPayroll(){
-  if(account.role!=='owner'||!payrollUnsettledPeople.length)return;
+  if(account?.role!=='owner'||!payrollUnsettledPeople.length)return;
   const pool=Math.max(0,payrollFoodRevenue-payrollDistributedFood);
   const share=Math.floor(pool/payrollUnsettledPeople.length);
   const allocated=share*payrollUnsettledPeople.length;
