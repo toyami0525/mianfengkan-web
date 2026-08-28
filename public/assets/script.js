@@ -7,6 +7,10 @@ function toast(msg){const el=document.querySelector('.toast');if(!el)return;el.t
 // v2.8.0：所有公開頁面自動加入「排班月曆」入口。
 (()=>{const nav=document.querySelector('.nav-links');if(!nav||nav.querySelector('a[href="schedule.html"]'))return;const a=document.createElement('a');a.href='schedule.html';a.textContent='排班月曆';if(location.pathname.endsWith('/schedule.html')||location.pathname.endsWith('schedule.html'))a.classList.add('active');const locationLink=nav.querySelector('a[href="location.html"]');if(locationLink)nav.insertBefore(a,locationLink);else{const reserve=nav.querySelector('.reserve-link');reserve?nav.insertBefore(a,reserve):nav.appendChild(a)}})();
 
+
+// v2.8.11：所有公開頁面自動加入「VIP 貴客榜」入口。
+(()=>{const nav=document.querySelector('.nav-links');if(!nav||nav.querySelector('a[href="vip.html"]'))return;const a=document.createElement('a');a.href='vip.html';a.textContent='VIP 貴客榜';if(location.pathname.endsWith('/vip.html')||location.pathname.endsWith('vip.html'))a.classList.add('active');const locationLink=nav.querySelector('a[href="location.html"]');if(locationLink)nav.insertBefore(a,locationLink);else{const reserve=nav.querySelector('.reserve-link');reserve?nav.insertBefore(a,reserve):nav.appendChild(a)}})();
+
 // v2.8.9：全站 Discord 浮動連結圖標（從館主後台 venue.discord 讀取）
 (async()=>{
  if(document.getElementById('mianfengkan-discord-link'))return;
