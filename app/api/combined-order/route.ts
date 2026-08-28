@@ -38,12 +38,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const guestName = String(body.guest_name ?? '').trim();
+    const guestServer = String(body.guest_server ?? '').trim().slice(0,60);
     const staffId = String(body.staff_id ?? '').trim();
     const requestedServices = Array.isArray(body.services) ? body.services.map(String) : [];
     const note = String(body.note ?? '').trim();
     const wantsPolaroid = body.polaroid === true;
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
-    if (!guestName || !staffId || !requestedServices.length) return NextResponse.json({ error: '預約資料不完整' }, { status: 400 });
+    if (!guestName || !guestServer || !staffId || !requestedServices.length) return NextResponse.json({ error: '請完整填寫客人名稱、伺服器與指名資料' }, { status: 400 });
 
     if(requestedServices.includes('眠楓套席')&&requestedServices.includes('Q版繪圖(公版)')) {
       return NextResponse.json({error:'Q版繪圖(公版)不可與眠楓套席同時選擇'},{status:400});
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
       for(let attempt=0;attempt<8;attempt++){
         const code=makePickupCode();
         const {data:claimed,error:claimError}=await adminDb.from('polaroid_pickups').insert({
-          reservation_id:null,staff_id:staffId,staff_name:staffName,guest_name:guestName,pickup_code:code,status:'processing',item_type:'lina_signed_polaroid'
+          reservation_id:null,staff_id:staffId,staff_name:staffName,guest_name:guestName,guest_server:guestServer,pickup_code:code,status:'processing',item_type:'lina_signed_polaroid'
         }).select('id').single();
         if(!claimError&&claimed){linaPickup={id:claimed.id,code};break}
         if(claimError?.code==='23505') continue;
@@ -167,6 +168,12 @@ export async function POST(request: Request) {
       if(linaPickup) await adminDb.from('polaroid_pickups').delete().eq('id',linaPickup.id);
       throw reservationError;
     }
+    const {error:serverUpdateError}=await adminDb.from('reservations').update({guest_server:guestServer}).eq('id',reservationId);
+    if(serverUpdateError){
+      if(linaPickup) await adminDb.from('polaroid_pickups').delete().eq('id',linaPickup.id);
+      await adminDb.from('reservations').update({status:'cancelled'}).eq('id',reservationId);
+      throw serverUpdateError;
+    }
     if(linaPickup){
       const {error:linkError}=await adminDb.from('polaroid_pickups').update({reservation_id:reservationId}).eq('id',linaPickup.id);
       if(linkError){
@@ -179,7 +186,7 @@ export async function POST(request: Request) {
     if (cleanItems.length || wantsPolaroid || wantsYukinojiPolaroid) {
       const orderItems = [...cleanItems, ...(wantsPolaroid ? [{ name:'慕斯菲露－紀念拍立得', qty:1, price:POLAROID_PRICE }] : []), ...(wantsYukinojiPolaroid ? [{ name:'雪之寺羽狩－紀念拍立得', qty:1, price:YUKINOJI_POLAROID_PRICE }] : [])];
       const total = foodTotal + (wantsPolaroid ? POLAROID_PRICE : 0) + (wantsYukinojiPolaroid ? YUKINOJI_POLAROID_PRICE : 0);
-      const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, staff_id:staffId, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
+      const { error: orderError } = await publicSupabase().from('orders').insert({ guest_name:guestName, guest_server:guestServer, staff_id:staffId, items:orderItems, total, note:`關聯預約：${reservationId}`, status:'pending' });
       if (orderError) throw orderError;
     }
     const pickupItems:{code:string;type:string;label:string}[]=[];
@@ -189,7 +196,7 @@ export async function POST(request: Request) {
       for(let attempt=0;attempt<8;attempt++){
         const code=makePickupCode();
         const {error:pickupError}=await admin.from('polaroid_pickups').insert({
-          reservation_id:reservationId,staff_id:staffId,staff_name:staffName,guest_name:guestName,pickup_code:code,status:'processing',item_type:itemType
+          reservation_id:reservationId,staff_id:staffId,staff_name:staffName,guest_name:guestName,guest_server:guestServer,pickup_code:code,status:'processing',item_type:itemType
         });
         if(!pickupError){pickupItems.push({code,type:itemType,label});return}
         if(pickupError.code!=='23505') throw pickupError;

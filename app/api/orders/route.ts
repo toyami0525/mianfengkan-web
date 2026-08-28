@@ -28,11 +28,11 @@ function makePickupCode(){
   const bytes=randomBytes(6);
   return 'MF-'+Array.from(bytes as Uint8Array).map((b:number)=>alphabet[b%alphabet.length]).join('');
 }
-async function createPickup(staff:{id:string;name:string},guestName:string){
+async function createPickup(staff:{id:string;name:string},guestName:string,guestServer:string){
   const db=adminSupabase();
   for(let attempt=0;attempt<8;attempt++){
     const code=makePickupCode();
-    const {error}=await db.from('polaroid_pickups').insert({reservation_id:null,staff_id:staff.id,staff_name:String(staff?.name ?? ''),guest_name:guestName,pickup_code:code,status:'processing'});
+    const {error}=await db.from('polaroid_pickups').insert({reservation_id:null,staff_id:staff.id,staff_name:String(staff?.name ?? ''),guest_name:guestName,guest_server:guestServer,pickup_code:code,status:'processing'});
     if(!error)return code;
     if(error.code!=='23505')throw error;
   }
@@ -43,10 +43,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const guestName = String(body.guest_name ?? '').trim();
+    const guestServer = String(body.guest_server ?? '').trim().slice(0,60);
     const wantsPolaroid = body.polaroid === true;
     const wantsYukinojiPolaroid = body.yukinoji_polaroid === true;
     const deliveryPreferenceStaffId = String(body.delivery_preference_staff_id ?? '').trim();
     if (!guestName) return NextResponse.json({ error: '請填寫客人名稱' }, { status: 400 });
+    if (!guestServer) return NextResponse.json({ error: '請填寫伺服器' }, { status: 400 });
     const todayKey=taipeiDateKey();const closureDb=adminSupabase();const{data:venueClosure,error:venueClosureError}=await closureDb.from('venue_closures').select('work_date,reason').eq('work_date',todayKey).maybeSingle();if(venueClosureError)throw venueClosureError;if(isMonday(todayKey)||venueClosure)return NextResponse.json({error:isMonday(todayKey)?'今日為每週一固定休館':'今日臨時休館，暫停接受點餐'},{status:400});
 
     const cleanItems = (Array.isArray(body.items) ? body.items : []).map((item:any)=>{
@@ -87,12 +89,12 @@ export async function POST(request: Request) {
     const orderItems=[...cleanItems,...(wantsPolaroid?[{name:'慕斯菲露－紀念拍立得',qty:1,price:POLAROID_PRICE}]:[]),...(wantsYukinojiPolaroid?[{name:'雪之寺羽狩－紀念拍立得',qty:1,price:YUKINOJI_POLAROID_PRICE}]:[])];
     const total=foodTotal+liquorTotal+(wantsPolaroid?POLAROID_PRICE:0)+(wantsYukinojiPolaroid?YUKINOJI_POLAROID_PRICE:0);
     const staffId=wantsPolaroid&&!wantsYukinojiPolaroid?musu.id:wantsYukinojiPolaroid&&!wantsPolaroid?yuki.id:null;
-    const { error } = await publicSupabase().from('orders').insert({guest_name:guestName,staff_id:staffId,items:orderItems,total,note:String(body.note??'').trim(),status:'pending',delivery_preference_staff_id:deliveryPreferenceStaff?.id??null,delivery_preference_staff_name:deliveryPreferenceStaff?.name??null});
+    const { error } = await publicSupabase().from('orders').insert({guest_name:guestName,guest_server:guestServer,staff_id:staffId,items:orderItems,total,note:String(body.note??'').trim(),status:'pending',delivery_preference_staff_id:deliveryPreferenceStaff?.id??null,delivery_preference_staff_name:deliveryPreferenceStaff?.name??null});
     if (error) throw error;
 
     const pickupCodes:string[]=[];
-    if(wantsPolaroid)pickupCodes.push(await createPickup(musu,guestName));
-    if(wantsYukinojiPolaroid)pickupCodes.push(await createPickup(yuki,guestName));
+    if(wantsPolaroid)pickupCodes.push(await createPickup(musu,guestName,guestServer));
+    if(wantsYukinojiPolaroid)pickupCodes.push(await createPickup(yuki,guestName,guestServer));
     return NextResponse.json({ ok: true, pickup_code:pickupCodes[0], pickup_codes:pickupCodes });
   } catch (error) {
     const message = error instanceof Error ? error.message : '送出點餐失敗';
