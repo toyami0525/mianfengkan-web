@@ -6,11 +6,13 @@ type VipRow={guest_name:string;total:number;tier:string};
 
 const COMPLETED_STATUSES=['completed','已完成'];
 const TIP_PATTERN=/(打賞|小費|tip|tips|donation|贊助)/i;
+const EXCLUDED_GUEST_NAMES=['羽鶴璃久','路','Lina'];
 
 function normalizeGuestName(value:any){
  return String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ');
 }
 function guestKey(value:any){return normalizeGuestName(value).toLocaleLowerCase('zh-Hant-TW')}
+const EXCLUDED_GUEST_KEYS=new Set(EXCLUDED_GUEST_NAMES.map(guestKey));
 function vipTier(total:number){
  if(total>=5_000_000)return '丹頂上賓';
  if(total>=3_000_000)return '楓鶴貴賓';
@@ -58,7 +60,7 @@ export async function GET(){
   const map=new Map<string,{guest_name:string,total:number}>();
   const add=(rawName:any,amount:number)=>{
    const name=normalizeGuestName(rawName);const key=guestKey(name);
-   if(!name||!key||amount<=0)return;
+   if(!name||!key||amount<=0||EXCLUDED_GUEST_KEYS.has(key))return;
    const current=map.get(key)||{guest_name:name,total:0};
    current.total+=amount;
    if(name.length>current.guest_name.length)current.guest_name=name;
