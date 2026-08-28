@@ -6,13 +6,22 @@ type VipRow={guest_name:string;total:number;tier:string};
 
 const COMPLETED_STATUSES=['completed','已完成'];
 const TIP_PATTERN=/(打賞|小費|tip|tips|donation|贊助)/i;
-const EXCLUDED_GUEST_NAMES=['羽鶴璃久','路','Lina'];
+const LEGACY_TEST_GUEST_NAMES=['羽鶴璃久','羽鶴璃久2','路','Lina'];
+// 只排除這個時間點以前既有的測試資料；之後同名正式消費會正常計入。
+const LEGACY_TEST_CUTOFF='2026-08-28T11:03:00.000Z';
 
 function normalizeGuestName(value:any){
  return String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ');
 }
 function guestKey(value:any){return normalizeGuestName(value).toLocaleLowerCase('zh-Hant-TW')}
-const EXCLUDED_GUEST_KEYS=new Set(EXCLUDED_GUEST_NAMES.map(guestKey));
+const LEGACY_TEST_GUEST_KEYS=new Set(LEGACY_TEST_GUEST_NAMES.map(guestKey));
+function isLegacyTestRow(rawName:any,createdAt:any){
+ const key=guestKey(rawName);
+ if(!LEGACY_TEST_GUEST_KEYS.has(key))return false;
+ const t=Date.parse(String(createdAt??''));
+ const cutoff=Date.parse(LEGACY_TEST_CUTOFF);
+ return Number.isFinite(t)&&t<=cutoff;
+}
 function vipTier(total:number){
  if(total>=5_000_000)return '丹頂上賓';
  if(total>=3_000_000)return '楓鶴貴賓';
@@ -54,20 +63,20 @@ async function fetchAll(table:'reservations'|'orders',columns:string){
 export async function GET(){
  try{
   const[reservations,orders]=await Promise.all([
-   fetchAll('reservations','guest_name,service_name,price,status'),
-   fetchAll('orders','guest_name,items,total,status'),
+   fetchAll('reservations','guest_name,service_name,price,status,created_at'),
+   fetchAll('orders','guest_name,items,total,status,created_at'),
   ]);
   const map=new Map<string,{guest_name:string,total:number}>();
-  const add=(rawName:any,amount:number)=>{
+  const add=(rawName:any,amount:number,createdAt:any)=>{
    const name=normalizeGuestName(rawName);const key=guestKey(name);
-   if(!name||!key||amount<=0||EXCLUDED_GUEST_KEYS.has(key))return;
+   if(!name||!key||amount<=0||isLegacyTestRow(name,createdAt))return;
    const current=map.get(key)||{guest_name:name,total:0};
    current.total+=amount;
    if(name.length>current.guest_name.length)current.guest_name=name;
    map.set(key,current);
   };
-  reservations.forEach(row=>add(row.guest_name,reservationSpend(row)));
-  orders.forEach(row=>add(row.guest_name,orderSpend(row)));
+  reservations.forEach(row=>add(row.guest_name,reservationSpend(row),row.created_at));
+  orders.forEach(row=>add(row.guest_name,orderSpend(row),row.created_at));
   const ranking:VipRow[]=[...map.values()]
    .filter(row=>row.total>0)
    .sort((a,b)=>b.total-a.total||a.guest_name.localeCompare(b.guest_name,'zh-Hant-TW'))
