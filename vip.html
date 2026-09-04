@@ -1,0 +1,65 @@
+<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VIP 貴客榜｜眠楓館</title><meta name="description" content="眠楓館 VIP 貴客消費排行榜與等級"><link rel="stylesheet" href="assets/style.css?v=2811"><style>
+.vip-guest-server{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin-top:6px;padding:4px 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;font-size:12px;line-height:1.2;letter-spacing:.05em;font-weight:800;opacity:1;box-shadow:0 3px 10px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);text-shadow:0 1px 2px rgba(0,0,0,.38)}
+.vip-podium .vip-guest-server{margin-top:-2px;margin-bottom:7px;align-self:center}
+.vip-guest-name-wrap{min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.vip-guest-name-wrap .vip-guest-name{display:block}
+.vip-guest-server.server-ifrit{background:#a92b2b;border-color:#ef7770;color:#fff7f2}
+.vip-guest-server.server-leviathan{background:#3f8fa8;border-color:#93d9ec;color:#f7fdff}
+.vip-guest-server.server-titan{background:#a58232;border-color:#e6c96e;color:#fffaf0}
+.vip-guest-server.server-garuda{background:#397c4b;border-color:#82c995;color:#f6fff7}
+.vip-guest-server.server-phoenix{background:#c89b24;border-color:#f3d66a;color:#241b03;text-shadow:none}
+.vip-guest-server.server-bahamut{background:#6d4a91;border-color:#b59ad3;color:#fff9ff}
+.vip-guest-server.server-odin{background:#46505c;border-color:#aab3bd;color:#f4f7fa}
+.vip-guest-server.server-default{background:#4a4f59;border-color:#8f98a3;color:#f7f8fa}
+</style></head><body>
+<header class="site-header"><nav class="nav"><a class="brand" href="index.html"><span class="brand-mark">楓</span><span><strong>眠楓館</strong><small>MIANFENGKAN</small></span></a><button class="menu-btn" aria-expanded="false">☰</button><div class="nav-links"><a href="about.html">館內介紹</a><a href="services.html">服務項目</a><a href="staff.html">館員介紹</a><a href="menu.html">餐食價目</a><a href="rules.html">來館須知</a><a href="schedule.html">排班月曆</a><a class="active" href="vip.html">VIP 貴客榜</a><a href="location.html">位置</a><a href="polaroid.html">拍立得領取</a><a class="reserve-link" href="reserve.html">指名／點餐</a></div></nav></header>
+<main class="page vip-page">
+<header class="page-title vip-title"><span class="eyebrow">HONORED GUESTS</span><h1>眠楓館・貴客名錄</h1><p>每一段相逢，都會在楓影之下留下足跡。</p></header>
+<section class="vip-rule-banner" aria-label="排行榜計算規則"><strong>消費排行計算規則</strong><span>VIP 等級與排行榜僅計入實際消費金額，<b>打賞不列入累積消費，也不影響排名。</b></span></section>
+<section class="vip-levels" aria-label="VIP 等級">
+ <article><span class="vip-level-icon">🍁</span><b>楓葉旅人</b><small>0 ～ 499,999 Gil</small></article>
+ <article><span class="vip-level-icon">🍂</span><b>紅楓常客</b><small>500,000 ～ 1,499,999 Gil</small></article>
+ <article><span class="vip-level-icon">🪽</span><b>白鶴貴客</b><small>1,500,000 ～ 2,999,999 Gil</small></article>
+ <article><span class="vip-level-icon">✨</span><b>楓鶴貴賓</b><small>3,000,000 ～ 4,999,999 Gil</small></article>
+ <article><span class="vip-level-icon">👑</span><b>丹頂上賓</b><small>5,000,000 Gil 以上</small></article>
+</section>
+<section class="vip-ranking-card">
+ <div class="vip-ranking-head"><div><span class="eyebrow">VIP RANKING</span><h2>貴客消費排行</h2></div><p>僅統計已完成的指名、餐點、酒品、拍立得與館內商品。</p></div>
+ <div id="vipTopThree" class="vip-top-three" aria-live="polite"></div>
+ <div id="vipRanking" class="vip-ranking-list"><div class="vip-loading">正在整理貴客名錄…</div></div>
+ <p class="vip-footnote">※ 排名依累積實際消費由高至低排列。取消、未完成訂單與打賞不計入。</p>
+</section>
+</main>
+<div class="toast"></div><script src="assets/script.js?v=2811"></script><script>
+(()=>{
+ const rankingEl=document.getElementById('vipRanking');
+ const topEl=document.getElementById('vipTopThree');
+ const fmt=n=>Number(n||0).toLocaleString('zh-TW')+' Gil';
+ const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+ const tierClass=tier=>({'楓葉旅人':'maple','紅楓常客':'red-maple','白鶴貴客':'white-crane','楓鶴貴賓':'maple-crane','丹頂上賓':'crowned-crane'}[tier]||'maple');
+ const tierIcon=tier=>({'楓葉旅人':'🍁','紅楓常客':'🍂','白鶴貴客':'🪽','楓鶴貴賓':'✨','丹頂上賓':'👑'}[tier]||'🍁');
+ const medal=i=>i===0?'🥇':i===1?'🥈':'🥉';
+ const serverClass=server=>({
+  '伊弗利特':'server-ifrit',
+  '利維坦':'server-leviathan',
+  '泰坦':'server-titan',
+  '迦樓羅':'server-garuda',
+  '鳳凰':'server-phoenix',
+  '巴哈姆特':'server-bahamut',
+  '奧汀':'server-odin',
+  '奧丁':'server-odin'
+ }[String(server||'').trim()]||'server-default');
+ async function load(){
+  try{
+   const r=await fetch('/api/vip-ranking',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'讀取排行榜失敗');
+   const rows=Array.isArray(j.ranking)?j.ranking:[];
+   if(!rows.length){topEl.innerHTML='';rankingEl.innerHTML='<div class="vip-loading">目前還沒有已完成的消費紀錄。</div>';return}
+   const top=rows.slice(0,3);
+   topEl.innerHTML=top.map((row,i)=>`<article class="vip-podium vip-podium-${i+1}"><span class="vip-medal">${medal(i)}</span><span class="vip-rank-no">NO.${i+1}</span><h3>${esc(row.guest_name)}</h3>${row.guest_server?`<small class="vip-guest-server ${serverClass(row.guest_server)}">${esc(row.guest_server)}</small>`:''}<span class="vip-tier ${tierClass(row.tier)}">${tierIcon(row.tier)} ${esc(row.tier)}</span><strong>${fmt(row.total)}</strong></article>`).join('');
+   rankingEl.innerHTML=rows.map((row,i)=>`<div class="vip-rank-row ${i<3?'top-rank':''}"><span class="vip-rank-index">${i+1}</span><span class="vip-guest-name-wrap"><span class="vip-guest-name">${esc(row.guest_name)}</span>${row.guest_server?`<small class="vip-guest-server ${serverClass(row.guest_server)}">${esc(row.guest_server)}</small>`:''}</span><span class="vip-tier ${tierClass(row.tier)}">${tierIcon(row.tier)} ${esc(row.tier)}</span><strong class="vip-total">${fmt(row.total)}</strong></div>`).join('');
+  }catch(error){topEl.innerHTML='';rankingEl.innerHTML=`<div class="vip-loading vip-error">${esc(error instanceof Error?error.message:'讀取排行榜失敗')}</div>`}
+ }
+ load();
+ setInterval(load,60000);
+})();
+</script><script src="assets/site-content.js"></script></body></html>
