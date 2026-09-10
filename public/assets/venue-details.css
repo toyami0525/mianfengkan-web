@@ -19,6 +19,10 @@ body.mf-pickup-page {
   --mf-panel: rgba(27, 17, 11, .93);
   --mf-header: rgba(22, 14, 10, .96);
 }
+body.mf-pickup-page::before {
+  /* Anchor the letter to the visible lower edge on wide and narrow screens. */
+  background-position: center, right bottom !important;
+}
 
 /* 服務項目：暖霧湯屋中的服務冊。 */
 body.mf-services-page .service-list { gap: 20px; }
@@ -35,70 +39,18 @@ body.mf-services-page .service-row strong { font-size: 24px; line-height: 1.6; l
 body.mf-services-page .service-row p { margin: 0; color: #e1d5c5 !important; font-size: 16px; line-height: 1.95; }
 body.mf-services-page .service-row .price { font-size: 16px; color: #eacb97 !important; line-height: 1.8; font-variant-numeric: tabular-nums; }
 
-/* 館員介紹：保留原照片，照片約占介紹區三分之一。 */
+/* 館員介紹：沿用原本的大照片、疊放小照片與左右交錯排版。 */
+body.mf-staff-page .page { max-width: 1240px; }
 body.mf-staff-page .staff-showcase { gap: 32px; margin-top: 0; }
-body.mf-staff-page .host-card,
-body.mf-staff-page .host-card-reverse {
-  grid-template-columns: minmax(0, .34fr) minmax(0, .66fr);
-  align-items: start;
-  gap: 38px;
-  padding: 34px;
-  min-height: 0;
-  border-radius: 4px;
+body.mf-staff-page .host-card {
   background: var(--mf-panel) !important;
   border: 1px solid rgba(215, 181, 114, .48) !important;
   box-shadow: inset 0 0 0 5px rgba(203, 157, 89, .025), 0 18px 44px rgba(0, 0, 0, .25);
-  overflow: visible;
 }
-body.mf-staff-page .host-visual,
-body.mf-staff-page .host-card-reverse .host-visual {
-  order: 1;
-  display: block;
-  min-height: 0;
-  width: 100%;
-  max-width: 340px;
-  margin: 0;
-  padding: 8px;
-  border: 1px solid rgba(218, 181, 111, .55);
-  border-radius: 2px;
-  background: rgba(8, 7, 6, .85);
-  overflow: hidden;
-}
-body.mf-staff-page .host-visual::before,
-body.mf-staff-page .host-visual::after,
 body.mf-staff-page .coming-card::before,
 body.mf-staff-page .coming-card::after { content: none !important; }
-body.mf-staff-page .host-photo-main {
-  position: static;
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 260px;
-  object-fit: contain;
-  object-position: center;
-  border-radius: 0;
-  transform: none !important;
-  filter: none !important;
-}
-body.mf-staff-page .host-photo-secondary {
-  position: static;
-  width: 45%;
-  max-width: 140px;
-  aspect-ratio: auto;
-  margin: 12px auto 0;
-  padding: 4px;
-  background: rgba(211, 179, 120, .09);
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  box-shadow: none;
-  transform: none !important;
-}
-body.mf-staff-page .host-photo-secondary img { width: 100%; height: auto; max-height: 100px; object-fit: contain; border-radius: 0; }
-body.mf-staff-page .host-nameplate,
 body.mf-staff-page .host-number { display: none; }
-body.mf-staff-page .host-monogram { display: block; padding: 44px 0; font-size: 64px; text-align: center; color: #e4c795; transform: none !important; }
-body.mf-staff-page .host-content,
-body.mf-staff-page .host-card-reverse .host-content { order: 2; min-width: 0; padding: 0; background: transparent !important; }
+body.mf-staff-page .host-content { min-width: 0; background: transparent !important; }
 body.mf-staff-page .host-role { font-size: 14px; color: #dbc08f !important; line-height: 1.7; margin: 0; }
 body.mf-staff-page .host-content h2 { margin: 9px 0 20px; font-size: 30px; line-height: 1.5; color: #f7e8ca !important; font-weight: 500; overflow-wrap: anywhere; }
 body.mf-staff-page .host-quote { color: #f2ceb9 !important; font-size: 18px; line-height: 1.9; margin-bottom: 18px; }
@@ -112,11 +64,14 @@ body.mf-staff-page .persona-switch { display: flex; flex-wrap: wrap; gap: 8px; m
 body.mf-staff-page .persona-switch-btn { min-height: 44px; min-width: 76px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 3px; background: transparent; color: #e8d8be; font-size: 14px; cursor: pointer; }
 body.mf-staff-page .persona-switch-btn.active { color: #ffdf9c; background: rgba(210, 167, 88, .12); border-color: #b99554; }
 body.mf-staff-page .owner-persona-card .persona-photo-alter,
+body.mf-staff-page .owner-persona-card .persona-nameplate-alter,
 body.mf-staff-page .owner-persona-card .persona-panel-alter { display: none; }
 body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-photo-normal,
 body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-secondary,
+body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-nameplate-normal,
 body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-panel-normal { display: none; }
 body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-photo-alter,
+body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-nameplate-alter,
 body.mf-staff-page .owner-persona-card[data-persona="alter"] .persona-panel-alter { display: block; }
 body.mf-staff-page .alter-lore p { margin: 10px 0; }
 body.mf-staff-page .alter-lore .alter-hook { color: #e7c18d !important; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 22px; }
@@ -182,8 +137,6 @@ body.mf-pickup-page .pickup-download { min-height: 46px; display: inline-flex; a
 @media (max-width: 1000px) {
   body.mf-services-page .service-row { grid-template-columns: minmax(140px, .8fr) minmax(0, 1.5fr); gap: 14px 26px; }
   body.mf-services-page .service-row .price { grid-column: 2; text-align: left; }
-  body.mf-staff-page .host-card,
-  body.mf-staff-page .host-card-reverse { gap: 26px; padding: 28px; }
   body.mf-vip-page .vip-ranking-head { flex-direction: column; gap: 10px; }
   body.mf-vip-page .vip-ranking-head p { text-align: left; }
 }
@@ -198,12 +151,6 @@ body.mf-pickup-page .pickup-download { min-height: 46px; display: inline-flex; a
   body.mf-vip-page .vip-total { grid-column: 3; grid-row: 1; }
 }
 @media (max-width: 720px) {
-  body.mf-staff-page .host-card,
-  body.mf-staff-page .host-card-reverse { grid-template-columns: minmax(0, 1fr); gap: 26px; padding: 26px; }
-  body.mf-staff-page .host-visual { max-width: 310px; justify-self: center; }
-  body.mf-staff-page .host-photo-main { max-height: 230px; }
-  body.mf-staff-page .host-photo-secondary { max-width: 110px; }
-  body.mf-staff-page .host-photo-secondary img { max-height: 76px; }
   body.mf-vip-page .vip-top-three { grid-template-columns: minmax(0, 1fr); }
   body.mf-vip-page .vip-podium { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; justify-items: start; text-align: left; column-gap: 14px; row-gap: 8px; padding: 22px; }
   body.mf-vip-page .vip-podium .vip-medal { display: none; }
@@ -226,8 +173,6 @@ body.mf-pickup-page .pickup-download { min-height: 46px; display: inline-flex; a
   body.mf-pickup-page .pickup-status { padding: 20px 14px; }
 }
 @media (max-width: 560px) {
-  body.mf-staff-page .host-card,
-  body.mf-staff-page .host-card-reverse { padding: 22px; gap: 22px; }
   body.mf-staff-page .host-content h2 { font-size: 27px; letter-spacing: .06em; }
   body.mf-staff-page .host-quote { font-size: 17px; }
   body.mf-vip-page .page { padding-left: 16px; padding-right: 16px; }
