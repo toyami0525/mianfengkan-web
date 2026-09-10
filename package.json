@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/prebuild-sanity.mjs && next build",
     "start": "next start",
     "lint": "next lint"

@@ -1,0 +1,335 @@
+/* v2.8.17 — 眠楓館指名／點餐。樣式僅限此頁。 */
+body.reserve-card-theme {
+  --ink: #fff1db;
+  --muted: #dfc5b3;
+  --gold: #edcd91;
+  --maple: #e8c07e;
+  --maple-dark: #472012;
+  --line: rgba(225, 181, 106, .38);
+  color-scheme: dark;
+  min-height: 100vh;
+  font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink);
+  background: #260b0d url("images/mianfengkan-maple-lacquer.jpg") center top / cover fixed no-repeat !important;
+}
+body.reserve-card-theme::before,
+body.reserve-card-theme::after,
+body.reserve-card-theme .page::after { display: none !important; }
+body.reserve-card-theme * { box-sizing: border-box; }
+body.reserve-card-theme [hidden] { display: none !important; }
+body.reserve-card-theme :is(button, input, select, textarea) { font: inherit; }
+body.reserve-card-theme button { cursor: pointer; }
+body.reserve-card-theme button:disabled { cursor: not-allowed; opacity: .48; }
+body.reserve-card-theme :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid #ffe7ab;
+  outline-offset: 4px;
+}
+body.reserve-card-theme .site-header {
+  background: rgba(30, 7, 10, .93) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: 0 6px 25px #12020655;
+}
+body.reserve-card-theme .nav { max-width: 1360px; gap: 20px; }
+body.reserve-card-theme .nav-links { gap: 16px; }
+body.reserve-card-theme .brand strong { color: #f8ddb0 !important; white-space: nowrap; }
+body.reserve-card-theme .brand-mark { color: #f4d195 !important; border-color: #cfaa6f !important; }
+body.reserve-card-theme .nav-links a { color: #f5dec1 !important; white-space: nowrap; }
+body.reserve-card-theme .reserve-link { border-radius: 4px; }
+body.reserve-card-theme .menu-btn { color: #f5d49a; min-width: 44px; min-height: 44px; }
+body.reserve-card-theme .mf-card-page { max-width: 1240px !important; padding: 36px 30px 60px; }
+body.reserve-card-theme .page-title.mf-card-invitation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 !important;
+  padding: 32px 46px;
+  border: 1px solid #e2be7f !important;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, rgba(48, 8, 12, .45), rgba(46, 7, 12, .1)), url("images/mianfengkan-maple-lacquer.jpg") center 13% / cover;
+  box-shadow: inset 0 0 0 5px #23080da6, inset 0 0 0 6px #d8a96680, 0 16px 60px #17020666;
+}
+body.reserve-card-theme .mf-card-invitation h1 {
+  font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  color: #ffe6af !important;
+  font-size: clamp(30px, 3.2vw, 42px);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: .15em;
+  margin: 8px 0;
+  text-shadow: 0 2px 12px #210203;
+}
+body.reserve-card-theme .mf-card-invitation p { color: #f0d6ad !important; margin: 0; font-size: 15px; letter-spacing: .09em; }
+body.reserve-card-theme .eyebrow { color: #e6c18e !important; font-size: 12px; letter-spacing: .17em; }
+body.reserve-card-theme .mf-venue-seal {
+  flex: 0 0 82px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: center;
+  width: 82px;
+  height: 82px;
+  padding: 8px;
+  border: 2px solid #e3bd70;
+  box-shadow: inset 0 0 0 3px #37100d, inset 0 0 0 4px #c99a56, 0 3px 14px #200303;
+  background: #361011c9;
+  font: 28px/1.12 "Noto Serif TC", "PMingLiU", serif;
+  color: #f9d795;
+  text-align: center;
+}
+body.reserve-card-theme #bookingForm { border: 1px solid #d8b477; border-top: 0; box-shadow: 0 20px 60px #10020466; }
+body.reserve-card-theme .booking-mode { margin: 0; padding: 0; border: 0; border-radius: 0; background: #2c080ddd; }
+body.reserve-card-theme .booking-mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0; }
+body.reserve-card-theme .booking-mode-btn {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 14px 12px;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid #9c7846;
+  background: transparent !important;
+  color: #eed8b5;
+}
+body.reserve-card-theme .booking-mode-btn + .booking-mode-btn { border-left: 1px solid #9c7846; }
+body.reserve-card-theme .booking-mode-btn b { color: #f1d7ae !important; font-size: 22px; font-weight: 500; letter-spacing: .2em; }
+body.reserve-card-theme .booking-mode-btn > span { font-family: serif; color: #ddba83; font-size: 16px; }
+body.reserve-card-theme .booking-mode-btn.active {
+  background: linear-gradient(0deg, #a56a282e, #5b20161a) !important;
+  box-shadow: inset 0 -3px #f0cf8b, inset 0 0 22px #d6a23c12;
+}
+body.reserve-card-theme .booking-mode-btn.active b { color: #ffe8b7 !important; }
+body.reserve-card-theme #bookingForm .booking-shell,
+body.reserve-card-theme.dining-only-mode #bookingForm .booking-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+  grid-template-rows: auto auto auto;
+  align-items: start;
+  gap: 0;
+  background: linear-gradient(105deg, #380a0dda, #23080bef);
+}
+body.reserve-card-theme .form-panel { display: contents !important; }
+body.reserve-card-theme #bookingForm .booking-note {
+  grid-area: 1 / 1 / 4 / 2;
+  min-width: 0;
+  padding: 30px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent !important;
+  backdrop-filter: none;
+}
+body.reserve-card-theme :is(.booking-note h2, .dining-head h2, .mf-order-title) {
+  margin: 5px 0 12px;
+  color: #f7ddb0 !important;
+  font: 500 26px/1.6 "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  letter-spacing: .08em;
+}
+body.reserve-card-theme :is(.booking-note p, .dining-head p) { color: #e0c2ac !important; font-size: 14px; line-height: 1.85; }
+body.reserve-card-theme #bookingForm .staff-select { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 24px; }
+body.reserve-card-theme #bookingForm .staff-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 92px;
+  width: 100%;
+  padding: 18px 20px;
+  text-align: left;
+  border: 1px solid #bb8f54;
+  border-radius: 5px;
+  background: linear-gradient(110deg, #5317138c, #240609b3) !important;
+  color: #fff0d5;
+  box-shadow: inset 0 0 0 3px #13040720;
+}
+body.reserve-card-theme #bookingForm .staff-choice:hover { border-color: #f2d397; background: #552119ad !important; }
+body.reserve-card-theme #bookingForm .staff-choice.selected {
+  border-color: #f8d997;
+  background: linear-gradient(105deg, #7545209e, #4c271798) !important;
+  box-shadow: inset 0 0 0 1px #f0ca89, 0 0 18px #f0b35416;
+}
+body.reserve-card-theme .mf-staff-copy { min-width: 0; display: grid; gap: 3px; }
+body.reserve-card-theme .mf-staff-copy b { font: 500 24px/1.5 "Noto Serif TC", "Songti TC", "PMingLiU", serif; letter-spacing: .09em; color: #fff1db; overflow-wrap: anywhere; }
+body.reserve-card-theme .mf-staff-services { color: #e5cbb5; font-size: 14px; line-height: 1.7; }
+body.reserve-card-theme .mf-staff-status { flex: 0 1 170px; text-align: right; font-size: 14px; font-weight: 400; line-height: 1.7; }
+body.reserve-card-theme .status-now { color: #b8e5ad; }
+body.reserve-card-theme .status-busy { color: #ffd28b; }
+body.reserve-card-theme .status-off { color: #dfc5b3; }
+body.reserve-card-theme #bookingTab { grid-area: 1 / 2 / 2 / 3; }
+body.reserve-card-theme :is(#bookingTab, .mf-dining-details) { min-width: 0; padding: 30px 26px 0; border-left: 1px solid var(--line); }
+body.reserve-card-theme .booking-tab-panel { display: none; }
+body.reserve-card-theme #bookingTab.active { display: block; }
+body.reserve-card-theme #diningTab.active { display: contents; }
+body.reserve-card-theme .mf-menu-panel { grid-area: 1 / 1 / 4 / 2; padding: 30px; min-width: 0; }
+body.reserve-card-theme .mf-dining-details { grid-area: 1 / 2 / 2 / 3; }
+body.reserve-card-theme .mf-guest-fields { grid-area: 2 / 2 / 3 / 3; display: grid; gap: 15px; padding: 22px 26px 4px; border-left: 1px solid var(--line); min-width: 0; }
+body.reserve-card-theme .mf-confirm-actions { grid-area: 3 / 2 / 4 / 3; padding: 8px 26px 30px; border-left: 1px solid var(--line); min-width: 0; }
+body.reserve-card-theme #bookingForm .form-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+body.reserve-card-theme #bookingForm .field { min-width: 0; margin: 0; }
+body.reserve-card-theme :is(.field label, .notice-confirm) { color: #f4dfc5; font-size: 15px; }
+body.reserve-card-theme #bookingForm .field-help { display: block; color: #dcc1ac !important; font-size: 14px; line-height: 1.8; opacity: 1; }
+body.reserve-card-theme :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-width: 0;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #a98a6b !important;
+  color: #fff1dd !important;
+  background: #1e090b !important;
+  font-size: 16px;
+}
+body.reserve-card-theme textarea { resize: vertical; }
+body.reserve-card-theme :is(input, textarea)::placeholder { color: #c7ab9b; opacity: 1; }
+body.reserve-card-theme select option { color: #fff1dd; background: #261013; }
+body.reserve-card-theme :is(input[type="checkbox"], input[type="radio"]) { accent-color: #e6bc71; flex: 0 0 22px; width: 22px; height: 22px; margin: 0; padding: 0; }
+body.reserve-card-theme #bookingForm .service-check-grid { display: grid; grid-template-columns: 1fr; gap: 9px; }
+body.reserve-card-theme #bookingForm .service-check {
+  border: 1px solid #ad855554 !important;
+  border-radius: 4px;
+  background: #501e183d !important;
+  padding: 13px 12px;
+  color: #f5e0c6;
+}
+body.reserve-card-theme #bookingForm .service-check b { color: #fff0d7; font-weight: 500; font-size: 16px; }
+body.reserve-card-theme #bookingForm .service-check small { color: #e1c4aa; font-size: 14px; opacity: 1; }
+body.reserve-card-theme #bookingForm .service-check:has(input:checked) { border-color: #f0c98a !important; background: #78502b55 !important; box-shadow: inset 0 0 0 1px #d9b1784d; }
+body.reserve-card-theme #bookingForm .service-check.package { display: none !important; }
+body.reserve-card-theme :is(.polaroid-section, .dining-delivery-preference, .dining-only-polaroids) { margin: 0 0 20px; padding: 0; border: 0; border-radius: 0; background: transparent !important; }
+body.reserve-card-theme #bookingForm .service-check.locked { opacity: .65; }
+body.reserve-card-theme #bookingForm .service-check input:disabled + span { opacity: 1; }
+body.reserve-card-theme #bookingForm .availability-message { padding: 12px; border-radius: 4px; border: 1px solid #b5905d60; color: #e5cfbc !important; background: #2a1210 !important; font-size: 14px; }
+body.reserve-card-theme #bookingForm .availability-message.available { color: #c4e7bd !important; background: #24302070 !important; border-color: #a5c49666 !important; }
+body.reserve-card-theme #bookingForm .availability-message.unavailable { color: #f3d6b5 !important; background: #4e251b55 !important; }
+body.reserve-card-theme #bookingForm .booking-summary { margin: 22px 0 0; padding: 18px 0 0; border: 0; border-top: 1px solid #bf945b6b; border-radius: 0; background: transparent !important; box-shadow: none; }
+body.reserve-card-theme .summary-title { color: #f8e0bc; border-color: var(--line); }
+body.reserve-card-theme .summary-title b { font-size: 21px; font-weight: 500; }
+body.reserve-card-theme .summary-group { color: #f3dfc7; border-color: var(--line); font-size: 15px; min-width: 0; }
+body.reserve-card-theme .summary-group :is(b, small) { overflow-wrap: anywhere; }
+body.reserve-card-theme .summary-group > b { color: #f9dca0; font-size: 15px; }
+body.reserve-card-theme .summary-group > small { color: #dfc2aa; font-size: 14px; }
+body.reserve-card-theme .summary-group.delivery-line { background: #5f321829; padding: 10px; border-radius: 3px; }
+body.reserve-card-theme .summary-total { border-color: var(--line); color: #e4c49c; flex-wrap: wrap; gap: 8px; }
+body.reserve-card-theme .summary-total strong { color: #ffe1a1; font-size: 24px; font-weight: 500; }
+body.reserve-card-theme #bookingForm .submit {
+  display: block;
+  margin: 12px 0 0;
+  min-height: 52px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ffe7ae;
+  border-radius: 5px;
+  color: #331407 !important;
+  background: linear-gradient(112deg, #e8b666, #ffe3a2 45%, #d9a957) !important;
+  box-shadow: inset 0 0 0 3px #5c391026, 0 4px 12px #0d03042e;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .1em;
+}
+body.reserve-card-theme #bookingForm .submit:not(:disabled):hover { filter: brightness(1.08); }
+body.reserve-card-theme .secondary-tab { min-height: 44px; padding: 9px 16px; border: 1px solid #c69e60; border-radius: 4px; background: #381412; color: #f0cf97; white-space: nowrap; }
+body.reserve-card-theme .tab-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 16px 0 22px; }
+body.reserve-card-theme .dining-head { margin-bottom: 8px; }
+body.reserve-card-theme #bookingForm .compact-food { max-height: 610px; overflow-y: auto; padding: 0 10px 0 0; scrollbar-width: thin; scrollbar-color: #bc8c4d #210608; }
+body.reserve-card-theme #bookingForm #diningTab .food-choices { display: grid; grid-template-columns: 1fr; gap: 0; }
+body.reserve-card-theme .food-category-title { margin: 14px 0 0; padding: 9px 12px; color: #f2d09b; background: #6f312233; border-top: 1px solid #b7874c66; font-size: 21px; letter-spacing: .1em; }
+body.reserve-card-theme #bookingForm .food-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 22px;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  margin: 0;
+  padding: 17px 12px;
+  border: 0;
+  border-bottom: 1px solid #c494543b;
+  border-radius: 0;
+  background: transparent !important;
+}
+body.reserve-card-theme #bookingForm .food-row b { color: #fff0d8; font-size: 19px; font-weight: 500; }
+body.reserve-card-theme #bookingForm .food-row > span:first-child { min-width: 0; }
+body.reserve-card-theme #bookingForm .food-row small { display: none; }
+body.reserve-card-theme #bookingForm .food-row > span:nth-child(2) { color: #f1ca8d; white-space: nowrap; font-size: 16px; font-variant-numeric: tabular-nums; }
+body.reserve-card-theme #bookingForm .food-row:has(input:checked) { background: #89542545 !important; box-shadow: inset 3px 0 #e4bf7f; }
+body.reserve-card-theme #bookingForm .food-row input { min-width: 22px; width: 22px; padding: 0; }
+body.reserve-card-theme #bookingForm .field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { border-radius: 4px; padding: 10px 12px; font-size: 16px; }
+body.reserve-card-theme #bookingForm .booking-note { position: static; }
+body.reserve-card-theme .liquor-order-section { margin-top: 28px; }
+body.reserve-card-theme .liquor-order-section > label { font-size: 21px; color: #f2d09b; }
+body.reserve-card-theme .liquor-choices { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 12px; }
+body.reserve-card-theme .liquor-choice { display: grid; grid-template-columns: 10px minmax(0, 1fr) 82px; gap: 12px; align-items: center; padding: 12px; border: 1px solid #b7874c66; border-radius: 4px; background: #32100e99 !important; }
+body.reserve-card-theme .liquor-copy b { color: #fff0d8; font-size: 17px; }
+body.reserve-card-theme .liquor-copy :is(small, em) { color: #e4c29a; font-size: 14px; font-style: normal; }
+body.reserve-card-theme .liquor-qty { padding: 8px; }
+body.reserve-card-theme .liquor-limit-note { color: #eaceaa; background: transparent; font-size: 14px; }
+body.reserve-card-theme .liquor-limit-note.limit-reached { color: #ffd78c; }
+body.reserve-card-theme .dining-polaroid-status { grid-template-columns: minmax(0,1fr); padding: 12px; border-radius: 4px; background: #56271c55 !important; border: 1px solid #b68f5d44; color: #e8c8a4 !important; font-size: 14px; }
+body.reserve-card-theme .dining-polaroid-status b { text-align: left; font-weight: 400; }
+body.reserve-card-theme .dining-polaroid-status :is(span, b) { color: inherit; }
+body.reserve-card-theme .mf-signature { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 28px 0 0; font: 16px/1.7 "PMingLiU", serif; letter-spacing: .3em; color: #dfbb80 !important; }
+body.reserve-card-theme .mf-signature::before,
+body.reserve-card-theme .mf-signature::after { content: ""; width: 40px; height: 1px; background: #c3925180; }
+body.reserve-card-theme .mf-card-footer { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; padding: 18px 6px; color: #f4dbb5; font-size: 14px; text-shadow: 0 2px 5px #220307; }
+body.reserve-card-theme .modal-backdrop { background: #160405d9; padding: 18px; }
+body.reserve-card-theme .notice-modal { max-height: calc(100dvh - 36px); overflow-y: auto; border: 1px solid #dbb478; border-radius: 7px; background: #351114; color: #fff0d8; }
+body.reserve-card-theme .notice-modal p { color: #efd5ba; }
+body.reserve-card-theme .modal-actions .secondary { color: #f2d7ab; background: #351512; border: 1px solid #b48b59; border-radius: 4px; }
+body.reserve-card-theme .generated-pickup-code { color: #ffde9b; background: #210c10; }
+body.reserve-card-theme .pickup-code-item b { color: #ffde9b; }
+body.reserve-card-theme .pickup-code-item small { color: #ebc9a5; }
+body.reserve-card-theme .pickup-close { color: #efd6bb; }
+body.reserve-card-theme .toast { max-width: min(420px, calc(100vw - 32px)); color: #ffebce; background: #351114; border: 1px solid #c39962; z-index: 10000; }
+@media (max-width: 1200px) {
+  body.reserve-card-theme .menu-btn { display: block; }
+  body.reserve-card-theme .nav { justify-content: space-between; }
+  body.reserve-card-theme .nav-links { display: none; position: absolute; left: 16px; right: 16px; top: 76px; padding: 14px 18px; flex-direction: column; gap: 0; background: #2b0f12 !important; border: 1px solid #c39a61; border-radius: 6px; box-shadow: 0 15px 40px #10020488; }
+  body.reserve-card-theme .nav-links.open { display: flex; }
+  body.reserve-card-theme .nav-links a { padding: 10px 12px; width: 100%; min-height: 44px; }
+}
+@media (max-width: 820px) {
+  body.reserve-card-theme { background-attachment: scroll !important; background-position: center top !important; background-size: auto 1100px !important; background-color: #280a0e !important; }
+  body.reserve-card-theme .mf-card-page { padding: 24px 16px 42px; }
+  body.reserve-card-theme #bookingForm .booking-shell,
+  body.reserve-card-theme.dining-only-mode #bookingForm .booking-shell { grid-template-columns: minmax(0, 1fr); }
+  body.reserve-card-theme #bookingForm .booking-note,
+  body.reserve-card-theme .mf-menu-panel { grid-area: 1 / 1 / 2 / 2; padding: 24px; }
+  body.reserve-card-theme #bookingTab,
+  body.reserve-card-theme .mf-dining-details { grid-area: 2 / 1 / 3 / 2; padding: 24px 24px 0; border: 0; border-top: 1px solid var(--line); }
+  body.reserve-card-theme .mf-guest-fields { grid-area: 3 / 1 / 4 / 2; padding: 22px 24px 4px; border: 0; }
+  body.reserve-card-theme .mf-confirm-actions { grid-area: 4 / 1 / 5 / 2; padding: 8px 24px 28px; border: 0; }
+  body.reserve-card-theme #bookingForm .compact-food { max-height: 540px; }
+  body.reserve-card-theme #bookingForm .staff-select { max-height: 440px; overflow-y: auto; padding: 3px; scrollbar-width: thin; scrollbar-color: #bc8c4d #210608; }
+}
+@media (max-width: 480px) {
+  body.reserve-card-theme .mf-card-page { padding: 18px 12px 36px; }
+  body.reserve-card-theme .page-title.mf-card-invitation { padding: 24px; gap: 14px; }
+  body.reserve-card-theme .mf-card-invitation h1 { font-size: 30px; letter-spacing: .12em; }
+  body.reserve-card-theme .mf-card-invitation p { font-size: 14px; }
+  body.reserve-card-theme .mf-card-invitation .eyebrow { font-size: 12px; letter-spacing: .05em; }
+  body.reserve-card-theme .mf-venue-seal { flex-basis: 60px; width: 60px; height: 64px; padding: 6px; font-size: 21px; }
+  body.reserve-card-theme .booking-mode-btn { min-height: 56px; gap: 12px; }
+  body.reserve-card-theme .booking-mode-btn b { font-size: 20px; }
+  body.reserve-card-theme #bookingForm .booking-note,
+  body.reserve-card-theme .mf-menu-panel { padding: 22px 16px; }
+  body.reserve-card-theme :is(#bookingTab, .mf-dining-details) { padding: 22px 16px 0; }
+  body.reserve-card-theme .mf-guest-fields { padding: 22px 16px 4px; }
+  body.reserve-card-theme .mf-confirm-actions { padding: 8px 16px 24px; }
+  body.reserve-card-theme #bookingForm .staff-choice { padding: 15px 12px; gap: 12px; }
+  body.reserve-card-theme .mf-staff-copy b { font-size: 22px; }
+  body.reserve-card-theme .mf-staff-status { flex-basis: 112px; font-size: 14px; }
+  body.reserve-card-theme .mf-staff-services { font-size: 14px; }
+  body.reserve-card-theme #bookingForm .food-row { grid-template-columns: minmax(0, 1fr) auto 22px; gap: 9px; padding: 15px 9px; }
+  body.reserve-card-theme #bookingForm .food-row b { font-size: 17px; }
+  body.reserve-card-theme #bookingForm .food-row > span:nth-child(2) { font-size: 14px; }
+  body.reserve-card-theme .liquor-choice { grid-template-columns: 8px minmax(0, 1fr) 76px; gap: 8px; padding: 12px 9px; }
+  body.reserve-card-theme .liquor-copy b { font-size: 16px; }
+  body.reserve-card-theme .mf-card-footer { font-size: 13px; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.reserve-card-theme * { scroll-behavior: auto !important; transition: none !important; }
+}
