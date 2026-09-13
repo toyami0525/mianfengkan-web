@@ -1,2 +1,7 @@
+# Allow the homepage (including query strings) and its static assets.
 User-agent: *
+Allow: /$
+Allow: /?
+Allow: /index.html
+Allow: /assets/
 Disallow: /
