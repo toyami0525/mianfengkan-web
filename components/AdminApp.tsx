@@ -60,9 +60,35 @@ export default function AdminApp(){
  const[manualPolaroidGuest,setManualPolaroidGuest]=useState(''),[manualPolaroidCode,setManualPolaroidCode]=useState(''),[manualProductStaff,setManualProductStaff]=useState('musufiru'),[manualProductType,setManualProductType]=useState('polaroid'),[manualProductIssuedLabel,setManualProductIssuedLabel]=useState('');
  const[calendarMonth,setCalendarMonth]=useState(()=>monthKey(new Date())),[calendarRows,setCalendarRows]=useState<Row[]>([]),[calendarClosures,setCalendarClosures]=useState<Row[]>([]),[todayVenueClosed,setTodayVenueClosed]=useState(false),[calendarToday,setCalendarToday]=useState(()=>taipeiDateKey(new Date())),[calendarStaff,setCalendarStaff]=useState<Row[]>([]),[calendarStaffId,setCalendarStaffId]=useState(''),[calendarLoading,setCalendarLoading]=useState(false);
  const[account,setAccount]=useState<Account|null>(null);
+ const[availabilityPanelOpen,setAvailabilityPanelOpen]=useState(false),[availabilityPending,setAvailabilityPending]=useState<Record<string,boolean>>({}),[availabilityMessage,setAvailabilityMessage]=useState(''),[staffLoadError,setStaffLoadError]=useState('');
+ const availabilityPendingRef=useRef(new Set<string>());
+ const staffRefreshVersionRef=useRef(0);
  const audioContextRef=useRef<AudioContext|null>(null);
  const publicBookingChannelRef=useRef<any>(null);
  const db=useMemo(()=>supabase(),[]);
+ function syncStaffRows(rows:Row[],replace=false){
+  setData(prev=>({...prev,staff:replace?rows:(prev.staff||[]).map(row=>{const saved=rows.find(x=>String(x.id)===String(row.id));return saved?{...row,...saved}:row})}));
+  setAccount(prev=>{
+   if(!prev?.staff_id)return prev;
+   const own=rows.find(row=>String(row.id)===String(prev.staff_id));
+   return own?{...prev,accepting_reservations:own.accepting_reservations===true}:prev;
+  });
+ }
+ async function refreshStaff(currentAccount=account){
+  if(!currentAccount)return;
+  if(currentAccount.role==='staff'&&!currentAccount.staff_id){syncStaffRows([],true);return}
+  const version=++staffRefreshVersionRef.current;
+  try{
+   let query=db.from('staff').select('*').order('created_at',{ascending:false});
+   if(currentAccount.role==='staff')query=query.eq('id',String(currentAccount.staff_id));
+   const{data:rows,error}=await query;
+   if(version!==staffRefreshVersionRef.current)return;
+   if(error)throw error;
+   syncStaffRows(rows||[],true);setStaffLoadError('');
+  }catch(error){
+   if(version===staffRefreshVersionRef.current)setStaffLoadError('館員接單狀態暫時無法更新，請按「重新整理」再試。');
+  }
+ }
  function notifyPublicBookingChange(event='booking_changed'){const channel=publicBookingChannelRef.current;if(!channel)return;void channel.send({type:'broadcast',event,payload:{at:new Date().toISOString()}}).catch((error:any)=>console.warn('前台 Realtime 廣播失敗，10 秒輪詢仍會補上。',error))}
  function syncSettings(rows:Row[]){
   const map=Object.fromEntries((rows||[]).map(r=>[r.key,r.value]));
@@ -75,7 +101,8 @@ export default function AdminApp(){
  const tabs=account?.role==='owner'?ownerTabs:account?.role==='frontdesk'?frontdeskTabs:staffTabs;
  async function load(currentAccount=account){
   setMsg('讀取中…');
-  const names=['staff','staff_work_calendar','reservations','orders','polaroid_pickups','announcements','site_settings'];
+  await refreshStaff(currentAccount);
+  const names=['staff_work_calendar','reservations','orders','polaroid_pickups','announcements','site_settings'];
   const out:Record<string,Row[]>={};
   for(const n of names){
    const query=db.from(n).select('*');
@@ -85,10 +112,9 @@ export default function AdminApp(){
   if(currentAccount?.role==='staff'&&currentAccount.staff_id){
    out.reservations=(out.reservations||[]).filter(r=>r.staff_id===currentAccount.staff_id);
    out.polaroid_pickups=(out.polaroid_pickups||[]).filter(r=>r.staff_id===currentAccount.staff_id);
-   out.staff=(out.staff||[]).filter(r=>r.id===currentAccount.staff_id);
    out.staff_work_calendar=(out.staff_work_calendar||[]).filter(r=>r.staff_id===currentAccount.staff_id);
   }
-  setData(out);syncSettings(out.site_settings||[]);setMsg('');
+  setData(prev=>({...out,staff:prev.staff||[]}));syncSettings(out.site_settings||[]);setMsg('');
  }
  useEffect(()=>{
   let mounted=true;
@@ -105,7 +131,13 @@ export default function AdminApp(){
    setNotificationSound(localStorage.getItem('mf-notification-sound')==='on');
    setReady(true);await load(currentAccount);
   });
-  const publicBookingChannel=db.channel('public-booking-live').subscribe();
+  const refreshAvailability=()=>{
+   if(mounted&&currentAccount&&currentAccount.role!=='frontdesk')void refreshStaff(currentAccount);
+  };
+  const refreshVisibleAvailability=()=>{if(document.visibilityState==='visible')refreshAvailability()};
+  const publicBookingChannel=db.channel('public-booking-live')
+   .on('broadcast',{event:'availability_changed'},refreshAvailability)
+   .subscribe();
   publicBookingChannelRef.current=publicBookingChannel;
   const channel=db.channel('admin-live-alerts')
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'reservations'},payload=>{
@@ -139,7 +171,11 @@ export default function AdminApp(){
     setData(prev=>({...prev,orders:(prev.orders||[]).map(x=>x.id===row.id?row:x)}));
    })
    .subscribe();
-  return()=>{mounted=false;db.removeChannel(channel);db.removeChannel(publicBookingChannel);if(publicBookingChannelRef.current===publicBookingChannel)publicBookingChannelRef.current=null};
+  // 接單狀態沿用公開廣播並保留輪詢，不依賴舊資料庫是否已發布 staff Realtime。
+  const availabilityTimer=window.setInterval(refreshVisibleAvailability,10000);
+  document.addEventListener('visibilitychange',refreshVisibleAvailability);
+  window.addEventListener('focus',refreshVisibleAvailability);
+  return()=>{mounted=false;staffRefreshVersionRef.current++;window.clearInterval(availabilityTimer);document.removeEventListener('visibilitychange',refreshVisibleAvailability);window.removeEventListener('focus',refreshVisibleAvailability);db.removeChannel(channel);db.removeChannel(publicBookingChannel);if(publicBookingChannelRef.current===publicBookingChannel)publicBookingChannelRef.current=null};
  },[]);
  // 瀏覽器可能在重新整理／重新登入後限制自動播放。
  // 通知音已開啟時，保留既有使用者互動解鎖機制。
@@ -337,11 +373,35 @@ export default function AdminApp(){
 
  async function logout(){await db.auth.signOut();location.href='/login'}
  async function toggleAvailability(){
-  if(!account?.staff_id)return;
-  const next=!account.accepting_reservations;setBusy('availability');
-  const{error}=await db.from('staff').update({accepting_reservations:next}).eq('id',account.staff_id);
-  if(error){alert(`更新失敗：${error.message}`)}else{setAccount({...account,accepting_reservations:next});notifyPublicBookingChange('availability_changed')}
-  setBusy('');
+  if(account?.role!=='staff'||!account.staff_id)return;
+  await updateStaffAvailability({id:account.staff_id,name:account.staff_name},!account.accepting_reservations);
+ }
+ async function updateStaffAvailability(row:Row,next:boolean){
+  const id=String(row.id||'');
+  if(!id||!account)return;
+  if(account.role!=='owner'&&!(account.role==='staff'&&id===String(account.staff_id)))return;
+  if(account.role==='owner'&&isOwnerProfile(row,account.staff_id))return;
+  if(availabilityPendingRef.current.has(id))return;
+  availabilityPendingRef.current.add(id);staffRefreshVersionRef.current++;
+  setAvailabilityPending(prev=>({...prev,[id]:true}));setAvailabilityMessage('');
+  try{
+   // 沿用 staff 的 RLS：館主可修改館員，館員只能修改自己。
+   // 讀回實際更新的資料，避免權限拒絕／館員已刪除時誤顯示成功。
+   const{data:saved,error}=await db.from('staff').update({accepting_reservations:next}).eq('id',id).select('id,name,accepting_reservations').single();
+   if(error)throw error;
+   if(!saved||saved.accepting_reservations!==next)throw new Error('無法確認接單狀態，請重新整理後再試');
+   staffRefreshVersionRef.current++;
+   syncStaffRows([saved]);setStaffLoadError('');
+   setAvailabilityMessage(`${saved.name||row.name||'館員'}已${next?'恢復接單':'暫停接單'}。`);
+   notifyPublicBookingChange('availability_changed');
+  }catch(error){
+   const detail=error instanceof Error?error.message:String((error as any)?.message||'請稍後再試');
+   setAvailabilityMessage(`${row.name||'館員'}的接單狀態更新失敗：${detail}`);
+   void refreshStaff();
+  }finally{
+   availabilityPendingRef.current.delete(id);
+   setAvailabilityPending(prev=>{const nextPending={...prev};delete nextPending[id];return nextPending});
+  }
  }
  async function toggleYukinojiChibi(){
   if(account?.staff_slug!=='yukinoji-hakari')return;
@@ -581,9 +641,23 @@ export default function AdminApp(){
   savePayrollSettlement({distributed_food:payrollDistributedFood+allocated,food_shares:nextShares,settled:nextSettled});
   setMsg(`已完成剩餘 ${payrollUnsettledPeople.length} 位人員結算。`);
  }
- return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><div className="role-caption">{account.role==='owner'?'完整管理權限':account.role==='frontdesk'?'櫃台處理權限':'個人指名／全館點餐'}</div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions">{account.role==='owner'&&bookingTestMode&&<div className="identity-badge"><strong>⚠ 指名測試模式啟用中</strong></div>}<div className="identity-badge">目前身份：<strong>{account.staff_name}</strong>（{account.role==='owner'?'館主':account.role==='frontdesk'?'櫃台':'館員'}）</div><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 通知音：開啟':'🔕 開啟通知音'}</button>{account.role==='owner'&&<button className="ghost" onClick={()=>playServiceEndingSound('ended')}>🔊 測試結束提示音</button>}<button className="ghost" onClick={()=>load()}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
- {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={busy==='availability'} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div>{account.staff_slug==='yukinoji-hakari'&&<div className="staff-availability chibi-availability"><div><strong>Q版繪圖(公版)</strong><span>{yukinojiChibiAccepting?'目前接單中':'目前暫停接單'}</span><small>切換後會即時反映到客人的指名介面。</small></div><button disabled={busy==='yukinoji-chibi'} className={yukinojiChibiAccepting?'offline':'online'} onClick={toggleYukinojiChibi}>{yukinojiChibiAccepting?'暫停 Q版接單':'恢復 Q版接單'}</button></div>}</>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的本營業日指名':'本營業日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>本營業日待確認</span></article><article><b>{todayReservationRevenue.toLocaleString('zh-TW')}</b><span>本營業日指名金額（含拍立得・Gil）</span></article><article><b>{todayOrders.length}</b><span>本營業日點餐</span></article><article><b>{todayFoodRevenue.toLocaleString('zh-TW')}</b><span>本營業日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・固定基本薪資</span><strong>{BASE_DAILY_PAY.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資固定，不因結算時間改變</small></div><div><span>目前尚未分配餐點收入</span><strong>{payrollUnallocatedFood.toLocaleString('zh-TW')} Gil</strong><small>尚有 {payrollUnsettledHeadcount} 位未結算；按下結算時才平均分配</small></div><button onClick={()=>setTab('payroll')}>查看／結算薪資</button></section>}<Panel title={account.role==='staff'?'我的本營業日近期指名':'本營業日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
- {tab==='staff'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><button disabled={busy===`staff:${r.id}`} onClick={()=>remove('staff',r.id)}>刪除</button>}/></Panel>}
+ return <div className="admin-shell"><aside className="admin-side"><div className="admin-brand"><span>楓</span><div><b>眠楓館</b><small>ADMINISTRATION</small></div></div><div className="role-caption">{account.role==='owner'?'完整管理權限':account.role==='frontdesk'?'櫃台處理權限':'個人指名／全館點餐'}</div><nav>{tabs.map(([k,v])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}>{v}</button>)}</nav><div className="side-bottom"><a href="/index.html">查看網站</a><button onClick={logout}>登出</button></div></aside><main className="admin-main"><header><div><p className="eyebrow">MIANFENGKAN</p><h1>{tabs.find(x=>x[0]===tab)?.[1]}</h1></div><div className="admin-header-actions">{account.role==='owner'&&<button type="button" className="ghost availability-manager-toggle" aria-expanded={availabilityPanelOpen} aria-controls="owner-staff-availability" onClick={()=>{setAvailabilityPanelOpen(open=>!open);if(!availabilityPanelOpen)void refreshStaff()}}>館員接單</button>}{account.role==='owner'&&bookingTestMode&&<div className="identity-badge"><strong>⚠ 指名測試模式啟用中</strong></div>}<div className="identity-badge">目前身份：<strong>{account.staff_name}</strong>（{account.role==='owner'?'館主':account.role==='frontdesk'?'櫃台':'館員'}）</div><button className={`sound-toggle ${notificationSound?'enabled':''}`} onClick={toggleNotificationSound}>{notificationSound?'🔔 通知音：開啟':'🔕 開啟通知音'}</button>{account.role==='owner'&&<button className="ghost" onClick={()=>playServiceEndingSound('ended')}>🔊 測試結束提示音</button>}<button className="ghost" onClick={()=>load()}>重新整理</button></div></header>{msg&&<p className="admin-message">{msg}</p>}
+ {availabilityMessage&&<p className="admin-message" role="status">{availabilityMessage}</p>}
+ {staffLoadError&&<p className="admin-message" role="alert">{staffLoadError}</p>}
+ {account.role==='owner'&&availabilityPanelOpen&&<section className="panel owner-availability-panel" id="owner-staff-availability" aria-labelledby="owner-availability-title">
+  <div className="panel-head"><h2 id="owner-availability-title">館員接單狀態</h2><button type="button" className="ghost" onClick={()=>setAvailabilityPanelOpen(false)}>收起</button></div>
+  <p className="hint">切換各館員的新指名接單狀態；已接下的服務照常進行。恢復接單後，仍依營業時間、休假與服務進度開放新指名。</p>
+  <div className="owner-availability-list">{staff.filter(row=>!isOwnerProfile(row,account.staff_id)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0)||String(a.name||'').localeCompare(String(b.name||''),'zh-TW')).map(row=>{
+   const id=String(row.id),accepting=row.accepting_reservations===true,pending=Boolean(availabilityPending[id]);
+   return <article className="owner-availability-row" key={id} aria-busy={pending}>
+    <div><strong>{row.name||'未命名館員'}</strong><span className={`availability-status ${accepting?'accepting':'resting'}`}>{accepting?'接受新指名':'暫停新指名'}</span>{row.active===false&&<small>未在前台顯示</small>}</div>
+    <button type="button" className={`availability-action ${accepting?'pause':'resume'}`} disabled={pending} aria-label={`${row.name}：${accepting?'暫停接單':'恢復接單'}`} onClick={()=>void updateStaffAvailability(row,!accepting)}>{pending?'更新中…':accepting?'暫停接單':'恢復接單'}</button>
+   </article>;
+  })}</div>
+  {!staff.some(row=>!isOwnerProfile(row,account.staff_id))&&<p className="empty">{staffLoadError?'館員資料尚未載入，請重新整理。':'目前沒有可管理的館員。'}</p>}
+ </section>}
+ {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={Boolean(availabilityPending[String(account.staff_id)])} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div>{account.staff_slug==='yukinoji-hakari'&&<div className="staff-availability chibi-availability"><div><strong>Q版繪圖(公版)</strong><span>{yukinojiChibiAccepting?'目前接單中':'目前暫停接單'}</span><small>切換後會即時反映到客人的指名介面。</small></div><button disabled={busy==='yukinoji-chibi'} className={yukinojiChibiAccepting?'offline':'online'} onClick={toggleYukinojiChibi}>{yukinojiChibiAccepting?'暫停 Q版接單':'恢復 Q版接單'}</button></div>}</>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的本營業日指名':'本營業日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>本營業日待確認</span></article><article><b>{todayReservationRevenue.toLocaleString('zh-TW')}</b><span>本營業日指名金額（含拍立得・Gil）</span></article><article><b>{todayOrders.length}</b><span>本營業日點餐</span></article><article><b>{todayFoodRevenue.toLocaleString('zh-TW')}</b><span>本營業日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・固定基本薪資</span><strong>{BASE_DAILY_PAY.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資固定，不因結算時間改變</small></div><div><span>目前尚未分配餐點收入</span><strong>{payrollUnallocatedFood.toLocaleString('zh-TW')} Gil</strong><small>尚有 {payrollUnsettledHeadcount} 位未結算；按下結算時才平均分配</small></div><button onClick={()=>setTab('payroll')}>查看／結算薪資</button></section>}<Panel title={account.role==='staff'?'我的本營業日近期指名':'本營業日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
+ {tab==='staff'&&account.role==='owner'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><>{!isOwnerProfile(r,account.staff_id)&&<button type="button" className={`availability-action ${r.accepting_reservations?'pause':'resume'}`} disabled={Boolean(availabilityPending[String(r.id)])||busy===`staff:${r.id}`} onClick={()=>void updateStaffAvailability(r,r.accepting_reservations!==true)}>{availabilityPending[String(r.id)]?'更新中…':r.accepting_reservations?'暫停接單':'恢復接單'}</button>}<button disabled={busy===`staff:${r.id}`||Boolean(availabilityPending[String(r.id)])} onClick={()=>remove('staff',r.id)}>刪除</button></>}/></Panel>}
  {tab==='schedule'&&account.role!=='frontdesk'&&<>{account.role==='owner'&&<Panel title="臨時休館"><div className="venue-closure-control"><div><strong>{calendarToday} 今日營業狀態</strong><small>{isMondayDate(calendarToday)?'每週一固定休館':todayVenueClosed?'目前：臨時休館':'目前：正常營業'}</small></div><button className={todayVenueClosed?'ghost':'venue-close-btn'} disabled={busy==='venue-closure'||isMondayDate(calendarToday)} onClick={()=>void toggleTodayVenueClosure()}>{isMondayDate(calendarToday)?'週一固定休館':busy==='venue-closure'?'更新中…':todayVenueClosed?'取消今日臨時休館':'今日臨時休館'}</button></div><p className="hint">「臨時休館」是全館停止營業，不是單一館員休假；啟用後公開月曆、指名與點餐會同步顯示／阻擋。</p></Panel>}<Panel title={account.role==='owner'?'全館排班月曆':'我的排班月曆'} action={<div className="calendar-month-actions"><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,-1))}>‹ 上個月</button><strong>{monthLabel(calendarMonth)}</strong><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,1))}>下個月 ›</button></div>}><div className="work-calendar-toolbar">{account.role==='owner'&&<label><span>查看／編輯館員</span><select value={calendarStaffId} onChange={e=>setCalendarStaffId(e.target.value)}>{calendarStaff.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}<div className="work-calendar-legend"><span className="working">● 預設上班</span><span className="off">● 館員休假</span><span className="closed">● 全館休館</span></div></div>{calendarLoading?<p className="empty-state">排班月曆讀取中…</p>:<WorkCalendar month={calendarMonth} staffId={account.role==='staff'?(account.staff_id||''):calendarStaffId} rows={calendarRows} closures={calendarClosures} busy={busy} onChange={setWorkCalendarDay}/>}<p className="hint">週二～週日預設為上班（綠燈），館員只需點日期設定「休假」；再點一次即可取消休假。每週一為全館固定休館。</p></Panel></>}
  {tab==='operations'&&<div className="operations-grid">
   <div className="operations-column operations-orders"><Panel title="點餐管理"><RecordToolbar range={orderRange} status={orderStatus} search={orderSearch} onRange={v=>{setOrderRange(v);setOrderPage(1)}} onStatus={v=>{setOrderStatus(v);setOrderPage(1)}} onSearch={v=>{setOrderSearch(v);setOrderPage(1)}} statuses={['pending','completed','cancelled','all']}/><RecordSummary total={filteredOrders.length} range={orderRange} status={orderStatus}/><Table rows={visibleOrders} keys={['guest_name','items','delivery_preference_staff_name','delivery_staff_name','total','status','created_at']} actions={r=><>{account.staff_id&&!r.delivery_staff_id&&r.status==='pending'&&<button disabled={busy===`delivery:${r.id}`} onClick={()=>claimDelivery(r)}>{r.delivery_preference_staff_id&&r.delivery_preference_staff_id!==account.staff_id?'代為送餐':'由我送餐'}</button>}{r.delivery_staff_id===account.staff_id&&<button disabled>已由我接單</button>}<button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'completed')}>完成</button><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'cancelled')}>取消</button></>}/><Pagination page={orderPage} pages={orderPages} onChange={setOrderPage}/></Panel></div>
@@ -610,6 +684,7 @@ function monthLabel(month:string){const[y,m]=month.split('-').map(Number);return
 function taipeiDateKey(d:Date=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}
 function isMondayDate(date:string){return new Date(`${date}T12:00:00+08:00`).getUTCDay()===1}
 function calendarCells(month:string){const[y,m]=month.split('-').map(Number),first=new Date(y,m-1,1),days=new Date(y,m,0).getDate(),offset=(first.getDay()+6)%7;const cells:(string|null)[]=Array(offset).fill(null);for(let d=1;d<=days;d++)cells.push(`${month}-${String(d).padStart(2,'0')}`);while(cells.length%7)cells.push(null);return cells}
+function isOwnerProfile(row:Row,ownerId:string|null){return row.slug==='riku'||row.role==='館主'||Boolean(ownerId&&String(row.id)===String(ownerId))}
 function Panel({title,action,children}:{title:string,action?:React.ReactNode,children:React.ReactNode}){return <section className="panel"><div className="panel-head"><h2>{title}</h2>{action}</div>{children}</section>}
 function RecordToolbar({range,status,search,onRange,onStatus,onSearch,statuses}:{range:DateRange,status:string,search:string,onRange:(v:DateRange)=>void,onStatus:(v:string)=>void,onSearch:(v:string)=>void,statuses:string[]}){return <div className="record-toolbar"><div className="filter-group"><span>日期</span>{(Object.keys(dateRangeText) as DateRange[]).map(v=><button key={v} className={range===v?'selected':''} onClick={()=>onRange(v)}>{dateRangeText[v]}</button>)}</div><div className="filter-group"><span>狀態</span>{statuses.map(v=><button key={v} className={status===v?'selected':''} onClick={()=>onStatus(v)}>{v==='all'?'全部':statusText[v]}</button>)}</div><label className="record-search"><span>搜尋</span><input value={search} onChange={e=>onSearch(e.target.value)} placeholder="客人、館員、服務或品項"/></label></div>}
 function RecordSummary({total,range,status}:{total:number,range:DateRange,status:string}){return <div className="record-summary">顯示：{dateRangeText[range]}・{status==='all'?'全部狀態':statusText[status]}，共 {total} 筆。取消或完成的紀錄不會被刪除，可切換狀態查看。</div>}
