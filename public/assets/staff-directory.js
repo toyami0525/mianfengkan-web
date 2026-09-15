@@ -41,7 +41,7 @@
     const services = Array.isArray(row.services) ? row.services : [];
     const primary = row.photo_primary;
     const secondary = row.photo_secondary;
-    return `<article class="mf-staff-card${leader ? ' lead' : ''}${services.length ? ' has-services' : ''}" id="${esc(row.slug)}" style="--main-position:${position[0]};--inset-position:${position[1]}">
+    return `<article class="mf-staff-card${leader ? ' lead' : ' frame-maple'}${services.length ? ' has-services' : ''}" id="${esc(row.slug)}" style="--main-position:${position[0]};--inset-position:${position[1]}">
       <div class="photo-area">
         ${primary ? `<button type="button" class="photo-main-button" data-photo aria-label="放大${esc(row.name)}的主照片"><img class="photo-main" src="${esc(primary)}" alt="${esc(row.name)}主照片" decoding="async"${leader ? '' : ' loading="lazy"'}></button>` : '<div class="photo-placeholder" aria-hidden="true">楓</div>'}
         ${secondary ? `<button type="button" class="photo-inset" data-photo aria-label="放大${esc(row.name)}的小照片"><img src="${esc(secondary)}" alt="${esc(row.name)}第二張照片" decoding="async"${leader ? '' : ' loading="lazy"'}></button>` : ''}
@@ -60,10 +60,13 @@
     const main = rows.find(row => row.slug === 'riku') || owner;
     // 副館主的展示項目跟隨本次實際顯示的館主項目，但不寫入指名／帳號系統。
     const vice = { ...deputy, services: [...(main.services || [])] };
+    // 僅限介紹頁：指定兩位固定為館員名錄首列，資料庫重新載入也維持相同順序。
+    const featuredOrder = new Map([['grin', 0], ['hong-hong-hong-taidafeng', 1]]);
     const others = rows.filter(row => row.slug !== 'riku' && row.slug !== 'croseviel')
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      .sort((a, b) => (featuredOrder.get(a.slug) ?? 2) - (featuredOrder.get(b.slug) ?? 2)
+        || (a.sort_order || 0) - (b.sort_order || 0));
     list.className = 'mf-staff-directory';
-    list.innerHTML = `<section class="pair-grid leadership" aria-label="館主與副館主">${card(main, 0, true)}${card(vice, 1, true)}</section>
+    list.innerHTML = `<section class="leadership-frame" aria-label="館主與副館主"><div class="pair-grid leadership">${card(main, 0, true)}${card(vice, 1, true)}</div></section>
       <div class="section-heading"><h2>館員名錄</h2><span>THE PEOPLE OF MIANFENGKAN</span></div>
       <section class="pair-grid gallery" aria-label="館員名錄">${others.map((row, i) => card(row, i + 2)).join('')}
         <article class="mf-staff-card coming"><span class="seal" aria-hidden="true">楓</span><span class="eyebrow">COMING SOON</span><h2>敬請期待</h2><p>新的館員正在準備與各位旅人見面。</p></article>

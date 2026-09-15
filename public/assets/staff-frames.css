@@ -1,0 +1,92 @@
+/* 夕鶴／夕楓外框：只套用館員介紹頁，保留原照、裁切焦點與內容。 */
+body.mf-staff-page .mf-staff-directory {
+  --frame-cranes: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%2070%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23b58e5b%22%20stroke-width%3D%22.8%22%3E%3Ccircle%20cx%3D%22180%22%20cy%3D%2229%22%20r%3D%2220%22%2F%3E%3Cpath%20d%3D%22M157%2041H203M146%2048H214M166%2054H194M10%2062H116M244%2062H350%22%20opacity%3D%22.7%22%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D%22180%22%20cy%3D%2229%22%20r%3D%2215%22%20fill%3D%22%23bc7450%22%20opacity%3D%22.23%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23dcc39a%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M104%2039C112%2035%20113%2030%20112%2025C111%2020%20116%2017%20121%2019L139%2023L122%2023C117%2023%20119%2030%20117%2036C116%2044%20108%2047%2098%2046L86%2044%22%20fill%3D%22%23dfd3b6%22%2F%3E%3Cpath%20d%3D%22M105%2038C90%2031%2082%209%2057%205C68%2015%2075%2028%2087%2037C69%2031%2056%2033%2039%2030C55%2041%2075%2046%2097%2044%22%20fill%3D%22%23cdbc99%22%2F%3E%3Cpath%20d%3D%22M58%206L87%2037M68%2011L92%2036M78%2018L97%2037M42%2031L90%2041M55%2036L94%2043%22%20stroke%3D%22%23766051%22%2F%3E%3Cpath%20d%3D%22M95%2046L65%2055L46%2054M102%2047L72%2057L57%2059%22%2F%3E%3Cpath%20d%3D%22M115%2019Q118%2017%20122%2020%22%20stroke%3D%22%23ae554c%22%20stroke-width%3D%222.5%22%2F%3E%3Ccircle%20cx%3D%22122%22%20cy%3D%2220.5%22%20r%3D%22.6%22%20fill%3D%22%23382526%22%20stroke%3D%22none%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28360%200%29%20scale%28-1%201%29%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23dcc39a%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M104%2039C112%2035%20113%2030%20112%2025C111%2020%20116%2017%20121%2019L139%2023L122%2023C117%2023%20119%2030%20117%2036C116%2044%20108%2047%2098%2046L86%2044%22%20fill%3D%22%23dfd3b6%22%2F%3E%3Cpath%20d%3D%22M105%2038C90%2031%2082%209%2057%205C68%2015%2075%2028%2087%2037C69%2031%2056%2033%2039%2030C55%2041%2075%2046%2097%2044%22%20fill%3D%22%23cdbc99%22%2F%3E%3Cpath%20d%3D%22M58%206L87%2037M68%2011L92%2036M78%2018L97%2037M42%2031L90%2041M55%2036L94%2043%22%20stroke%3D%22%23766051%22%2F%3E%3Cpath%20d%3D%22M95%2046L65%2055L46%2054M102%2047L72%2057L57%2059%22%2F%3E%3Cpath%20d%3D%22M115%2019Q118%2017%20122%2020%22%20stroke%3D%22%23ae554c%22%20stroke-width%3D%222.5%22%2F%3E%3Ccircle%20cx%3D%22122%22%20cy%3D%2220.5%22%20r%3D%22.6%22%20fill%3D%22%23382526%22%20stroke%3D%22none%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --frame-maple: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20110%2034%22%3E%3Cpath%20d%3D%22M3%2028Q24%2022%2042%2026T106%2016%22%20fill%3D%22none%22%20stroke%3D%22%23b17952%22%20stroke-width%3D%22.7%22%2F%3E%3Cpath%20d%3D%22M54%2023L40%2025L44%2021L30%2013L42%2014L38%203L48%2012L54%201L60%2012L70%203L66%2014L78%2013L64%2021L68%2025L56%2023L56%2031L53%2032Z%22%20fill%3D%22%23ad6049%22%20stroke%3D%22%23d3a56d%22%20stroke-width%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M54%206L55%2025M55%2022L41%207M55%2022L68%207M55%2022L34%2015M55%2022L74%2015%22%20fill%3D%22none%22%20stroke%3D%22%23d3a56d%22%20stroke-width%3D%22.5%22%2F%3E%3C%2Fsvg%3E");
+}
+/* 兩位共用一個夕鶴外框，桌機並排、手機同框直排。 */
+.mf-staff-directory .leadership-frame {
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  padding:0 16px 16px;
+  border:1px solid #c1a074;
+  border-radius:29px;
+  background:radial-gradient(ellipse at 50% 0,rgba(179,102,74,.26),transparent 48%),linear-gradient(125deg,#3e2430 0%,#2b1d29 38%,#171820 70%,#352126 100%);
+  box-shadow:0 23px 58px #0005,inset 0 0 0 3px #d1ad6e0d;
+}
+.mf-staff-directory .leadership-frame::before {
+  content:"";
+  display:block;
+  height:76px;
+  background:var(--frame-cranes) center / 360px 70px no-repeat;
+  pointer-events:none;
+}
+.mf-staff-directory .leadership-frame::after {
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px solid #bfa07550;
+  border-radius:23px;
+  pointer-events:none;
+  z-index:2;
+}
+.mf-staff-directory .leadership-frame .leadership { gap:24px; }
+.mf-staff-directory .leadership-frame .lead {
+  border-color:#c3a37868;
+  border-radius:17px;
+  background:linear-gradient(150deg,#251c20,#16151b);
+  box-shadow:0 9px 24px #0003;
+}
+/* 夕楓紋只落在外緣；不蓋住人物、文字或照片按鈕。 */
+.mf-staff-directory .mf-staff-card.frame-maple {
+  position:relative;
+  isolation:isolate;
+  padding:28px 9px 9px;
+  border-color:#ba895e;
+  border-radius:24px;
+  background:radial-gradient(ellipse at 8% 0,rgba(164,81,52,.28),transparent 52%),linear-gradient(140deg,#492824,#281b20 52%,#34211b);
+  box-shadow:0 17px 38px #0004,inset 0 0 0 3px #b67b4410;
+}
+.mf-staff-directory .frame-maple::before {
+  content:"";
+  position:absolute;
+  inset:5px;
+  border:1px solid #c3976459;
+  border-radius:19px;
+  pointer-events:none;
+  z-index:2;
+}
+.mf-staff-directory .frame-maple::after {
+  content:"";
+  position:absolute;
+  top:0;
+  left:18px;
+  right:18px;
+  height:28px;
+  background:var(--frame-maple) left center / 91px 28px no-repeat,var(--frame-maple) right center / 91px 28px no-repeat,linear-gradient(90deg,transparent 20%,#b78c5559 42%,#e0bb7f99 50%,#b78c5559 58%,transparent 80%) center / 100% 1px no-repeat;
+  pointer-events:none;
+  z-index:2;
+}
+.mf-staff-directory .frame-maple .photo-area { border-radius:15px 15px 0 0; }
+.mf-staff-directory .frame-maple .staff-copy {
+  border-radius:0 0 15px 15px;
+  background:linear-gradient(145deg,#241a18,#181317);
+}
+@media(max-width:1120px) {
+  .mf-staff-directory .leadership-frame { padding:0 12px 12px; }
+  .mf-staff-directory .leadership-frame .leadership { gap:20px; }
+}
+@media(max-width:760px) {
+  .mf-staff-directory .leadership-frame { padding:0 9px 9px; border-radius:24px; }
+  .mf-staff-directory .leadership-frame::before { height:65px; background-size:min(300px,100%) auto; }
+  .mf-staff-directory .leadership-frame::after { inset:4px; border-radius:20px; }
+  .mf-staff-directory .leadership-frame .leadership { gap:16px; }
+  .mf-staff-directory .leadership-frame .lead { border-radius:15px; }
+  .mf-staff-directory .mf-staff-card.frame-maple { border-radius:21px; padding:26px 8px 8px; }
+  .mf-staff-directory .frame-maple::before { border-radius:17px; }
+  .mf-staff-directory .frame-maple::after { height:26px; background-size:84px 26px,84px 26px,100% 1px; }
+}
+@media(forced-colors:active) {
+  .mf-staff-directory .leadership-frame,
+  .mf-staff-directory .mf-staff-card.frame-maple { border:2px solid CanvasText; }
+}
