@@ -120,8 +120,8 @@ export async function POST(request: Request) {
     const closeAt = new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 16, 0, 0, 0));
     const projectedEnd = new Date(start.getTime()+duration*60000);
     if(!bookingTestMode && (start>=closeAt || projectedEnd>closeAt)) return NextResponse.json({error:'今日剩餘營業時間不足，本次服務無法在 24:00 前完成'},{status:400});
-    if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
-      return NextResponse.json({ error: '神噯雪目前僅提供耳語陪伴服務' }, { status: 400 });
+    if (['shenaixue', 'sai'].includes(staff.slug) && (services.length !== 1 || services[0] !== '耳語陪伴')) {
+      return NextResponse.json({ error: `${staffName}目前僅提供耳語陪伴服務` }, { status: 400 });
     }
     if (staff.slug === 'yukinoji-hakari') {
       const allowed=new Set(['耳語陪伴','Q版繪圖(公版)']);
