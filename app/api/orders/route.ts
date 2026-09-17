@@ -74,12 +74,20 @@ export async function POST(request: Request) {
     let deliveryPreferenceStaff:any=null;
     if(deliveryPreferenceStaffId){
       const staffDb=adminSupabase();
-      const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deliveryPreferenceStaffId);
+      // 副館主不另建帳號；以館主的有效 ID 收單及通知，但保留客人指定的副館主姓名。
+      const isDeputyDelivery=deliveryPreferenceStaffId==='croseviel';
+      const deliveryLookup=isDeputyDelivery?'riku':deliveryPreferenceStaffId;
+      const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deliveryLookup);
       const query=staffDb.from('staff').select('id,name,active').eq('active',true);
-      const r=isUuid?await query.eq('id',deliveryPreferenceStaffId).single():await query.eq('slug',deliveryPreferenceStaffId).single();
+      const r=isUuid?await query.eq('id',deliveryLookup).single():await query.eq('slug',deliveryLookup).single();
       if(r.error||!r.data)return NextResponse.json({error:'指定的希望送餐館員目前無法選擇'},{status:400});
       const{data:deliveryOff,error:deliveryOffError}=await staffDb.from('staff_work_calendar').select('staff_id').eq('staff_id',r.data.id).eq('work_date',todayKey).eq('status','off').maybeSingle();if(deliveryOffError)throw deliveryOffError;if(deliveryOff)return NextResponse.json({error:'希望送餐的館員今日休假，請改選其他館員或不指定'},{status:400});
-      deliveryPreferenceStaff=r.data;
+      if(isDeputyDelivery){
+        const{data:active,error:activeError}=await staffDb.from('reservations').select('id').eq('staff_id',r.data.id).not('status','in','(completed,cancelled,rejected,已完成,已取消,已拒絕)').limit(1);
+        if(activeError)throw activeError;
+        if(active?.length)return NextResponse.json({error:'副館主目前無法安排送餐，請改選其他館員或不指定'},{status:409});
+      }
+      deliveryPreferenceStaff={...r.data,name:isDeputyDelivery?'克羅塞維爾':r.data.name};
     }
 
     let musu:any=null,yuki:any=null;

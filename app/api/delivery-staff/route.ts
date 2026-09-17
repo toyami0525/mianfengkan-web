@@ -14,7 +14,13 @@ export async function GET() {
     ]);
     if(error)throw error;if(calendarOffError)throw calendarOffError;if(closureError)throw closureError;
     if(isMonday(today)||closure)return NextResponse.json({staff:[],venue_closed:true},{headers:{'Cache-Control':'no-store, max-age=0'}});
-    const offIds=new Set((calendarOff||[]).map((x:any)=>String(x.staff_id)));const staff=(data||[]).filter((x:any)=>!offIds.has(String(x.id)));
+    const offIds=new Set((calendarOff||[]).map((x:any)=>String(x.staff_id)));
+    const available=(data||[]).filter((x:any)=>!offIds.has(String(x.id)));
+    // 副館主只作為送餐選項；沿用館主的接單與休假狀態，不新增帳號或薪資人頭。
+    const staff=available.flatMap((row:any)=>row.slug==='riku'?[row,{
+      id:'croseviel',slug:'croseviel',name:'克羅塞維爾',role:'副館主',
+      sort_order:row.sort_order,availability_staff_id:row.id
+    }]:[row]);
     return NextResponse.json({staff},{headers:{'Cache-Control':'no-store, max-age=0'}});
   } catch (error) {
     const message = error instanceof Error ? error.message : '讀取送餐館員失敗';
