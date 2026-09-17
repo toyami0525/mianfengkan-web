@@ -427,6 +427,7 @@ body{
 .feedback-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .feedback-toolbar h2{margin:0 0 8px;font-size:1.4rem}.feedback-toolbar p{margin:0;color:#b8c7d9;font-size:.875rem}
 .feedback-panel a{color:#e8c58c}.feedback-list{display:grid;gap:18px;margin:22px 0}
+.feedback-panel button{font:inherit;font-size:1rem;min-height:44px;border:1px solid #b39769;border-radius:5px;background:#24364e;color:#f4e3c3;padding:10px 16px;cursor:pointer}.feedback-panel button:disabled{opacity:.5;cursor:default}.feedback-panel button:focus-visible{outline:2px solid #f2d49c;outline-offset:3px}
 .feedback-response{border:1px solid #8190a544;border-radius:8px;background:#0d192b;padding:20px;overflow-wrap:anywhere}
 .feedback-response>header{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
 .feedback-response h3{font-size:1.1rem;margin:0 0 6px}.feedback-response time{color:#b8c7d9;font-size:.875rem}
