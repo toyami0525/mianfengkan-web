@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#270a0e">
+  <title>滿意度調查｜眠楓館</title>
+  <link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/venue-pages.css?v=2818">
+  <link rel="stylesheet" href="assets/survey.css?v=20260917">
+</head>
+<body class="mf-page-theme mf-survey-page">
+<header class="site-header"><nav class="nav"><a class="brand" href="index.html"><span class="brand-mark">楓</span><span><strong>眠楓館</strong><small>MIANFENGKAN</small></span></a><button class="menu-btn" aria-expanded="false" aria-label="開啟導覽選單">☰</button><div class="nav-links"><a href="about.html">館內介紹</a><a href="services.html">服務項目</a><a href="staff.html">館員介紹</a><a href="menu.html">餐食價目</a><a href="rules.html">來館須知</a><a href="vip.html">VIP 貴客榜</a><a href="location.html">位置</a><a href="polaroid.html">拍立得領取</a><a href="survey.html" class="active" aria-current="page">滿意度調查</a><a class="reserve-link" href="reserve.html">指名／點餐</a></div></nav></header>
+<main class="survey-page">
+  <header class="survey-intro"><span class="eyebrow">MIANFENGKAN · GUEST FEEDBACK</span><h1>滿意度調查</h1><p>今晚在眠楓館，過得還好嗎？<br>喜歡的片刻、希望改進的地方，都可以留在這裡。</p></header>
+  <form id="surveyForm" class="survey-card">
+    <p class="survey-privacy">回覆僅供館主查看，不會公開。標示「必填」的欄位請協助填寫。</p>
+    <div class="survey-field">
+      <div class="survey-label-row"><label for="guestName">客人姓名 <small>必填或匿名</small></label><label class="survey-check anonymous-choice"><input type="checkbox" id="anonymous" name="is_anonymous">匿名填答</label></div>
+      <input id="guestName" name="guest_name" maxlength="80" required autocomplete="off" placeholder="您的角色名稱">
+      <p class="survey-help" id="anonymousHelp" hidden>將以「匿名旅人」送出，不會記錄您的姓名。</p>
+    </div>
+    <div class="survey-field">
+      <label for="staffName">今晚是哪位館員服務您？ <small>必填</small></label>
+      <div class="survey-staff-row"><input id="staffName" name="staff_name" list="staffNames" maxlength="160" required autocomplete="off" placeholder="館員姓名，多位可用頓號分隔；也可填「無」"><button type="button" id="noStaff" class="survey-secondary">填入「無」</button></div>
+      <datalist id="staffNames"><option value="無"></option></datalist>
+      <p class="survey-help" id="staffHelp">接待、送餐或指名服務的館員，都可以填寫。</p>
+    </div>
+    <fieldset class="survey-field"><legend>今晚的滿意度 <small>必填</small></legend>
+      <div class="survey-rating" id="ratingChoices">
+        <label><input type="radio" name="rating" value="1" required aria-label="1 星，很不滿意"><span aria-hidden="true">★</span></label>
+        <label><input type="radio" name="rating" value="2" aria-label="2 星，不太滿意"><span aria-hidden="true">★</span></label>
+        <label><input type="radio" name="rating" value="3" aria-label="3 星，普通"><span aria-hidden="true">★</span></label>
+        <label><input type="radio" name="rating" value="4" aria-label="4 星，滿意"><span aria-hidden="true">★</span></label>
+        <label><input type="radio" name="rating" value="5" aria-label="5 星，非常滿意"><span aria-hidden="true">★</span></label>
+      </div><p class="survey-help" id="ratingHint" aria-live="polite">點選星星評分，1 星最低、5 星最高。</p>
+    </fieldset>
+    <fieldset class="survey-field"><legend>今晚體驗了什麼服務？ <small>必填，可複選</small></legend>
+      <div class="survey-services" id="serviceChoices">
+        <label class="survey-check"><input type="checkbox" name="services" value="只點餐而已">只點餐而已</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="泡湯洗浴">泡湯洗浴</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="按摩服務">按摩服務</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="耳語陪伴">耳語陪伴</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="Q版繪圖(公版)">Q版繪圖（公版）</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="拍立得">拍立得</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="簽繪拍立得">簽繪拍立得</label>
+        <label class="survey-check"><input type="checkbox" name="services" value="其他服務">其他服務</label>
+      </div><p class="survey-help">若只享用餐點，選「只點餐而已」即可。</p>
+    </fieldset>
+    <div class="survey-field"><label for="comments">有什麼想說的話，或希望我們改進的地方？ <small>選填</small></label>
+      <textarea id="comments" name="comments" rows="5" maxlength="2000" placeholder="想對館員說的話、讓您印象深刻的片刻，或任何意見……"></textarea>
+      <p class="survey-help survey-counter"><span id="commentCount">0</span>／2,000 字</p>
+    </div>
+    <p id="surveyError" class="survey-error" role="alert" tabindex="-1" hidden></p>
+    <button id="surveySubmit" type="submit" class="survey-submit">送出今晚的回饋</button>
+    <noscript><p>請啟用瀏覽器 JavaScript，才能送出調查。</p></noscript>
+  </form>
+  <section id="surveySuccess" class="survey-card survey-success" tabindex="-1" hidden><span class="eyebrow">謝謝您的信任</span><h2>您的心聲，我們收到了。</h2><p>謝謝您願意留下一點時間，<br>讓眠楓館的下一次款待更貼近您的心意。</p><a href="index.html" class="survey-submit">返回眠楓館</a></section>
+  <footer class="survey-footer">眠楓館 敬上</footer>
+</main>
+<div class="toast" role="status"></div>
+<script src="assets/script.js?v=20260917-survey"></script><script src="assets/site-content.js"></script><script src="assets/survey.js?v=20260917"></script>
+</body></html>

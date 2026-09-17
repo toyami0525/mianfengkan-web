@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
     return [
       { source: '/', destination: '/index.html', permanent: false },
       { source: '/about', destination: '/about.html', permanent: false },
+      { source: '/survey', destination: '/survey.html', permanent: false },
       { source: '/services', destination: '/services.html', permanent: false },
       { source: '/staff', destination: '/staff.html', permanent: false },
       { source: '/menu', destination: '/menu.html', permanent: false },

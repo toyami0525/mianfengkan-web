@@ -10,7 +10,7 @@ const SERVICE_INFO: Record<string, { price: number; duration: number }> = {
   '泡湯洗浴': { price: 150000, duration: 15 },
   '按摩服務': { price: 100000, duration: 15 },
   '耳語陪伴': { price: 100000, duration: 15 },
-  'Q版繪圖(公版)': { price: 350000, duration: 15 },
+  'Q版繪圖(公版)': { price: 500000, duration: 15 },
   '簽繪拍立得': { price: 150000, duration: 15 },
   '拍立得(無簽繪)': { price: 80000, duration: 15 },
   '眠楓套席': { price: 300000, duration: 45 },

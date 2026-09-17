@@ -52,7 +52,7 @@
     .floating-maple{position:absolute;z-index:2;width:115px;height:115px;background:url('assets/images/maple-leaf.webp') center/contain no-repeat;opacity:.13;pointer-events:none;filter:drop-shadow(0 10px 25px rgba(0,0,0,.3));animation:mapleDrift 13s ease-in-out infinite}.floating-maple.one{left:7%;top:14%;transform:rotate(-18deg)}.floating-maple.two{right:7%;bottom:10%;width:86px;height:86px;opacity:.09;animation-delay:-5s;transform:rotate(28deg)}
     .home-drawer{position:fixed;inset:0 0 0 auto;width:min(410px,88vw);z-index:35;padding:96px 48px 40px;background:rgba(22,15,12,.96);backdrop-filter:blur(18px);transform:translateX(105%);transition:transform .38s cubic-bezier(.7,0,.2,1);box-shadow:-20px 0 70px rgba(0,0,0,.32)}
     .home-drawer.open{transform:translateX(0)}
-    .home-drawer nav{display:flex;flex-direction:column}
+    .home-drawer{overflow-y:auto}.home-drawer .address{position:static!important;margin-top:26px;padding-bottom:24px}.home-drawer nav{display:flex;flex-direction:column}
     .home-drawer a{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.12);font-family:"Noto Serif TC",serif;font-size:18px;letter-spacing:.18em;color:#fff}
     .home-drawer a small{display:block;margin-top:5px;font:10px/1.4 sans-serif;letter-spacing:.25em;color:rgba(255,255,255,.48)}
     .home-drawer .address{position:absolute;left:48px;right:48px;bottom:34px;font-size:11px;line-height:1.8;letter-spacing:.12em;color:rgba(255,255,255,.48)}
@@ -81,7 +81,7 @@
       <a href="vip.html">VIP 貴客榜<small>HONORED GUESTS</small></a>
       <a href="location.html">位置<small>LOCATION</small></a>
       <a href="polaroid.html">拍立得領取<small>POLAROID PICKUP</small></a>
-      <a href="reserve.html">指名／點餐<small>BOOKING & DINING</small></a>
+      <a href="survey.html">滿意度調查<small>GUEST FEEDBACK</small></a><a href="reserve.html">指名／點餐<small>BOOKING & DINING</small></a>
       
     </nav>
     <div class="address">FF14 繁中版｜穹頂皓天 7區22號<br>營業時間依招募板公告為主</div>

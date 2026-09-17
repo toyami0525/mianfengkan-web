@@ -1,0 +1,45 @@
+body.mf-survey-page{--mf-background:url('images/mianfengkan-maple-lacquer.jpg');--mf-panel:rgba(35,10,15,.95);--mf-header:rgba(28,8,13,.96);font-family:"PingFang TC","Microsoft JhengHei",sans-serif}
+.mf-survey-page [hidden]{display:none!important}
+.mf-survey-page *{box-sizing:border-box}
+.survey-page{width:min(800px,100%);margin:0 auto;padding:42px 24px 32px}
+.survey-intro{margin-bottom:28px;text-align:center}
+.survey-intro h1{color:#f8dfb5;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(2rem,5vw,2.65rem);font-weight:600;letter-spacing:.14em;margin:8px 0 12px}
+.survey-intro p{color:#efdbca;margin:0;line-height:1.9}
+.survey-intro .eyebrow{color:#e4c290;font-size:.8rem;letter-spacing:.12em}
+.survey-card{padding:32px 38px;background:linear-gradient(125deg,rgba(62,17,25,.97),rgba(26,10,17,.97));border:1px solid #b18a5c;border-radius:6px;box-shadow:0 12px 50px #0b010966,inset 0 0 0 5px #b58a4e0b}
+.survey-privacy{font-size:.875rem;color:#e0c5b6;line-height:1.8;padding:0 0 22px;margin:0 0 26px;border-bottom:1px solid #bc97553b}
+.survey-field{margin:0 0 28px;padding:0;border:0;min-width:0}
+.survey-field>label,.survey-field legend,.survey-label-row>label:first-child{display:block;font-weight:600;color:#fae8d2;font-size:1rem;margin-bottom:10px;line-height:1.75}
+.survey-field small{font-size:.875rem;font-weight:400;color:#d7bb9f;display:inline-block;margin-left:6px}
+.survey-label-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.survey-field :is(input:not([type=checkbox]):not([type=radio]),textarea){display:block;width:100%;min-width:0;color:#fff0de;background:#180b12!important;border:1px solid #bb925963;border-radius:4px;padding:12px 14px;font:inherit;font-size:1rem;line-height:1.7}
+.survey-field input:disabled{opacity:.55}
+.survey-field textarea{resize:vertical;min-height:140px}
+.survey-field :is(input,textarea)::placeholder{color:#b9a397;opacity:1}
+.survey-help{color:#d6bcb0;font-size:.875rem;line-height:1.8;margin:8px 0 0}
+.survey-staff-row{display:flex;align-items:stretch;gap:10px}
+.survey-secondary{white-space:nowrap;font:inherit;font-size:.875rem;background:#472028;color:#f2d4a6;border:1px solid #b78f5a;padding:10px 14px;border-radius:4px;cursor:pointer}
+.survey-check{display:flex!important;align-items:center;gap:10px;cursor:pointer;font-size:1rem;color:#f9e4d2;font-weight:400}
+.survey-check input{appearance:auto!important;position:static!important;opacity:1!important;accent-color:#ce9f62;width:18px!important;height:18px!important;flex:0 0 18px;margin:0}
+.anonymous-choice{font-size:.875rem;min-height:44px}
+.survey-rating{display:flex;gap:8px;margin:5px 0 0}
+.survey-rating label{position:relative;display:grid;place-items:center;cursor:pointer;width:52px;height:56px;min-width:0}
+.survey-rating input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.survey-rating span{display:block;font:2.7rem/1 sans-serif;color:#896b64;transition:color .15s,transform .15s}
+.survey-rating label.is-selected span{color:#f4c979}
+.survey-rating label:hover span{color:#ffe2a7;transform:translateY(-2px)}
+.survey-rating label:focus-within{outline:2px solid #f2d2a0;outline-offset:2px;border-radius:4px}
+.survey-services{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.survey-services label{padding:12px 14px;border:1px solid #a6795147;background:#1d0c145e;border-radius:4px;min-height:50px;line-height:1.6}
+.survey-services label:has(input:checked){border-color:#deba7e;background:#61302466;color:#ffe5b4}
+.survey-counter{text-align:right}
+.survey-submit{display:block;text-align:center;width:100%;padding:14px 20px;background:linear-gradient(110deg,#b88b52,#e0bd7e);color:#2b1012!important;border:1px solid #edcf94;border-radius:4px;font:inherit;font-size:1rem;font-weight:600;line-height:1.7;cursor:pointer;letter-spacing:.1em;text-decoration:none}
+.survey-submit:disabled{opacity:.65;cursor:wait}
+.survey-error{background:#541d27;border:1px solid #d88a88;border-radius:4px;padding:12px;color:#fff0e5;line-height:1.7}
+.survey-success{text-align:center;padding:48px 32px}
+.survey-success h2{font-family:serif;color:#f7dfb3;font-size:1.8rem;line-height:1.5;margin:12px 0}
+.survey-success p{color:#e4cbbb;line-height:2;margin-bottom:30px}
+.survey-footer{text-align:center;font-family:serif;letter-spacing:.25em;margin-top:26px;color:#e5c190;font-size:.875rem}
+.mf-survey-page :is(a,button,input,textarea):focus-visible{outline:2px solid #ffe0a2;outline-offset:3px}
+@media(max-width:600px){.survey-page{padding:28px 16px}.survey-card{padding:24px 20px}.survey-intro{margin-bottom:22px}.survey-services{grid-template-columns:1fr}.survey-staff-row{flex-wrap:wrap}.survey-secondary{min-height:44px}.survey-rating{gap:4px}.survey-rating label{width:46px;height:52px}.survey-rating span{font-size:2.5rem}.survey-success{padding:36px 20px}}
+@media(prefers-reduced-motion:reduce){.survey-rating span{transition:none}}

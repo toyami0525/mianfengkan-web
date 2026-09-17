@@ -966,3 +966,12 @@ body:not(.homepage) .rule p{
 @media(max-width:900px){.vip-levels{grid-template-columns:repeat(2,minmax(0,1fr))}.vip-levels article:last-child{grid-column:1/-1}.vip-ranking-head{align-items:start;flex-direction:column}.vip-ranking-head p{text-align:left}.vip-top-three{grid-template-columns:1fr}.vip-podium,.vip-podium-1{min-height:auto}.vip-podium-1{order:-2}.vip-podium-2{order:-1}.vip-rank-row{grid-template-columns:44px minmax(0,1fr) auto}.vip-rank-row .vip-tier{grid-column:2/4;justify-self:start}.vip-total{grid-column:3;grid-row:1}}
 @media(max-width:560px){.vip-ranking-card{padding:17px}.vip-levels{grid-template-columns:1fr}.vip-levels article:last-child{grid-column:auto}.vip-rule-banner{align-items:flex-start;flex-direction:column;text-align:left}.vip-rank-row{padding:12px 10px;gap:8px}.vip-total{font-size:13px}.vip-guest-name{font-size:14px}.vip-tier{font-size:11px}}
 @media(min-width:901px){.nav-links{gap:17px;font-size:13px}.reserve-link{padding-left:13px!important;padding-right:13px!important}}
+
+/* Keep the full navigation usable after adding guest feedback. */
+@media(max-width:1350px){
+ body .site-header .nav .menu-btn{display:block;min-width:44px;min-height:44px}
+ body .site-header .nav .nav-links{display:none;position:absolute;top:76px;left:16px;right:16px;max-height:calc(100dvh - 96px);overflow-y:auto;flex-direction:column;align-items:stretch;gap:0;padding:14px;background:#221419;border:1px solid #bd955755;border-radius:4px;box-shadow:0 16px 40px #0008}
+ body .site-header .nav .nav-links.open{display:flex}
+ body .site-header .nav .nav-links a{padding:12px!important;font-size:16px;color:#f6e5d2;white-space:normal}
+ body .site-header .nav .nav-links a::after{display:none}
+}
