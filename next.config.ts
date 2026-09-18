@@ -1,5 +1,14 @@
 import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      { source: '/ashenrila', destination: '/ashenrila/index.html' },
+      { source: '/ashenrila/invitation', destination: '/ashenrila/invitation/index.html' },
+      { source: '/ashenrila/drinks', destination: '/ashenrila/drinks/index.html' },
+      { source: '/ashenrila/staff', destination: '/ashenrila/staff/index.html' },
+      { source: '/ashenrila/visit', destination: '/ashenrila/visit/index.html' }
+    ];
+  },
   async redirects() {
     return [
       { source: '/', destination: '/index.html', permanent: false },
