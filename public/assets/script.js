@@ -3,6 +3,16 @@ menuBtn?.addEventListener('click',()=>{const open=navLinks.classList.toggle('ope
 navLinks?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navLinks.classList.remove('open')));
 function toast(msg){const el=document.querySelector('.toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
 
+// 團體遊戲：所有內頁共用入口，保留各頁既有導覽與接單流程。
+(()=>{
+ const nav=document.querySelector('.nav-links');
+ if(!nav||nav.querySelector('a[href="games.html"]'))return;
+ const link=document.createElement('a');
+ link.href='games.html';link.textContent='團體遊戲';
+ const services=nav.querySelector('a[href="services.html"]');
+ if(services)services.insertAdjacentElement('afterend',link);else nav.appendChild(link);
+})();
+
 
 // v2.8.0：所有公開頁面自動加入「排班月曆」入口。
 (()=>{const nav=document.querySelector('.nav-links');if(!nav||nav.querySelector('a[href="schedule.html"]'))return;const a=document.createElement('a');a.href='schedule.html';a.textContent='排班月曆';if(location.pathname.endsWith('/schedule.html')||location.pathname.endsWith('schedule.html'))a.classList.add('active');const locationLink=nav.querySelector('a[href="location.html"]');if(locationLink)nav.insertBefore(a,locationLink);else{const reserve=nav.querySelector('.reserve-link');reserve?nav.insertBefore(a,reserve):nav.appendChild(a)}})();

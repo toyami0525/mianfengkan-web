@@ -1,0 +1,51 @@
+/* Group games reuse the venue's moonlit setting and gold accents. */
+body.mf-games-page {
+  --mf-background: url('images/page-schedule-moon.jpg');
+  --mf-panel: rgba(22, 17, 25, .95);
+  --mf-header: rgba(17, 14, 22, .97);
+}
+body.mf-games-page .game-page { max-width: 960px; }
+body.mf-games-page .page-title { padding-top: 30px; margin-bottom: 28px; }
+body.mf-games-page .page-title h1 { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; }
+.game-edition { font-size: 1rem; letter-spacing: .1em; border: 1px solid #d7b77c80; padding: 4px 12px; color: #edd5ae; }
+.game-panel { border: 1px solid #d7b77c70; border-radius: 4px; background: var(--mf-panel); padding: 28px 32px; box-shadow: 0 14px 32px #0004; min-width: 0; }
+.game-page :is(h2, h3) { color: #f2dbb3; font-weight: 500; letter-spacing: .08em; line-height: 1.6; }
+.game-page h2 { font-size: 1.5rem; margin: 0 0 16px; }
+.game-page h3 { font-size: 1.4rem; margin: 0; }
+.game-page p { font-size: 1rem; line-height: 1.95; margin: 10px 0 0; color: #eee3d6; overflow-wrap: anywhere; }
+.game-page strong { color: #ffe3ab; font-weight: 600; }
+.game-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+.game-roles dt { color: #efd4a4; font-size: 1.15rem; }
+.game-roles dt span { display: inline-block; font-size: .875rem; color: #d2c1b4; margin-left: 8px; }
+.game-roles dd { font-size: 1rem; line-height: 1.8; color: #e4d7cb; margin: 6px 0 0; }
+.game-page .game-section-title { margin: 34px 0 16px; }
+.game-steps { padding: 0; margin: 0; display: grid; gap: 16px; list-style: none; }
+.game-step-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px; margin-bottom: 14px; }
+.game-step-number { color: #c6a778; font: 1.15rem/1.6 Georgia, serif; letter-spacing: .08em; }
+.game-phase { font-size: .875rem; color: #cebdad; }
+.game-night { background: rgba(11, 21, 36, .96); border-color: #aeb9cd66; }
+.game-night .game-step-number { color: #bed0e2; }
+.game-outcomes { display: grid; gap: 10px; margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); list-style: none; }
+.game-outcomes li { display: flex; flex-wrap: wrap; gap: 2px 22px; font-size: 1rem; line-height: 1.8; color: #eee3d6; }
+.game-page .game-repeat { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); color: #ead0a2; }
+.game-victory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.game-footer { text-align: center; margin-top: 32px; }
+.game-footer a { display: inline-flex; align-items: center; min-height: 48px; padding: 8px 24px; border: 1px solid #c5a36b; border-radius: 4px; color: #f1d7ab; font-size: 1rem; background: rgba(17, 14, 22, .93); }
+.game-footer a:hover { background: #382831; }
+.game-skip-link { position: fixed; top: 12px; left: 16px; z-index: 100; padding: 12px 18px; background: #231622; color: #ffe2ac; border: 1px solid #d7b77c; transform: translateY(-180%); }
+.game-skip-link:focus { transform: none; }
+
+/* Keep the new service entry in the existing three-column service list. */
+.service-game-action { display: flex; justify-content: flex-end; align-items: center; }
+.service-game-action a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 18px; border: 1px solid #d4ae73; border-radius: 4px; color: #f5dfb8; font-size: 1rem; line-height: 1.7; white-space: nowrap; background: rgba(55, 33, 27, .9); }
+.service-game-action a:hover { background: #54312c; }
+@media (max-width: 1000px) { .service-game-action { grid-column: 2; justify-content: flex-start; } }
+@media (max-width: 600px) {
+  .game-panel { padding: 22px 20px; }
+  .game-roles, .game-victory-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .game-roles > div + div { padding-top: 16px; border-top: 1px solid var(--line); }
+  .game-step-heading { gap: 6px 12px; }
+  .game-phase { width: 100%; padding-left: 0; }
+  .game-outcomes li { flex-direction: column; }
+  .service-game-action { grid-column: 1; }
+}
