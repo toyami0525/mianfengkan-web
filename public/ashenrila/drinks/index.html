@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://mianfengkan-web.vercel.app/ashenrila/drinks">
   <title>午夜酒單｜艾申瑞拉</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c12'/%3E%3Cpath d='M32 8 54 32 32 56 10 32Z' fill='none' stroke='%23b6a383' stroke-width='2'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Georgia,serif' font-size='35' fill='%23e2eaf2'%3EA%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/ashenrila/styles.css">
+  <link rel="stylesheet" href="/ashenrila/styles.css?v=20260918-return">
   <script src="/ashenrila/script.js" defer></script>
 </head>
 <body class="inner-page drinks-page">
@@ -18,15 +18,17 @@
       <span class="brand-mark" aria-hidden="true">A</span>
       <span class="brand-name">艾申瑞拉<span lang="en">ASHENRILA</span></span>
     </a>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="開啟導覽選單"><span></span><span></span></button>
-    <nav id="site-nav" class="site-nav" aria-label="主要導覽">
-      <a href="/ashenrila">首頁</a>
-      <a href="/ashenrila/invitation">午夜邀請</a>
-      <a href="/ashenrila/drinks" aria-current="page">午夜酒單</a>
-      <a href="/ashenrila/staff">員工介紹</a>
-      <a href="/ashenrila/visit">來訪須知</a>
-      <a class="sister-link" href="https://mianfengkan-web.vercel.app/index.html" target="_blank" rel="noopener noreferrer">眠楓館 <span aria-hidden="true">↗</span><span class="sr-only">（另開視窗）</span></a>
-    </nav>
+    <div class="header-actions">
+      <nav id="site-nav" class="site-nav" aria-label="主要導覽">
+        <a href="/ashenrila">首頁</a>
+        <a href="/ashenrila/invitation">午夜邀請</a>
+        <a href="/ashenrila/drinks" aria-current="page">午夜酒單</a>
+        <a href="/ashenrila/staff">員工介紹</a>
+        <a href="/ashenrila/visit">來訪須知</a>
+      </nav>
+      <a class="return-home" href="/index.html" aria-label="返回眠楓館"><span class="return-symbol" aria-hidden="true">←</span><span><span class="return-prefix">返回</span>眠楓館</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="開啟導覽選單"><span></span><span></span></button>
+    </div>
   </header>
 
   <main id="main" tabindex="-1">
@@ -116,7 +118,10 @@
   <footer class="site-footer section-shell">
     <a class="footer-brand" href="/ashenrila">艾申瑞拉<span lang="en">ASHENRILA</span></a>
     <p>玻璃鞋為信，黑夜為約。</p>
-    <a href="#top" class="back-top">回到頁首 <span aria-hidden="true">↑</span></a>
+    <div class="footer-actions">
+      <a class="return-home" href="/index.html"><span class="return-symbol" aria-hidden="true">←</span><span>返回眠楓館</span></a>
+      <a href="#top" class="back-top">回到頁首 <span aria-hidden="true">↑</span></a>
+    </div>
     <small>FINAL FANTASY XIV 玩家創作酒吧 · 非官方網站</small>
   </footer>
 </body>
