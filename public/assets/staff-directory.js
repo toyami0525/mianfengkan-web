@@ -7,6 +7,12 @@
   }
 
   const local = MF_DEFAULT_STAFF.map(row => ({ ...row, services: [...(row.services || [])] }));
+  // 緋瞳換照：第一張為大張主照片，第二張為小照片；不修改其他展示資料。
+  const feitong = local.find(row => row.slug === 'feitong');
+  if (feitong) {
+    feitong.photo_primary = 'assets/images/staff-feitong-20260919-01.webp';
+    feitong.photo_secondary = 'assets/images/staff-feitong-20260919-02.webp';
+  }
   const owner = local.find(row => row.slug === 'riku');
   if (!owner) return;
   owner.photo_primary = 'assets/images/staff-riku-20260915-01.jpg';
