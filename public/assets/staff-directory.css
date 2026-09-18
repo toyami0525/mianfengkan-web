@@ -26,6 +26,13 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
 .mf-staff-directory .service { font-size:12px; line-height:1.6; border:1px solid rgba(170,142,91,.38); border-radius:4px; padding:5px 9px; background:rgba(128,101,55,.07); color:#e5d7bd; white-space:normal; }
 .mf-staff-directory .service[data-type="拍立得"] { border-color:#8d6981; background:#61364d25; }
 .mf-staff-directory .service[data-type="耳語陪伴"], .mf-staff-directory .service[data-type="枕邊談心"] { border-color:#7e788e; background:#5b45631c; }
+.mf-staff-directory .midnight-invitation { margin-top:24px; padding-top:21px; border-top:1px solid #b79a6959; }
+.mf-staff-directory .midnight-invitation-title { margin:0 0 12px; color:#c4ab7d; font-size:14px; line-height:1.8; letter-spacing:.22em; font-weight:400; }
+.mf-staff-directory .midnight-invitation-quote { margin:0 0 19px; color:#ecdfca; font-size:16px; line-height:1.9; overflow-wrap:anywhere; }
+.mf-staff-directory .midnight-invitation-link { display:inline-flex; align-items:center; justify-content:space-between; gap:28px; min-height:64px; max-width:100%; padding:8px 21px; border:1px solid #bfa373; border-radius:5px; background:linear-gradient(120deg,#172337,#0b111c); color:#f2dfb8; font:400 16px/1.6 "Noto Serif TC","Songti TC","Microsoft JhengHei",serif; letter-spacing:.09em; text-decoration:none; transition:background .2s ease,border-color .2s ease; }
+.mf-staff-directory .midnight-invitation-link:hover { background:#23324a; border-color:#e7c994; }
+.mf-staff-directory .midnight-invitation-link:focus-visible { outline:2px solid #e7c994; outline-offset:4px; }
+.mf-staff-directory .midnight-glass-slipper { display:block; flex:0 0 62px; width:62px; height:auto; object-fit:contain; }
 .mf-staff-directory .section-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:43px 3px 21px; }
 .mf-staff-directory .section-heading h2 { font-size:20px; line-height:1.8; letter-spacing:.18em; font-weight:500; margin:0; white-space:nowrap; color:#f2e9d9; }
 .mf-staff-directory .section-heading span { display:block; font:10px Georgia,serif; color:#a28d6d; letter-spacing:.22em; white-space:nowrap; }
@@ -63,6 +70,7 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
   .mf-staff-directory .nameplate h2 { font-size:27px; }
   .mf-staff-directory .nameplate p { font-size:11px; }
   .mf-staff-directory .staff-copy { padding:23px 23px 26px; }
+  .mf-staff-directory .midnight-invitation-link { display:flex; width:100%; gap:16px; padding-inline:16px; }
   .mf-staff-directory .quote { font-size:16px; line-height:1.95; }
   .mf-staff-directory .bio { font-size:16px; line-height:1.95; }
   .mf-staff-directory .mf-staff-card { border-radius:19px; }

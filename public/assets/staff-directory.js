@@ -50,6 +50,11 @@
       </div>
       <div class="staff-copy"><p class="quote">${esc(row.quote || '')}</p><p class="bio">${esc(row.bio || '')}</p>
         ${services.length ? `<div class="services"><span class="services-label">提供服務</span>${services.map(service => `<span class="service" data-type="${esc(service)}">${esc(service)}</span>`).join('')}</div>` : ''}
+        ${row.slug === deputy.slug ? `<section class="midnight-invitation" aria-labelledby="croseviel-midnight-title">
+          <h3 id="croseviel-midnight-title" class="midnight-invitation-title">午夜邀請</h3>
+          <p class="midnight-invitation-quote">「若今夜還不想散場，親愛的，隨我來。」</p>
+          <a class="midnight-invitation-link" href="https://ashenrila-noir.wl02672962.chatgpt.site" target="_blank" rel="noopener noreferrer" aria-label="前往艾申瑞拉，另開視窗"><span>前往艾申瑞拉</span><img class="midnight-glass-slipper" src="assets/images/ashenrila-glass-slipper.png" width="248" height="186" alt="" aria-hidden="true" decoding="async"></a>
+        </section>` : ''}
       </div>
     </article>`;
   }
