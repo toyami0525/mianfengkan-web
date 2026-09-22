@@ -1,2 +1,3 @@
 import AdminApp from '@/components/AdminApp';
-export default function Admin(){return <AdminApp/>}
+import {WerewolfAdminEntry} from '@/components/WerewolfAdmin';
+export default function Admin(){return <><WerewolfAdminEntry/><AdminApp/></>}

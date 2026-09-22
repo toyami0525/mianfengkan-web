@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#180f19">
+  <meta name="description" content="眠楓館狼人殺獨立預約。每場 500,000 Gil，由一位代表填寫日期、時間與參加人數，送出後由館主確認安排。">
+  <title>狼人殺預約｜眠楓館</title>
+  <link rel="stylesheet" href="assets/werewolf-reserve.css?v=20260922">
+</head>
+<body class="ww-page">
+<a class="ww-skip" href="#reservation">跳至預約表單</a>
+<header class="ww-header"><a class="ww-brand" href="index.html"><span class="ww-seal" aria-hidden="true">楓</span><span>眠楓館<small>MIANFENGKAN</small></span></a><nav aria-label="狼人殺頁面導覽"><a href="games.html">遊戲規則</a><a href="reserve.html">指名／點餐</a><a href="index.html">返回主館</a></nav></header>
+<main class="ww-main">
+<header class="ww-hero"><div><span class="ww-eyebrow">MIANFENGKAN · GROUP GAME</span><h1>狼人殺<span>預約</span></h1><p class="ww-lead">今夜，誰藏著另一個身分？</p><p>帶上夥伴，把笑聲、懷疑與一點演技，留在眠楓的夜裡。</p></div><div class="ww-hero-price"><small>一場遊戲，一段共同的回憶</small><strong>500,000 <span>Gil</span></strong><p>每場 50 萬 · 非每人計價</p></div></header>
+<div class="ww-process" aria-label="預約流程"><span><b>01</b> 填寫預約</span><span aria-hidden="true">→</span><span><b>02</b> 館主確認</span><span aria-hidden="true">→</span><span><b>03</b> 相約開局</span></div>
+<div class="ww-layout">
+<section class="ww-panel" id="reservation" aria-labelledby="form-title">
+<div class="ww-section-heading"><span class="ww-eyebrow">YOUR RESERVATION</span><h2 id="form-title">留一席，等夥伴到齊</h2><p>每場由一位代表送出即可。＊為必填欄位。</p></div>
+<p id="config-status" class="ww-notice" role="status">正在確認可預約日期…</p><button id="retry-config" type="button" class="ww-secondary" hidden>重新確認日期</button>
+<noscript><p class="ww-error">需要啟用 JavaScript 才能送出預約；亦可直接聯繫館主。</p></noscript>
+<form id="werewolf-form">
+<fieldset id="booking-fields"><legend class="ww-sr-only">預約資料</legend>
+<div class="ww-fields">
+<div class="ww-field"><label for="guest_name">預約代表的角色名稱 ＊</label><input id="guest_name" name="guest_name" maxlength="80" placeholder="請填寫完整角色名稱" autocomplete="nickname" required></div>
+<div class="ww-field"><label for="guest_server">所屬伺服器 ＊</label><select id="guest_server" name="guest_server" required><option value="">請選擇伺服器</option><option>伊弗利特</option><option>利維坦</option><option>巴哈姆特</option><option>泰坦</option><option>迦樓羅</option><option>鳳凰</option><option>奧汀</option></select></div>
+<div class="ww-field"><label for="date">希望遊玩日期 ＊</label><input id="date" name="date" type="date" required aria-describedby="date-help"><small id="date-help">週一公休；臨時休館日不受理預約。</small></div>
+<div class="ww-field"><label for="time">希望開始時間 ＊</label><input id="time" name="time" type="time" min="21:00" max="23:59" step="60" value="21:00" required aria-describedby="time-help"><small id="time-help">台灣時間 21:00～23:59，實際開場由館主確認。</small></div>
+<div class="ww-field"><label for="players">預計參加人數 ＊</label><input id="players" name="players" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="含預約代表本人" required><small>填寫人數不會改變每場費用。</small></div>
+<div class="ww-field"><label for="contact">其他聯絡方式（選填）</label><input id="contact" name="contact" maxlength="200" placeholder="例如 Discord 使用者名稱" autocomplete="off"><small>未填時，以角色名稱及伺服器聯絡。</small></div>
+<div class="ww-field ww-full"><label for="notes">想先告訴我們的事（選填）</label><textarea id="notes" name="notes" rows="4" maxlength="2000" placeholder="例如：大家都是第一次玩、同行夥伴、希望的遊戲氣氛……"></textarea></div>
+</div>
+<div class="ww-honeypot" aria-hidden="true"><label for="website">請留空</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+<label class="ww-agree"><input type="checkbox" id="agreed" name="agreed" required><span>我已了解每場收費 <strong>500,000 Gil</strong>，不是每人收費；送出後為預約申請，需由館主確認時間與人數安排。</span></label>
+<p class="ww-privacy">角色名稱、聯絡方式與備註僅供館主處理預約，不會公開在網站。</p>
+<div id="form-error" class="ww-error" role="alert" tabindex="-1" hidden></div>
+<button class="ww-submit" type="submit" id="submit-booking" disabled>送出狼人殺預約 <span aria-hidden="true">↗</span></button>
+<p class="ww-submit-help">請等待畫面顯示預約編號，才代表申請已送達。</p>
+</fieldset>
+</form>
+<section id="booking-success" class="ww-success" tabindex="-1" hidden aria-labelledby="success-title"><span class="ww-eyebrow">REQUEST RECEIVED</span><h2 id="success-title">你的預約申請已送達</h2><p>預約編號</p><strong id="booking-code"></strong><p id="booking-result-state">目前為待確認，尚未保證開場。</p><p id="booking-result-summary"></p><p>請保存此編號；需要更改或取消，請聯繫館主。重整頁面或返回上一頁不會取消已送出的申請。</p><a class="ww-secondary" href="games.html">再看一次遊戲規則</a></section>
+</section>
+<aside class="ww-aside" aria-labelledby="summary-title"><section class="ww-summary"><span class="ww-eyebrow">TONIGHT'S GATHERING</span><h2 id="summary-title">本次的狼人之夜</h2><p class="ww-game-name">狼人殺・簡易版</p><dl><div><dt>希望日期</dt><dd id="summary-date">尚未選擇</dd></div><div><dt>開始時間</dt><dd id="summary-time">21:00（台灣時間）</dd></div><div><dt>參加人數</dt><dd id="summary-players">尚未填寫</dd></div></dl><div class="ww-total"><span>整場費用</span><strong>500,000 <small>Gil</small></strong></div><p class="ww-summary-help">由一位代表預約一場，不會依人數倍增金額。</p><a class="ww-rules-link" href="games.html" target="_blank" rel="noopener noreferrer">閱讀狼人殺規則 ↗</a></section><section class="ww-note"><h3>預約前的小提醒</h3><p>本頁與館員指名、餐點訂單分開。提交後，館主會再確認遊玩時間與人數安排。</p><p>本頁不會自動扣款，費用請於館內與館主確認。</p></section></aside>
+</div>
+<footer class="ww-footer"><span>眠楓館 · <span id="venue-address">穹頂皓天 7區22號</span></span><span>月色不說話，故事由你們開始。</span></footer>
+</main>
+<script src="assets/werewolf-reserve.js?v=20260922" defer></script>
+<script src="assets/site-content.js" defer></script>
+</body></html>
