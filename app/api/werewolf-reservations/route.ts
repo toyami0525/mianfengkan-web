@@ -6,13 +6,22 @@ export const dynamic='force-dynamic';
 export const runtime='nodejs';
 const headers={'Cache-Control':'no-store'};
 const reply=(body:unknown,status=200)=>NextResponse.json(body,{status,headers});
+// Supabase gateways may briefly issue a token ahead of a database node's clock.
+// Retry only that transient verification failure with the SAME credentials; never bypass auth.
+async function retryClock<T extends {error:{code?:string;message?:string}|null}>(operation:()=>PromiseLike<T>):Promise<T>{
+  for(let attempt=0;;attempt++){
+    const result=await operation();
+    if(attempt>=2||result.error?.code!=='PGRST303'||!result.error.message?.includes('JWT issued at future'))return result;
+    await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
+  }
+}
 export async function GET() {
   try {
     const db=adminSupabase(),now=new Date();
     const today=new Date(now.getTime()+8*3600000).toISOString().slice(0,10);
     const [closures,settings]=await Promise.all([
-      db.from('venue_closures').select('work_date').gte('work_date',today).order('work_date'),
-      db.from('site_settings').select('value').eq('key','venue').maybeSingle()
+      retryClock(()=>db.from('venue_closures').select('work_date').gte('work_date',today).order('work_date')),
+      retryClock(()=>db.from('site_settings').select('value').eq('key','venue').maybeSingle())
     ]);
     if (closures.error||settings.error) {
       const failure=closures.error||settings.error;
@@ -45,11 +54,12 @@ export async function POST(req:NextRequest) {
     const clientHash=createHmac('sha256',secret).update(`werewolf:${ip}`).digest('hex');
     const {request_id,...payload}=booking;
     const payloadHash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-    const {data,error}=await adminSupabase().rpc('create_werewolf_reservation',{
+    const db=adminSupabase();
+    const {data,error}=await retryClock(()=>db.rpc('create_werewolf_reservation',{
       p_request_id:request_id,p_guest_name:booking.guest_name,p_guest_server:booking.guest_server,
       p_contact:booking.contact,p_starts_at:booking.starts_at,p_players:booking.players,
       p_notes:booking.notes,p_client_hash:clientHash,p_payload_hash:payloadHash
-    });
+    }));
     if (error) {
       const messages:Record<string,[number,string]>={
         WW_CLOSED:[409,'該日期休館，請改選其他日期。'],
