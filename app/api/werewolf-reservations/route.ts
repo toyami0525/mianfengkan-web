@@ -14,11 +14,18 @@ export async function GET() {
       db.from('venue_closures').select('work_date').gte('work_date',today).order('work_date'),
       db.from('site_settings').select('value').eq('key','venue').maybeSingle()
     ]);
-    if (closures.error||settings.error) throw new Error('settings');
+    if (closures.error||settings.error) {
+      const failure=closures.error||settings.error;
+      console.error('[werewolf config query]',{source:closures.error?'closures':'venue',code:failure?.code,message:failure?.message});
+      throw new Error('settings');
+    }
     const venue=settings.data?.value||{};
     // No reservations, guest names or contact details are exposed by this endpoint.
     return reply({price:WEREWOLF_PRICE,today,now:now.toISOString(),closed_dates:(closures.data||[]).map(r=>r.work_date),address:typeof venue.address==='string'?venue.address:'穹頂皓天 7區22號'});
-  } catch {return reply({error:'暫時無法確認休館日期，請稍後重新載入。'},503);}
+  } catch(error) {
+    console.error('[werewolf config]',error instanceof Error?error.message:'configuration failure');
+    return reply({error:'暫時無法確認休館日期，請稍後重新載入。'},503);
+  }
 }
 export async function POST(req:NextRequest) {
   const origin=req.headers.get('origin');
@@ -53,6 +60,7 @@ export async function POST(req:NextRequest) {
       const known=messages[error.message];
       if (known) return reply({error:known[1]},known[0]);
       if (error.code==='23505') return reply({error:'相同角色在這個時間已有待處理預約，請先聯繫館主確認，勿重複送出。'},409);
+      console.error('[werewolf create]',{code:error.code});
       throw error;
     }
     if (!data?.booking_code||data.price!==WEREWOLF_PRICE) throw new Error('invalid response');
