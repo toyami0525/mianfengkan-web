@@ -333,3 +333,88 @@ body.reserve-card-theme .toast { max-width: min(420px, calc(100vw - 32px)); colo
 @media (prefers-reduced-motion: reduce) {
   body.reserve-card-theme * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+
+/* 指名／點餐：各尺寸均保留常駐導覽與原本的展開選單。 */
+body.reserve-card-theme .reserve-site-header > .nav {
+  position: relative;
+  justify-content: space-between;
+}
+body.reserve-card-theme .reserve-site-header .menu-btn { display: block; }
+body.reserve-card-theme #reserve-site-menu {
+  display: none;
+  position: absolute;
+  z-index: 40;
+  top: 100%;
+  left: 16px;
+  right: 16px;
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 14px;
+  background: #2b0f12 !important;
+  border: 1px solid #c39a61;
+  border-radius: 4px;
+  box-shadow: 0 16px 40px #100204aa;
+}
+body.reserve-card-theme #reserve-site-menu.open { display: flex; }
+body.reserve-card-theme #reserve-site-menu a {
+  min-height: 44px;
+  width: 100%;
+  padding: 10px 12px !important;
+  font-size: 16px;
+  white-space: normal;
+}
+body.reserve-card-theme #reserve-site-menu a::after { display: none; }
+body.reserve-card-theme .mf-page-nav {
+  border-top: 1px solid rgba(225, 181, 106, .18);
+  background: rgba(47, 12, 16, .9);
+}
+body.reserve-card-theme .mf-page-nav-links {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 8px 24px 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #a77a48 transparent;
+}
+body.reserve-card-theme .mf-page-nav-links a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #f5dec1 !important;
+  font-size: 14px;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
+}
+body.reserve-card-theme .mf-page-nav-links a:hover {
+  border-color: rgba(225, 181, 106, .38);
+  background: #562229;
+}
+body.reserve-card-theme .mf-page-nav-links a[aria-current="page"] {
+  border-color: #bf965b;
+  background: #632630;
+  color: #ffe7b4 !important;
+}
+body.reserve-card-theme .mf-page-nav-links a:focus-visible {
+  outline-offset: -3px;
+}
+@media (max-width: 600px) {
+  body.reserve-card-theme .mf-page-nav-links {
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+}
