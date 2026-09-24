@@ -14,9 +14,13 @@ export async function POST(req:NextRequest){
     const staffValue=Array.isArray((account as any).staff)?(account as any).staff[0]:(account as any).staff;
     const allowed=account.role==='owner'||(account.role==='staff'&&staffValue?.slug==='yukinoji-hakari');
     if(!allowed)return NextResponse.json({error:'只有雪之寺羽狩可切換 Q版繪圖接單狀態'},{status:403});
-    const body=await req.json();const enabled=body?.enabled===true;
-    const {error}=await db.from('site_settings').upsert({key:'yukinoji_chibi_accepting',value:{enabled},updated_at:new Date().toISOString()},{onConflict:'key'});
+    const body=await req.json();
+    if(typeof body?.enabled!=='boolean')return NextResponse.json({error:'請指定開啟或關閉'},{status:400});
+    const enabled=body.enabled;
+    const {data:yuki,error:staffError}=await db.from('staff').select('id').eq('slug','yukinoji-hakari').single();
+    if(staffError||!yuki)throw new Error('找不到雪之寺羽狩館員資料');
+    const {data:saved,error}=await db.from('staff_service_availability').upsert({staff_id:yuki.id,service_name:'Q版繪圖(公版)',enabled},{onConflict:'staff_id,service_name'}).select('enabled').single();
     if(error)throw error;
-    return NextResponse.json({ok:true,enabled});
+    return NextResponse.json({ok:true,enabled:saved.enabled});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'更新失敗'},{status:500})}
 }

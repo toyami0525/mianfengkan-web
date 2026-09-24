@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {supabase} from '@/lib/supabase';
 import FeedbackPanel from '@/components/FeedbackPanel';
+import {staffServiceState} from '@/lib/staff-services';
 
 type Row=Record<string,any>;
 type DateRange='today'|'yesterday'|'week'|'month'|'all';
@@ -63,6 +64,8 @@ export default function AdminApp(){
  const[account,setAccount]=useState<Account|null>(null);
  const[availabilityPanelOpen,setAvailabilityPanelOpen]=useState(false),[availabilityPending,setAvailabilityPending]=useState<Record<string,boolean>>({}),[availabilityMessage,setAvailabilityMessage]=useState(''),[staffLoadError,setStaffLoadError]=useState('');
  const availabilityPendingRef=useRef(new Set<string>());
+ const[servicePending,setServicePending]=useState<Record<string,boolean>>({});
+ const servicePendingRef=useRef(new Set<string>());
  const staffRefreshVersionRef=useRef(0);
  const audioContextRef=useRef<AudioContext|null>(null);
  const publicBookingChannelRef=useRef<any>(null);
@@ -72,7 +75,7 @@ export default function AdminApp(){
   setAccount(prev=>{
    if(!prev?.staff_id)return prev;
    const own=rows.find(row=>String(row.id)===String(prev.staff_id));
-   return own?{...prev,accepting_reservations:own.accepting_reservations===true}:prev;
+   return own&&typeof own.accepting_reservations==='boolean'?{...prev,accepting_reservations:own.accepting_reservations}:prev;
   });
  }
  async function refreshStaff(currentAccount=account){
@@ -82,10 +85,15 @@ export default function AdminApp(){
   try{
    let query=db.from('staff').select('*').order('created_at',{ascending:false});
    if(currentAccount.role==='staff')query=query.eq('id',String(currentAccount.staff_id));
-   const{data:rows,error}=await query;
+   const[{data:rows,error},{data:serviceRows,error:serviceError}]=await Promise.all([
+    query,db.from('staff_service_availability').select('staff_id,service_name,enabled'),
+   ]);
    if(version!==staffRefreshVersionRef.current)return;
    if(error)throw error;
-   syncStaffRows(rows||[],true);setStaffLoadError('');
+   if(serviceError)throw serviceError;
+   syncStaffRows((rows||[]).map(row=>({...row,...staffServiceState(row,serviceRows||[])})),true);setStaffLoadError('');
+   const yuki=(rows||[]).find(row=>row.slug==='yukinoji-hakari');
+   if(yuki)setYukinojiChibiAccepting(staffServiceState(yuki,serviceRows||[]).available_services.includes('Q版繪圖(公版)'));
   }catch(error){
    if(version===staffRefreshVersionRef.current)setStaffLoadError('館員接單狀態暫時無法更新，請按「重新整理」再試。');
   }
@@ -97,7 +105,6 @@ export default function AdminApp(){
   setHomepage({...DEFAULT_HOME,...(map.homepage||{})});
   setRules(Array.isArray(map.rules)&&map.rules.length?map.rules:DEFAULT_RULES);
   setBookingTestMode(map.booking_test_mode===true||map.booking_test_mode?.enabled===true);
-  const chibi=map.yukinoji_chibi_accepting;setYukinojiChibiAccepting(chibi===undefined?true:(chibi===true||chibi?.enabled===true));
  }
  const tabs=account?.role==='owner'?ownerTabs:account?.role==='frontdesk'?frontdeskTabs:staffTabs;
  async function load(currentAccount=account){
@@ -138,6 +145,7 @@ export default function AdminApp(){
   const refreshVisibleAvailability=()=>{if(document.visibilityState==='visible')refreshAvailability()};
   const publicBookingChannel=db.channel('public-booking-live')
    .on('broadcast',{event:'availability_changed'},refreshAvailability)
+   .on('broadcast',{event:'settings_changed'},refreshAvailability)
    .subscribe();
   publicBookingChannelRef.current=publicBookingChannel;
   const channel=db.channel('admin-live-alerts')
@@ -404,6 +412,37 @@ export default function AdminApp(){
    setAvailabilityPending(prev=>{const nextPending={...prev};delete nextPending[id];return nextPending});
   }
  }
+ async function updateServiceAvailability(row:Row,serviceName:string,enabled:boolean){
+  if(account?.role!=='owner'||!row.id)return;
+  const key=`${row.id}:${serviceName}`;
+  if(servicePendingRef.current.has(key))return;
+  servicePendingRef.current.add(key);staffRefreshVersionRef.current++;
+  setServicePending(prev=>({...prev,[key]:true}));setAvailabilityMessage('');
+  try{
+   const{data:saved,error}=await db.from('staff_service_availability')
+    .upsert({staff_id:row.id,service_name:serviceName,enabled},{onConflict:'staff_id,service_name'})
+    .select('staff_id,service_name,enabled').single();
+   if(error)throw error;
+   if(!saved||saved.enabled!==enabled)throw new Error('無法確認服務狀態，請重新整理後再試');
+   staffRefreshVersionRef.current++;
+   // Patch only this item; another service may have been saved at the same time.
+   setData(prev=>({...prev,staff:(prev.staff||[]).map(item=>{
+    if(item.id!==row.id)return item;
+    const available=new Set<string>(item.available_services||[]);
+    if(enabled)available.add(serviceName);else available.delete(serviceName);
+    return {...item,available_services:Array.from(available)};
+   })}));
+   setAvailabilityMessage(`${row.name}的「${serviceName}」已${enabled?'開啟':'關閉'}。`);
+   notifyPublicBookingChange('availability_changed');
+   await refreshStaff();
+  }catch(error){
+   setAvailabilityMessage(`服務項目更新失敗：${String((error as any)?.message||'請稍後再試')}`);
+   void refreshStaff();
+  }finally{
+   servicePendingRef.current.delete(key);
+   setServicePending(prev=>{const next={...prev};delete next[key];return next});
+  }
+ }
  async function toggleYukinojiChibi(){
   if(account?.staff_slug!=='yukinoji-hakari')return;
   const next=!yukinojiChibiAccepting;setBusy('yukinoji-chibi');
@@ -646,13 +685,24 @@ export default function AdminApp(){
  {availabilityMessage&&<p className="admin-message" role="status">{availabilityMessage}</p>}
  {staffLoadError&&<p className="admin-message" role="alert">{staffLoadError}</p>}
  {account.role==='owner'&&availabilityPanelOpen&&<section className="panel owner-availability-panel" id="owner-staff-availability" aria-labelledby="owner-availability-title">
-  <div className="panel-head"><h2 id="owner-availability-title">館員接單狀態</h2><button type="button" className="ghost" onClick={()=>setAvailabilityPanelOpen(false)}>收起</button></div>
-  <p className="hint">切換各館員的新指名接單狀態；已接下的服務照常進行。恢復接單後，仍依營業時間、休假與服務進度開放新指名。</p>
+  <div className="panel-head"><h2 id="owner-availability-title">館員接單與服務項目</h2><button type="button" className="ghost" onClick={()=>setAvailabilityPanelOpen(false)}>收起</button></div>
+  <p className="hint">可暫停整位館員接單，或單獨關閉服務項目。設定會保留到再次開啟；已接下的指名照常進行。</p>
   <div className="owner-availability-list">{staff.filter(row=>!isOwnerProfile(row,account.staff_id)).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0)||String(a.name||'').localeCompare(String(b.name||''),'zh-TW')).map(row=>{
    const id=String(row.id),accepting=row.accepting_reservations===true,pending=Boolean(availabilityPending[id]);
+   const hasService=(row.available_services||[]).some((name:string)=>name!=='紀念拍立得');
    return <article className="owner-availability-row" key={id} aria-busy={pending}>
-    <div><strong>{row.name||'未命名館員'}</strong><span className={`availability-status ${accepting?'accepting':'resting'}`}>{accepting?'接受新指名':'暫停新指名'}</span>{row.active===false&&<small>未在前台顯示</small>}</div>
-    <button type="button" className={`availability-action ${accepting?'pause':'resume'}`} disabled={pending} aria-label={`${row.name}：${accepting?'暫停接單':'恢復接單'}`} onClick={()=>void updateStaffAvailability(row,!accepting)}>{pending?'更新中…':accepting?'暫停接單':'恢復接單'}</button>
+    <div className="owner-availability-heading"><div><strong>{row.name||'未命名館員'}</strong><span className={`availability-status ${accepting&&hasService?'accepting':'resting'}`}>{!accepting?'暫停新指名':hasService?'接受新指名':'服務項目已全關閉'}</span>{row.active===false&&<small>未在前台顯示</small>}</div>
+     <button type="button" className={`availability-action ${accepting?'pause':'resume'}`} disabled={pending} aria-label={`${row.name}：${accepting?'暫停接單':'恢復接單'}`} onClick={()=>void updateStaffAvailability(row,!accepting)}>{pending?'更新中…':accepting?'暫停接單':'恢復接單'}</button>
+    </div>
+    <div className="owner-service-list" role="group" aria-label={`${row.name}的服務項目`}>
+     {(row.service_options||[]).map((name:string)=>{
+      const enabled=(row.available_services||[]).includes(name),saving=Boolean(servicePending[`${id}:${name}`]);
+      return <button key={name} type="button" role="switch" aria-checked={enabled} aria-label={`${row.name}：${name}`} aria-busy={saving} disabled={saving||Boolean(staffLoadError)} className={`service-switch ${enabled?'enabled':'disabled'}`} onClick={()=>void updateServiceAvailability(row,name,!enabled)}>
+       <span>{name}</span><span className="service-switch-status">{saving?'儲存中…':enabled?'開啟':'關閉'}<i aria-hidden="true"/></span>
+      </button>;
+     })}
+     {!row.service_options?.length&&<small>目前沒有可設定的指名服務</small>}
+    </div>
    </article>;
   })}</div>
   {!staff.some(row=>!isOwnerProfile(row,account.staff_id))&&<p className="empty">{staffLoadError?'館員資料尚未載入，請重新整理。':'目前沒有可管理的館員。'}</p>}

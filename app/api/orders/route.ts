@@ -93,6 +93,11 @@ export async function POST(request: Request) {
     let musu:any=null,yuki:any=null;
     if(wantsPolaroid){const r=await publicSupabase().from('staff').select('id,name,slug').eq('slug','musufiru').single();if(r.error||!r.data)return NextResponse.json({error:'找不到慕斯菲露館員資料'},{status:400});musu=r.data}
     if(wantsYukinojiPolaroid){const r=await publicSupabase().from('staff').select('id,name,slug').eq('slug','yukinoji-hakari').single();if(r.error||!r.data)return NextResponse.json({error:'找不到雪之寺羽狩館員資料'},{status:400});yuki=r.data}
+    if(musu||yuki){
+      const {data:paused,error:serviceError}=await closureDb.from('staff_service_availability').select('staff_id').in('staff_id',[musu?.id,yuki?.id].filter(Boolean)).eq('service_name','紀念拍立得').eq('enabled',false);
+      if(serviceError)throw serviceError;
+      if(paused?.length)return NextResponse.json({error:'所選的紀念拍立得目前暫停提供，請重新選擇。'},{status:409});
+    }
 
     const orderItems=[...cleanItems,...(wantsPolaroid?[{name:'慕斯菲露－紀念拍立得',qty:1,price:POLAROID_PRICE}]:[]),...(wantsYukinojiPolaroid?[{name:'雪之寺羽狩－紀念拍立得',qty:1,price:YUKINOJI_POLAROID_PRICE}]:[])];
     const total=foodTotal+liquorTotal+(wantsPolaroid?POLAROID_PRICE:0)+(wantsYukinojiPolaroid?YUKINOJI_POLAROID_PRICE:0);

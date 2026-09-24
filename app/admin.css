@@ -8,8 +8,19 @@
 .owner-availability-panel .panel-head{gap:16px}
 .owner-availability-panel .hint{font-size:13px;line-height:1.8;margin:10px 0 18px}
 .owner-availability-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.owner-availability-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border:1px solid rgba(215,183,121,.24);border-radius:12px;background:rgba(11,22,39,.68);min-width:0}
+.owner-availability-row{display:flex;flex-direction:column;align-items:stretch;gap:16px;padding:16px;border:1px solid rgba(215,183,121,.24);border-radius:12px;background:rgba(11,22,39,.68);min-width:0}
 .owner-availability-row>div{display:grid;gap:8px;min-width:0}
+.owner-availability-row>.owner-availability-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.owner-availability-heading>div{display:grid;gap:6px}
+.owner-service-list{border-top:1px solid #d7b77933;padding-top:12px}
+.panel button.service-switch{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:10px 12px;border:1px solid #8495ab55!important;border-radius:8px;background:#162940!important;color:#f1f5fa!important;font:14px/1.5 "Microsoft JhengHei",sans-serif;text-align:left;cursor:pointer}
+.panel button.service-switch.disabled{background:#242838!important;color:#c7cbd5!important}
+.service-switch-status{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
+.service-switch i{position:relative;display:block;width:32px;height:18px;border-radius:12px;background:#687384}
+.service-switch i:after{content:"";position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#fff}
+.service-switch.enabled i{background:#467f70}.service-switch.enabled i:after{left:17px}
+.panel button.service-switch:disabled{opacity:.6;cursor:wait}
+.panel button.service-switch:focus-visible{outline:2px solid #e4c78f;outline-offset:3px}
 .owner-availability-row strong{font-size:16px;line-height:1.5;overflow-wrap:anywhere;color:#f5ede2}
 .owner-availability-row small{font:12px/1.5 sans-serif;color:#c4bec7}
 .availability-status{font:12px/1.5 sans-serif;display:inline-flex;align-items:center;gap:6px}

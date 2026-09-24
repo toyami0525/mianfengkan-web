@@ -62,6 +62,7 @@ export async function POST(request: Request) {
       p_start_at: startAt,
       p_note: note,
     });
+    if(error?.code==='P0001'&&error.message.includes('暫停提供'))return NextResponse.json({error:error.message},{status:409});
     if (error) throw error;
     return NextResponse.json({ ok: true, id: data });
   } catch (error) {

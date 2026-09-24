@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { publicSupabase } from '@/lib/supabase-server';
 import { adminSupabase } from '@/lib/supabase-admin';
 import { randomBytes } from 'crypto';
+import {staffServiceState,requestedServiceNames} from '@/lib/staff-services';
 
 const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const POLAROID_PRICE = 80000;
@@ -89,13 +90,18 @@ export async function POST(request: Request) {
     const settingMap=Object.fromEntries((settings||[]).map((row:any)=>[row.key,row.value]));
     const testValue=settingMap.booking_test_mode;
     const bookingTestMode=testValue===true||testValue?.enabled===true;
-    const chibiValue=settingMap.yukinoji_chibi_accepting;
-    const yukinojiChibiAccepting=chibiValue===undefined?true:(chibiValue===true||chibiValue?.enabled===true);
     if (!bookingTestMode && taipeiNow.hour < 21) return NextResponse.json({ error: '目前非指名時間，每日 21:00 起開放即時指名' }, { status: 400 });
 
-    const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name').eq('id',staffId).single();
+    const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name,services').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
     const staffName = staff.name;
+    const {data:serviceAvailability,error:serviceError}=await adminDb.from('staff_service_availability').select('staff_id,service_name,enabled').eq('staff_id',staffId);
+    if(serviceError)throw serviceError;
+    const serviceState=staffServiceState(staff,serviceAvailability||[]);
+    const requested=requestedServiceNames(services,wantsPolaroid||wantsYukinojiPolaroid);
+    if(requested.some(name=>!serviceState.service_options.includes(name)))return NextResponse.json({error:'此館員未提供所選的服務項目'},{status:400});
+    const paused=requested.filter(name=>!serviceState.available_services.includes(name));
+    if(paused.length)return NextResponse.json({error:`${staffName}的「${paused.join('、')}」目前暫停提供，請重新選擇服務。`},{status:409});
     const {data:calendarOff,error:calendarOffError}=await adminDb.from('staff_work_calendar').select('staff_id').eq('staff_id',staffId).eq('work_date',todayKey).eq('status','off').maybeSingle();
     if(calendarOffError)throw calendarOffError;
     if(calendarOff)return NextResponse.json({error:'此館員今日休假，暫停接受指名'},{status:409});
@@ -131,7 +137,6 @@ export async function POST(request: Request) {
     const wantsLinaSigned=services.includes('簽繪拍立得');
     const wantsLinaPlain=services.includes('拍立得(無簽繪)');
     if(wantsChibi&&staff.slug!=='yukinoji-hakari') return NextResponse.json({error:'Q版繪圖(公版)僅限指名雪之寺羽狩'},{status:400});
-    if(wantsChibi&&!yukinojiChibiAccepting) return NextResponse.json({error:'Q版繪圖(公版)目前暫停接單，請稍後再查看'},{status:409});
     if(staff.slug==='lina'&&services.some((name)=>!['簽繪拍立得','拍立得(無簽繪)'].includes(name))) return NextResponse.json({error:'Lina 目前僅提供簽繪拍立得與拍立得(無簽繪)'},{status:400});
     if(wantsLinaSigned&&staff.slug!=='lina') return NextResponse.json({error:'簽繪拍立得僅限指名 Lina'},{status:400});
     if(wantsLinaPlain&&staff.slug!=='lina') return NextResponse.json({error:'拍立得(無簽繪)僅限指名 Lina'},{status:400});
@@ -166,6 +171,7 @@ export async function POST(request: Request) {
     });
     if (reservationError) {
       if(linaPickup) await adminDb.from('polaroid_pickups').delete().eq('id',linaPickup.id);
+      if(reservationError.code==='P0001'&&reservationError.message.includes('暫停提供'))return NextResponse.json({error:reservationError.message},{status:409});
       throw reservationError;
     }
     const {error:serverUpdateError}=await adminDb.from('reservations').update({guest_server:guestServer}).eq('id',reservationId);
