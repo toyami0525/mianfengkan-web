@@ -83,6 +83,8 @@
         <article class="mf-staff-card coming"><span class="seal" aria-hidden="true">楓</span><span class="eyebrow">COMING SOON</span><h2>敬請期待</h2><p>新的館員正在準備與各位旅人見面。</p></article>
       </section>`;
     setupViewer(list);
+    const houseCat = document.getElementById('house-cat-panel');
+    if (houseCat) setupViewer(houseCat);
   }
 
   function setupViewer(list) {

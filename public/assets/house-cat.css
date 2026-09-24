@@ -1,0 +1,42 @@
+/* 館員介紹的小分頁與店貓；原館員名錄沿用既有排版。 */
+body.mf-staff-page .staff-title { margin-bottom: 18px; padding-bottom: 27px; border-bottom: 0; }
+body.mf-staff-page .staff-directory-panel[hidden] { display: none !important; }
+.staff-directory-tabs-wrap { display: flex; justify-content: center; margin: 0 0 34px; }
+.staff-directory-tabs { display: inline-flex; gap: 5px; padding: 5px; max-width: 100%; border: 1px solid #705a3e; border-radius: 8px; background: #1c140f; }
+.staff-directory-tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 52px; padding: 8px 27px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #cbb99d; font: inherit; font-size: 16px; line-height: 1.5; letter-spacing: .08em; cursor: pointer; }
+.staff-directory-tab[aria-selected="true"] { background: #3b2c1b; border-color: #aa8b59; color: #f5dfb8; }
+.staff-directory-tab:hover { background: #302315; color: #f5dfb8; }
+.house-cat-tab-icon { display: block; flex: 0 0 auto; width: 34px; height: 34px; object-fit: contain; }
+.house-cat-heading { display: flex; align-items: center; gap: 20px; margin: 0 0 22px; }
+.house-cat-heading::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, #bd9a5552, transparent); }
+.house-cat-heading p { margin: 0 0 7px; color: #c7ac77; font: 12px/1.5 Georgia, serif; letter-spacing: .22em; }
+.house-cat-heading h2 { margin: 0; color: #f5ead8; font-size: 22px; font-weight: 400; line-height: 1.5; letter-spacing: .18em; }
+.house-cat-profile { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); overflow: hidden; border: 1px solid #bd9a5559; border-radius: 23px; background: linear-gradient(145deg, #211811, #120e0a); }
+.house-cat-profile * { box-sizing: border-box; }
+.house-cat-photos { position: relative; min-width: 0; min-height: 440px; border-right: 1px solid #bd9a552b; background: #281e17; }
+.house-cat-photo-main { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: zoom-in; }
+.house-cat-photo-main img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 58% 48%; }
+.house-cat-photo-inset { position: absolute; bottom: 24px; left: 24px; width: 30%; max-width: 170px; aspect-ratio: 1; height: auto; padding: 4px; border: 1px solid #efdfbea6; border-radius: 15px; background: #ebe2d2; overflow: hidden; box-shadow: 0 12px 25px #0005; transform: rotate(-3deg); cursor: zoom-in; }
+.house-cat-photo-inset img { display: block; width: 100%; height: 100%; border-radius: 10px; object-fit: cover; object-position: 43% 42%; }
+.house-cat-copy { display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 38px 42px; }
+.house-cat-role { margin: 0 0 10px; color: #c7ac77; font-size: 14px; line-height: 1.7; letter-spacing: .12em; }
+.house-cat-copy h2 { margin: 0; color: #f5ead8; font-size: clamp(28px, 2.7vw, 36px); font-weight: 400; line-height: 1.5; letter-spacing: .06em; overflow-wrap: anywhere; }
+.house-cat-quote { margin: 20px 0 21px; padding: 0; border: 0; background: none; color: #e0bd9b; font-size: 20px; font-weight: 400; line-height: 1.9; }
+.house-cat-bio { color: #d0c5b4; font-size: 16px; line-height: 1.95; overflow-wrap: anywhere; }
+.house-cat-bio p { margin: 0 0 14px; }
+.house-cat-bio p:last-child { margin-bottom: 0; }
+@media (max-width: 1000px) {
+  .house-cat-copy { padding: 30px; }
+}
+@media (max-width: 680px) {
+  .staff-directory-tabs-wrap { margin-bottom: 28px; }
+  .staff-directory-tab { padding: 8px 19px; font-size: 14px; }
+  .house-cat-tab-icon { width: 30px; height: 30px; }
+  .house-cat-profile { grid-template-columns: minmax(0, 1fr); border-radius: 19px; }
+  .house-cat-photos { min-height: 0; aspect-ratio: 4 / 3; border-right: 0; border-bottom: 1px solid #bd9a552b; }
+  .house-cat-photo-inset { left: 18px; bottom: 18px; width: 28%; max-width: 135px; padding: 3px; border-radius: 12px; }
+  .house-cat-photo-inset img { border-radius: 8px; }
+  .house-cat-copy { padding: 26px 24px 29px; }
+  .house-cat-copy h2 { font-size: 28px; }
+  .house-cat-quote { font-size: 18px; margin: 17px 0; }
+}
