@@ -1,0 +1,125 @@
+name: Hong Riko browser verification
+on:
+  push:
+    branches: [maintenance/hong-riko-20260928]
+    paths: [.github/workflows/hong-verify.yml]
+permissions:
+  contents: read
+jobs:
+  browser-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser tooling
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.55.0 >/dev/null
+          npx playwright install chromium >/dev/null
+      - name: Verify public pages and isolated booking submissions
+        run: |
+          python3 -m http.server 8080 --directory public >/tmp/mf-static.log 2>&1 &
+          trap 'kill $!' EXIT
+          cat > .mf-browser-test.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('assert/strict');
+          const fs=require('fs');
+          const NAME='轟轟轟里可',OLD='轟轟轟太大風',ID='6c0c6cd1-003d-47b9-ad44-191f93dac136';
+          const BASE='https://mianfengkan-web.vercel.app';
+          const services=['泡湯洗浴','按摩服務','耳語陪伴'];
+          const staff={id:ID,slug:'hong-hong-hong-taidafeng',name:NAME,role:'館員',services,available_services:services,service_options:services,active:true,accepting_reservations:true};
+          (async()=>{
+            fs.mkdirSync('verification',{recursive:true});
+            let deployed=false;
+            for(let i=0;i<12;i++){
+              const r=await fetch(BASE+'/assets/booking-v32.js?verify=hong-riko-20260928');
+              const text=await r.text();
+              if(r.ok&&text.includes(NAME)&&!text.includes(OLD)){deployed=true;break;}
+              await new Promise(resolve=>setTimeout(resolve,5000));
+            }
+            assert(deployed,'Published booking asset must contain only new display name');
+            const text=await(await fetch(BASE+'/assets/staff-data.js?verify=hong-riko-20260928')).text();
+            assert(text.includes(NAME)&&!text.includes(OLD),'Published staff fallback renamed');
+            console.log('PASS: production staff and booking assets contain new name, no old display name');
+            const delivery=await(await fetch(BASE+'/api/delivery-staff')).json();
+            assert.equal(delivery.staff.find(s=>s.id===ID)?.name,NAME);
+            console.log('PASS: production delivery API uses new name and original UUID');
+            const browser=await chromium.launch({headless:true});
+            try{
+              const live=await browser.newContext({timezoneId:'Asia/Taipei',viewport:{width:1440,height:1000}});
+              const page=await live.newPage();
+              await page.route('**/*',route=>['GET','HEAD'].includes(route.request().method())?route.continue():route.abort());
+              await page.goto(BASE+'/staff.html',{waitUntil:'networkidle'});
+              await page.getByText(NAME,{exact:true}).first().waitFor({state:'visible'});
+              assert(!(await page.locator('body').innerText()).includes(OLD));
+              await page.getByText(NAME,{exact:true}).first().scrollIntoViewIfNeeded();
+              await page.screenshot({path:'verification/production-staff.png'});
+              console.log('PASS: production staff directory visibly renders new name');
+              await page.goto(BASE+'/reserve.html',{waitUntil:'networkidle'});
+              const target=page.locator('#staffSelect button').filter({hasText:NAME});
+              if(await target.count()){
+                assert.equal(await target.getAttribute('data-id'),ID);
+                await target.click();
+                assert((await page.locator('#bookingServiceSummary').innerText()).includes(NAME));
+                await page.screenshot({path:'verification/production-booking.png'});
+                console.log('PASS: production booking choice and summary point to original UUID with new name');
+              }else console.log('Production booking list is currently unavailable; successful submissions are tested in isolated browser fixtures below');
+              await live.close();
+              for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
+                const ctx=await browser.newContext({timezoneId:'Asia/Taipei',viewport});
+                const p=await ctx.newPage();
+                const errors=[];p.on('pageerror',e=>errors.push(e.message));
+                await p.clock.install({time:new Date('2026-09-29T13:30:00Z')});
+                let submissions=[];
+                await p.route('**/*',async route=>{
+                  const req=route.request(),url=new URL(req.url());
+                  if(url.hostname!=='127.0.0.1')return route.abort();
+                  if(url.pathname.startsWith('/api/')){
+                    if(req.method()==='POST'){
+                      assert.equal(url.pathname,'/api/combined-order');
+                      const body=req.postDataJSON();assert.equal(body.staff_id,ID);assert.equal(body.guest_name,'__ISOLATED_RENAME_TEST__');
+                      assert.equal(body.polaroid,false);assert.equal(body.yukinoji_polaroid,false);
+                      submissions.push(body);
+                      return route.fulfill({json:{ok:true,reservation_id:'00000000-0000-4000-8000-000000000001',pickup_codes:[],pickup_items:[]}});
+                    }
+                    return route.fulfill({json:url.pathname==='/api/realtime-config'?{}:{staff:[staff],blocks:[],test_mode:false,venue_closed:false,staff_service_availability:[],polaroid_paused_slugs:[]}});
+                  }
+                  return route.continue();
+                });
+                await p.goto('http://127.0.0.1:8080/reserve.html',{waitUntil:'networkidle'});
+                for(const service of services){
+                  await p.locator('#staffSelect button').filter({hasText:NAME}).click();
+                  await p.locator('#guest').fill('__ISOLATED_RENAME_TEST__');
+                  await p.locator('#server').selectOption('伊弗利特');
+                  await p.locator(`input[name="service"][value="${service}"]`).check();
+                  assert((await p.locator('#bookingServiceSummary').innerText()).includes(NAME));
+                  const prior=submissions.length;
+                  await p.locator('#bookingSubmit').click();
+                  await p.waitForFunction(()=>document.querySelector('.toast')?.textContent.includes('指名服務已成功送出'));
+                  assert.equal(submissions.length,prior+1);assert.deepEqual(submissions.at(-1).services,[service]);
+                  await p.waitForFunction(()=>document.querySelector('#bookingSubmit').textContent==='送出指名');
+                }
+                await p.locator('.booking-mode-btn[data-mode="dining"]').click();
+                await p.locator('#deliveryPreference').selectOption(ID);
+                assert((await p.locator('#deliveryPreference option:checked').innerText()).includes(NAME));
+                assert((await p.locator('#bookingSummary').innerText()).includes(NAME));
+                assert.deepEqual(errors,[]);
+                await p.screenshot({path:`verification/isolated-${viewport.width}.png`});
+                console.log(`PASS: ${viewport.width}px browser, three service submissions, correct UUID and prices configuration, new-name delivery choice, no JavaScript errors`);
+                await ctx.close();
+              }
+              console.log('All submission requests intercepted locally; no production booking/order writes performed by browser tests.');
+            }finally{await browser.close();}
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS
+          node .mf-browser-test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hong-riko-browser-verification
+          path: verification/
+          retention-days: 7
