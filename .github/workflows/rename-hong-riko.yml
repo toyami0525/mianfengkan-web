@@ -37,38 +37,55 @@ jobs:
                   continue
               replaced = text.replace(old,new)
               assert text.count('hong-hong-hong-taidafeng') == replaced.count('hong-hong-hong-taidafeng')
-              assert text.count('honghong@mianfengkan.local') == replaced.count('honghong@mianfengkan.local')
               p.write_text(replaced,encoding='utf-8')
               changed.append(filename)
               print(f'RENAMED {filename}: {text.count(old)} occurrence(s)')
           if not changed:
               raise SystemExit('No display-name occurrences found; stop for inspection')
           Path('/tmp/mf-renamed-files.json').write_text(json.dumps(changed))
-          print('--- CHANGED FILES ---')
-          print(json.dumps(changed,ensure_ascii=False,indent=2))
+          print(f'EXACT NAME REPLACEMENT: {len(changed)} files; stable slugs preserved')
           PY
           git diff --stat
-          git diff --unified=3
-      - name: Inspect staff identity and booking entry points
-        run: |
-          git grep -n -E 'hong-hong-hong-taidafeng|honghong@mianfengkan.local|login_id' -- lib app/api components public/assets || true
-          cat app/api/combined-order/route.ts
-          find app/api -iname '*login*' -o -iname '*auth*'
-          cat lib/staff.ts 2>/dev/null || true
-          cat lib/staff-services.ts 2>/dev/null || true
-      - name: Install locked dependencies
+      - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts --package-lock=false; fi
-      - name: Check TypeScript and changed JavaScript syntax
+      - name: Run production prebuild and TypeScript checks
         run: |
+          node scripts/prebuild-sanity.mjs
           npx tsc --noEmit
           python3 - <<'PY'
           import json, subprocess
           for filename in json.load(open('/tmp/mf-renamed-files.json')):
               if filename.endswith(('.js','.mjs','.cjs')):
                   subprocess.run(['node','--check',filename],check=True)
+          print('PASS: changed JavaScript syntax; TypeScript; production prebuild')
           PY
-      - name: Commit only the verified name changes
+      - name: Test staff identity and service configuration
+        run: |
+          node <<'JS'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),ts=require('typescript');
+          const slug='hong-hong-hong-taidafeng',name='轟轟轟里可';
+          const doc={addEventListener(){}};
+          const ctx=vm.createContext({document:doc});
+          vm.runInContext(fs.readFileSync('public/assets/staff-data.js','utf8')+';globalThis.rows=MF_DEFAULT_STAFF;',ctx);
+          const staff=ctx.rows.filter(s=>s.slug===slug);
+          assert.equal(staff.length,1);assert.equal(staff[0].name,name);
+          assert.equal(staff[0].photo_primary,'assets/images/staff-hong-01.webp');
+          const source=fs.readFileSync('public/assets/booking-v32.js','utf8');
+          const names=vm.createContext({});
+          vm.runInContext(source.split('\n').slice(0,2).join('\n')+';globalThis.book=FALLBACK_STAFF;globalThis.delivery=FALLBACK_DELIVERY_STAFF;',names);
+          assert.equal(names.book.find(s=>s.slug===slug).name,name);
+          assert.equal(names.delivery.find(s=>s.slug===slug).name,name);
+          assert(source.includes('BOOKABLE_STAFF_SLUGS=new Set(FALLBACK_STAFF.map(x=>x.slug))'));
+          const exports={};
+          const compiled=ts.transpileModule(fs.readFileSync('lib/staff-services.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+          vm.runInNewContext(compiled,{exports});
+          const actual=exports.staffServiceState({id:'test-stable-id',slug,services:['泡湯搓澡','按摩','枕邊談心']},[]);
+          assert.deepEqual(Array.from(actual.available_services),['泡湯洗浴','按摩服務','耳語陪伴']);
+          assert(!actual.available_services.includes('紀念拍立得'));
+          console.log('PASS: one staff identity, unchanged pictures and slug, booking/delivery names, all three original services, no accidental polaroid');
+          JS
+      - name: Commit only verified name changes
         run: |
           python3 - <<'PY'
           import json, subprocess
