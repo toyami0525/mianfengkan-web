@@ -1,0 +1,79 @@
+name: Verify Hong Riko rename
+on:
+  push:
+    branches: [maintenance/hong-riko-20260928]
+    paths: [.github/workflows/rename-hong-riko.yml]
+permissions:
+  contents: write
+jobs:
+  rename-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: maintenance/hong-riko-20260928
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact display-name replacement without changing IDs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess, json
+          old = '\u8f5f\u8f5f\u8f5f\u592a\u5927\u98a8'
+          new = '\u8f5f\u8f5f\u8f5f\u91cc\u53ef'
+          extensions = {'.js','.mjs','.cjs','.ts','.tsx','.jsx','.html','.json','.md','.txt'}
+          changed = []
+          for filename in subprocess.check_output(['git','ls-files','-z']).decode().split('\0'):
+              p = Path(filename)
+              if not filename or p.suffix not in extensions or filename.startswith('.github/'):
+                  continue
+              try:
+                  text = p.read_text(encoding='utf-8')
+              except UnicodeError:
+                  continue
+              if old not in text:
+                  continue
+              replaced = text.replace(old,new)
+              assert text.count('hong-hong-hong-taidafeng') == replaced.count('hong-hong-hong-taidafeng')
+              assert text.count('honghong@mianfengkan.local') == replaced.count('honghong@mianfengkan.local')
+              p.write_text(replaced,encoding='utf-8')
+              changed.append(filename)
+              print(f'RENAMED {filename}: {text.count(old)} occurrence(s)')
+          if not changed:
+              raise SystemExit('No display-name occurrences found; stop for inspection')
+          Path('/tmp/mf-renamed-files.json').write_text(json.dumps(changed))
+          print('--- CHANGED FILES ---')
+          print(json.dumps(changed,ensure_ascii=False,indent=2))
+          PY
+          git diff --stat
+          git diff --unified=3
+      - name: Inspect staff identity and booking entry points
+        run: |
+          git grep -n -E 'hong-hong-hong-taidafeng|honghong@mianfengkan.local|login_id' -- lib app/api components public/assets || true
+          cat app/api/combined-order/route.ts
+          find app/api -iname '*login*' -o -iname '*auth*'
+          cat lib/staff.ts 2>/dev/null || true
+          cat lib/staff-services.ts 2>/dev/null || true
+      - name: Install locked dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts --package-lock=false; fi
+      - name: Check TypeScript and changed JavaScript syntax
+        run: |
+          npx tsc --noEmit
+          python3 - <<'PY'
+          import json, subprocess
+          for filename in json.load(open('/tmp/mf-renamed-files.json')):
+              if filename.endswith(('.js','.mjs','.cjs')):
+                  subprocess.run(['node','--check',filename],check=True)
+          PY
+      - name: Commit only the verified name changes
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          changed=json.load(open('/tmp/mf-renamed-files.json'))
+          subprocess.run(['git','add','--',*changed],check=True)
+          PY
+          git -c user.name='ChatGPT' -c user.email='noreply@openai.com' commit -m 'fix: rename Hong staff to 轟轟轟里可 across site and booking'
+          git push origin HEAD:maintenance/hong-riko-20260928
