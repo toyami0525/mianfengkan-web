@@ -3,6 +3,7 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import {supabase} from '@/lib/supabase';
 import FeedbackPanel from '@/components/FeedbackPanel';
 import {staffServiceState} from '@/lib/staff-services';
+import VenueClosureControl from '@/components/VenueClosureControl';
 
 type Row=Record<string,any>;
 type DateRange='today'|'yesterday'|'week'|'month'|'all';
@@ -60,13 +61,14 @@ export default function AdminApp(){
  const[payrollStaffIds,setPayrollStaffIds]=useState<string[]>([]);
  const[payrollSettlement,setPayrollSettlement]=useState<PayrollSettlementState>(EMPTY_PAYROLL_SETTLEMENT);
  const[manualPolaroidGuest,setManualPolaroidGuest]=useState(''),[manualPolaroidCode,setManualPolaroidCode]=useState(''),[manualProductStaff,setManualProductStaff]=useState('musufiru'),[manualProductType,setManualProductType]=useState('polaroid'),[manualProductIssuedLabel,setManualProductIssuedLabel]=useState('');
- const[calendarMonth,setCalendarMonth]=useState(()=>monthKey(new Date())),[calendarRows,setCalendarRows]=useState<Row[]>([]),[calendarClosures,setCalendarClosures]=useState<Row[]>([]),[todayVenueClosed,setTodayVenueClosed]=useState(false),[calendarToday,setCalendarToday]=useState(()=>taipeiDateKey(new Date())),[calendarStaff,setCalendarStaff]=useState<Row[]>([]),[calendarStaffId,setCalendarStaffId]=useState(''),[calendarLoading,setCalendarLoading]=useState(false);
+ const[calendarMonth,setCalendarMonth]=useState(()=>taipeiDateKey(new Date()).slice(0,7)),[calendarRows,setCalendarRows]=useState<Row[]>([]),[calendarClosures,setCalendarClosures]=useState<Row[]>([]),[calendarStaff,setCalendarStaff]=useState<Row[]>([]),[calendarStaffId,setCalendarStaffId]=useState(''),[calendarLoading,setCalendarLoading]=useState(false);
  const[account,setAccount]=useState<Account|null>(null);
  const[availabilityPanelOpen,setAvailabilityPanelOpen]=useState(false),[availabilityPending,setAvailabilityPending]=useState<Record<string,boolean>>({}),[availabilityMessage,setAvailabilityMessage]=useState(''),[staffLoadError,setStaffLoadError]=useState('');
  const availabilityPendingRef=useRef(new Set<string>());
  const[servicePending,setServicePending]=useState<Record<string,boolean>>({});
  const servicePendingRef=useRef(new Set<string>());
  const staffRefreshVersionRef=useRef(0);
+ const calendarLoadVersionRef=useRef(0);
  const audioContextRef=useRef<AudioContext|null>(null);
  const publicBookingChannelRef=useRef<any>(null);
  const db=useMemo(()=>supabase(),[]);
@@ -321,19 +323,21 @@ export default function AdminApp(){
  useEffect(()=>{if(ready&&account&&tab==='schedule'&&account.role!=='frontdesk')void loadWorkCalendar(calendarMonth)},[ready,tab,calendarMonth,account?.role,account?.staff_id]);
  async function loadWorkCalendar(month=calendarMonth){
   if(!account||account.role==='frontdesk')return;
+  const version=++calendarLoadVersionRef.current;
   setCalendarLoading(true);
   try{
    const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效');
    const response=await fetch(`/api/staff/calendar?month=${encodeURIComponent(month)}`,{cache:'no-store',headers:{Authorization:`Bearer ${session.access_token}`}});
    const result=await response.json();if(!response.ok)throw new Error(result.error||'讀取排班月曆失敗');
+   if(version!==calendarLoadVersionRef.current)return;
    const staffRows=Array.isArray(result.staff)?result.staff:[],scheduleRows=Array.isArray(result.rows)?result.rows:[],closureRows=Array.isArray(result.closures)?result.closures:[];
-   setCalendarStaff(staffRows);setCalendarRows(scheduleRows);setCalendarClosures(closureRows);setCalendarToday(String(result.today||taipeiDateKey(new Date())));setTodayVenueClosed(Boolean(result.today_closure));
+   setCalendarStaff(staffRows);setCalendarRows(scheduleRows);setCalendarClosures(closureRows);
    setCalendarStaffId(current=>{
     if(account.role==='staff')return account.staff_id||'';
     if(current&&staffRows.some((x:Row)=>x.id===current))return current;
     return staffRows[0]?.id||'';
    });
-  }catch(error){setMsg(error instanceof Error?error.message:'讀取排班月曆失敗')}finally{setCalendarLoading(false)}
+  }catch(error){if(version===calendarLoadVersionRef.current)setMsg(error instanceof Error?error.message:'讀取排班月曆失敗')}finally{if(version===calendarLoadVersionRef.current)setCalendarLoading(false)}
  }
  async function setWorkCalendarDay(staffId:string,workDate:string,status:'working'|'off'|null){
   if(!staffId||!account)return;
@@ -348,19 +352,6 @@ export default function AdminApp(){
    });
    notifyPublicBookingChange('schedule_changed');
   }catch(error){setMsg(error instanceof Error?error.message:'更新排班失敗')}finally{setBusy('')}
- }
- async function toggleTodayVenueClosure(){
-  if(account?.role!=='owner')return;
-  if(isMondayDate(calendarToday)){alert('每週一已是全館固定休館。');return}
-  const next=!todayVenueClosed;setBusy('venue-closure');
-  try{
-   const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效');
-   const response=await fetch('/api/staff/calendar/closure',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({work_date:calendarToday,closed:next})});
-   const result=await response.json();if(!response.ok)throw new Error(result.error||'更新臨時休館失敗');
-   setTodayVenueClosed(result.closed===true);
-   if(calendarToday.startsWith(calendarMonth))setCalendarClosures(prev=>result.closed?[...prev.filter(x=>x.work_date!==calendarToday),result.row]:prev.filter(x=>x.work_date!==calendarToday));
-   setMsg(result.closed?'今日已設定為全館臨時休館。':'已取消今日臨時休館。');notifyPublicBookingChange('schedule_changed');
-  }catch(error){const text=error instanceof Error?error.message:'更新臨時休館失敗';setMsg(text);alert(text)}finally{setBusy('')}
  }
 
  async function issueManualProduct(){
@@ -710,7 +701,7 @@ export default function AdminApp(){
  {tab==='dashboard'&&<>{account.role==='staff'&&<><div className="staff-availability"><strong>接單狀態</strong><span>{account.accepting_reservations?'目前接受新指名':'目前暫停接受新指名'}</span><button disabled={Boolean(availabilityPending[String(account.staff_id)])} className={account.accepting_reservations?'offline':'online'} onClick={toggleAvailability}>{account.accepting_reservations?'切換為休息中':'切換為接單中'}</button></div>{account.staff_slug==='yukinoji-hakari'&&<div className="staff-availability chibi-availability"><div><strong>Q版繪圖(公版)</strong><span>{yukinojiChibiAccepting?'目前接單中':'目前暫停接單'}</span><small>切換後會即時反映到客人的指名介面。</small></div><button disabled={busy==='yukinoji-chibi'} className={yukinojiChibiAccepting?'offline':'online'} onClick={toggleYukinojiChibi}>{yukinojiChibiAccepting?'暫停 Q版接單':'恢復 Q版接單'}</button></div>}</>}<section className="stats"><article><b>{todayReservations.length}</b><span>{account.role==='staff'?'我的本營業日指名':'本營業日指名'}</span></article><article><b>{todayReservations.filter(x=>x.status==='pending').length}</b><span>本營業日待確認</span></article><article><b>{todayReservationRevenue.toLocaleString('zh-TW')}</b><span>本營業日指名金額（含拍立得・Gil）</span></article><article><b>{todayOrders.length}</b><span>本營業日點餐</span></article><article><b>{todayFoodRevenue.toLocaleString('zh-TW')}</b><span>本營業日點餐金額（Gil）</span></article></section>{account.role==='owner'&&<section className="payroll-dashboard-card"><div><span>館主專用・固定基本薪資</span><strong>{BASE_DAILY_PAY.toLocaleString('zh-TW')} Gil／人</strong><small>基本薪資固定，不因結算時間改變</small></div><div><span>目前尚未分配餐點收入</span><strong>{payrollUnallocatedFood.toLocaleString('zh-TW')} Gil</strong><small>尚有 {payrollUnsettledHeadcount} 位未結算；按下結算時才平均分配</small></div><button onClick={()=>setTab('payroll')}>查看／結算薪資</button></section>}<Panel title={account.role==='staff'?'我的本營業日近期指名':'本營業日近期指名'}><Table rows={todayReservations.slice(0,8)} keys={['guest_name','staff_name','service_name','starts_at','status']}/></Panel></>}
  {tab==='feedback'&&account.role==='owner'&&<FeedbackPanel/>}
  {tab==='staff'&&account.role==='owner'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><>{!isOwnerProfile(r,account.staff_id)&&<button type="button" className={`availability-action ${r.accepting_reservations?'pause':'resume'}`} disabled={Boolean(availabilityPending[String(r.id)])||busy===`staff:${r.id}`} onClick={()=>void updateStaffAvailability(r,r.accepting_reservations!==true)}>{availabilityPending[String(r.id)]?'更新中…':r.accepting_reservations?'暫停接單':'恢復接單'}</button>}<button disabled={busy===`staff:${r.id}`||Boolean(availabilityPending[String(r.id)])} onClick={()=>remove('staff',r.id)}>刪除</button></>}/></Panel>}
- {tab==='schedule'&&account.role!=='frontdesk'&&<>{account.role==='owner'&&<Panel title="臨時休館"><div className="venue-closure-control"><div><strong>{calendarToday} 今日營業狀態</strong><small>{isMondayDate(calendarToday)?'每週一固定休館':todayVenueClosed?'目前：臨時休館':'目前：正常營業'}</small></div><button className={todayVenueClosed?'ghost':'venue-close-btn'} disabled={busy==='venue-closure'||isMondayDate(calendarToday)} onClick={()=>void toggleTodayVenueClosure()}>{isMondayDate(calendarToday)?'週一固定休館':busy==='venue-closure'?'更新中…':todayVenueClosed?'取消今日臨時休館':'今日臨時休館'}</button></div><p className="hint">「臨時休館」是全館停止營業，不是單一館員休假；啟用後公開月曆、指名與點餐會同步顯示／阻擋。</p></Panel>}<Panel title={account.role==='owner'?'全館排班月曆':'我的排班月曆'} action={<div className="calendar-month-actions"><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,-1))}>‹ 上個月</button><strong>{monthLabel(calendarMonth)}</strong><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,1))}>下個月 ›</button></div>}><div className="work-calendar-toolbar">{account.role==='owner'&&<label><span>查看／編輯館員</span><select value={calendarStaffId} onChange={e=>setCalendarStaffId(e.target.value)}>{calendarStaff.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}<div className="work-calendar-legend"><span className="working">● 預設上班</span><span className="off">● 館員休假</span><span className="closed">● 全館休館</span></div></div>{calendarLoading?<p className="empty-state">排班月曆讀取中…</p>:<WorkCalendar month={calendarMonth} staffId={account.role==='staff'?(account.staff_id||''):calendarStaffId} rows={calendarRows} closures={calendarClosures} busy={busy} onChange={setWorkCalendarDay}/>}<p className="hint">週二～週日預設為上班（綠燈），館員只需點日期設定「休假」；再點一次即可取消休假。每週一為全館固定休館。</p></Panel></>}
+ {tab==='schedule'&&account.role!=='frontdesk'&&<>{account.role==='owner'&&<Panel title="臨時休館"><VenueClosureControl db={db} onSaved={()=>{notifyPublicBookingChange('schedule_changed');void loadWorkCalendar(calendarMonth)}}/></Panel>}<Panel title={account.role==='owner'?'全館排班月曆':'我的排班月曆'} action={<div className="calendar-month-actions"><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,-1))}>‹ 上個月</button><strong>{monthLabel(calendarMonth)}</strong><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,1))}>下個月 ›</button></div>}><div className="work-calendar-toolbar">{account.role==='owner'&&<label><span>查看／編輯館員</span><select value={calendarStaffId} onChange={e=>setCalendarStaffId(e.target.value)}>{calendarStaff.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}<div className="work-calendar-legend"><span className="working">● 預設上班</span><span className="off">● 館員休假</span><span className="closed">● 全館休館</span></div></div>{calendarLoading?<p className="empty-state">排班月曆讀取中…</p>:<WorkCalendar month={calendarMonth} staffId={account.role==='staff'?(account.staff_id||''):calendarStaffId} rows={calendarRows} closures={calendarClosures} busy={busy} onChange={setWorkCalendarDay}/>}<p className="hint">週二～週日預設為上班（綠燈），館員只需點日期設定「休假」；再點一次即可取消休假。每週一為全館固定休館。</p></Panel></>}
  {tab==='operations'&&<div className="operations-grid">
   <div className="operations-column operations-orders"><Panel title="點餐管理"><RecordToolbar range={orderRange} status={orderStatus} search={orderSearch} onRange={v=>{setOrderRange(v);setOrderPage(1)}} onStatus={v=>{setOrderStatus(v);setOrderPage(1)}} onSearch={v=>{setOrderSearch(v);setOrderPage(1)}} statuses={['pending','completed','cancelled','all']}/><RecordSummary total={filteredOrders.length} range={orderRange} status={orderStatus}/><Table rows={visibleOrders} keys={['guest_name','items','delivery_preference_staff_name','delivery_staff_name','total','status','created_at']} actions={r=><>{account.staff_id&&!r.delivery_staff_id&&r.status==='pending'&&<button disabled={busy===`delivery:${r.id}`} onClick={()=>claimDelivery(r)}>{r.delivery_preference_staff_id&&r.delivery_preference_staff_id!==account.staff_id?'代為送餐':'由我送餐'}</button>}{r.delivery_staff_id===account.staff_id&&<button disabled>已由我接單</button>}<button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'completed')}>完成</button><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'cancelled')}>取消</button></>}/><Pagination page={orderPage} pages={orderPages} onChange={setOrderPage}/></Panel></div>
   <div className="operations-column operations-reservations"><Panel title={account.role==='staff'?'我的指名管理':'指名管理'}><RecordToolbar range={reservationRange} status={reservationStatus} search={reservationSearch} onRange={v=>{setReservationRange(v);setReservationPage(1)}} onStatus={v=>{setReservationStatus(v);setReservationPage(1)}} onSearch={v=>{setReservationSearch(v);setReservationPage(1)}} statuses={['pending','acknowledged','confirmed','completed','cancelled','all']}/><RecordSummary total={filteredReservations.length} range={reservationRange} status={reservationStatus}/><Table rows={visibleReservations} keys={['guest_name','contact','staff_name','service_name','starts_at','ends_at','price','status','note']} actions={r=><>{r.status==='pending'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'acknowledged')}>確認</button>}{r.status==='acknowledged'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'confirmed')}>開始</button>}{canExtendReservation(r)&&<button className="extend-button" disabled={busy===`extend:${r.id}`} onClick={()=>openExtend(r)}>續時／續費</button>}<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'completed')}>完成</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'cancelled')}>取消</button></>}/><Pagination page={reservationPage} pages={reservationPages} onChange={setReservationPage}/></Panel></div>
