@@ -1,0 +1,11 @@
+.control{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.selection{display:flex;flex-direction:column;gap:8px;flex:1 1 220px;max-width:360px;min-width:0}
+.selection label{font-weight:700}
+.selection input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid rgba(172,190,220,.32);border-radius:10px;background:rgba(10,19,36,.62);color:#f1f5ff;font:inherit;color-scheme:dark}
+.selection input:focus-visible{outline:2px solid #adc4e7;outline-offset:3px}
+.selection small{color:#c2cbda;line-height:1.6;min-height:1.6em}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding-bottom:2px}
+.actions button{min-height:44px}
+.error{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;color:#ffd0cf;line-height:1.7}
+.message{margin:14px 0 0;color:#c5e7d6;line-height:1.7}
+@media(max-width:560px){.control{gap:14px}.selection{max-width:none;flex-basis:100%}.actions{width:100%}.actions button:last-child{flex:1}}
