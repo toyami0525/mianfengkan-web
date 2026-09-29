@@ -1,0 +1,65 @@
+name: Verify selectable venue closure dates
+on:
+  push:
+    branches: [maintenance/closure-dates-20260929]
+    paths: [.github/workflows/closure-dates.yml]
+permissions:
+  contents: write
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: maintenance/closure-dates-20260929
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch only the owner closure control from the verified original
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          p=Path('components/AdminApp.tsx')
+          assert subprocess.check_output(['git','hash-object',str(p)]).decode().strip()=='57e715460e2f7bd5e37011a96c60f33b194c2e12', 'AdminApp changed; stop rather than overwrite'
+          s=p.read_text()
+          def once(old,new):
+              global s
+              assert s.count(old)==1, repr(old)
+              s=s.replace(old,new,1)
+          once("import {staffServiceState} from '@/lib/staff-services';", "import {staffServiceState} from '@/lib/staff-services';\nimport VenueClosureControl from '@/components/VenueClosureControl';")
+          once('useState(()=>monthKey(new Date()))', 'useState(()=>taipeiDateKey(new Date()).slice(0,7))')
+          once(',[todayVenueClosed,setTodayVenueClosed]=useState(false),[calendarToday,setCalendarToday]=useState(()=>taipeiDateKey(new Date()))', '')
+          once(' const staffRefreshVersionRef=useRef(0);', ' const staffRefreshVersionRef=useRef(0);\n const calendarLoadVersionRef=useRef(0);')
+          once(" async function loadWorkCalendar(month=calendarMonth){\n  if(!account||account.role==='frontdesk')return;\n  setCalendarLoading(true);", " async function loadWorkCalendar(month=calendarMonth){\n  if(!account||account.role==='frontdesk')return;\n  const version=++calendarLoadVersionRef.current;\n  setCalendarLoading(true);")
+          once("const result=await response.json();if(!response.ok)throw new Error(result.error||'讀取排班月曆失敗');", "const result=await response.json();if(!response.ok)throw new Error(result.error||'讀取排班月曆失敗');\n   if(version!==calendarLoadVersionRef.current)return;")
+          once('setCalendarStaff(staffRows);setCalendarRows(scheduleRows);setCalendarClosures(closureRows);setCalendarToday(String(result.today||taipeiDateKey(new Date())));setTodayVenueClosed(Boolean(result.today_closure));', 'setCalendarStaff(staffRows);setCalendarRows(scheduleRows);setCalendarClosures(closureRows);')
+          once("}catch(error){setMsg(error instanceof Error?error.message:'讀取排班月曆失敗')}finally{setCalendarLoading(false)}", "}catch(error){if(version===calendarLoadVersionRef.current)setMsg(error instanceof Error?error.message:'讀取排班月曆失敗')}finally{if(version===calendarLoadVersionRef.current)setCalendarLoading(false)}")
+          start=s.index(' async function toggleTodayVenueClosure(){\n')
+          end=s.index('\n async function issueManualProduct(){',start)
+          s=s[:start]+s[end:]
+          start=s.index('<Panel title="臨時休館">')
+          end=s.index('</Panel>',start)+len('</Panel>')
+          assert 'toggleTodayVenueClosure' in s[start:end]
+          s=s[:start]+'''<Panel title="臨時休館"><VenueClosureControl db={db} onSaved={()=>{notifyPublicBookingChange('schedule_changed');void loadWorkCalendar(calendarMonth)}}/></Panel>'''+s[end:]
+          assert 'todayVenueClosed' not in s and 'calendarToday' not in s and 'toggleTodayVenueClosure' not in s
+          assert s.count('staff_slug:selected.staff_slug')==1
+          p.write_text(s)
+          print('PASS: exact scoped patch; existing staff, payroll, orders and products unchanged')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Install existing project dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts --package-lock=false; fi
+      - name: Verify production prebuild, full TypeScript and closure scenarios
+        run: |
+          node scripts/prebuild-sanity.mjs
+          npx tsc --noEmit --incremental false
+          node scripts/test-venue-closures.cjs
+      - name: Commit only the verified AdminApp change to the isolated branch
+        run: |
+          git add -- components/AdminApp.tsx
+          git -c user.name='ChatGPT' -c user.email='noreply@openai.com' commit -m 'Integrate verified date-selectable venue closure control'
+          git push origin HEAD:maintenance/closure-dates-20260929
