@@ -126,8 +126,11 @@ export async function POST(request: Request) {
     const closeAt = new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, 16, 0, 0, 0));
     const projectedEnd = new Date(start.getTime()+duration*60000);
     if(!bookingTestMode && (start>=closeAt || projectedEnd>closeAt)) return NextResponse.json({error:'今日剩餘營業時間不足，本次服務無法在 24:00 前完成'},{status:400});
-    if (['shenaixue', 'sai'].includes(staff.slug) && (services.length !== 1 || services[0] !== '耳語陪伴')) {
+    if (staff.slug === 'shenaixue' && (services.length !== 1 || services[0] !== '耳語陪伴')) {
       return NextResponse.json({ error: `${staffName}目前僅提供耳語陪伴服務` }, { status: 400 });
+    }
+    if (staff.slug === 'sai' && services.some((name)=>!['耳語陪伴','拍立得(無簽繪)'].includes(name))) {
+      return NextResponse.json({ error: '賽伊目前僅提供耳語陪伴與拍立得(無簽繪)' }, { status: 400 });
     }
     if (staff.slug === 'yukinoji-hakari') {
       const allowed=new Set(['耳語陪伴','Q版繪圖(公版)']);
@@ -135,18 +138,18 @@ export async function POST(request: Request) {
     }
     const wantsChibi=services.includes('Q版繪圖(公版)');
     const wantsLinaSigned=services.includes('簽繪拍立得');
-    const wantsLinaPlain=services.includes('拍立得(無簽繪)');
+    const wantsPlainPolaroid=services.includes('拍立得(無簽繪)');
     if(wantsChibi&&staff.slug!=='yukinoji-hakari') return NextResponse.json({error:'Q版繪圖(公版)僅限指名雪之寺羽狩'},{status:400});
     if(staff.slug==='lina'&&services.some((name)=>!['簽繪拍立得','拍立得(無簽繪)'].includes(name))) return NextResponse.json({error:'Lina 目前僅提供簽繪拍立得與拍立得(無簽繪)'},{status:400});
     if(wantsLinaSigned&&staff.slug!=='lina') return NextResponse.json({error:'簽繪拍立得僅限指名 Lina'},{status:400});
-    if(wantsLinaPlain&&staff.slug!=='lina') return NextResponse.json({error:'拍立得(無簽繪)僅限指名 Lina'},{status:400});
+    if(wantsPlainPolaroid&&!['lina','sai'].includes(staff.slug)) return NextResponse.json({error:'拍立得(無簽繪)僅限指名 Lina 或賽伊'},{status:400});
     if (wantsPolaroid && staff.slug !== 'musufiru') return NextResponse.json({ error: '慕斯菲露紀念拍立得僅限指名慕斯菲露' }, { status: 400 });
     if (wantsPolaroid && servicePrice < 150000) return NextResponse.json({ error: '慕斯菲露紀念拍立得需單筆服務費滿 150,000 Gil' }, { status: 400 });
     if (wantsYukinojiPolaroid && staff.slug !== 'yukinoji-hakari') return NextResponse.json({ error: '雪之寺羽狩紀念拍立得僅限指名雪之寺羽狩' }, { status: 400 });
     if (wantsYukinojiPolaroid && servicePrice < 200000) return NextResponse.json({ error: '雪之寺羽狩紀念拍立得需單筆服務費滿 200,000 Gil' }, { status: 400 });
 
     const serviceName = services.join('＋');
-    const fullNote = [note, wantsPolaroid ? '包含：慕斯菲露紀念拍立得' : '', wantsYukinojiPolaroid ? '包含：雪之寺羽狩紀念拍立得' : '', wantsLinaSigned ? '每日限量服務：Lina 簽繪拍立得' : '', wantsLinaPlain ? '包含：Lina 拍立得(無簽繪)' : ''].filter(Boolean).join('\n');
+    const fullNote = [note, wantsPolaroid ? '包含：慕斯菲露紀念拍立得' : '', wantsYukinojiPolaroid ? '包含：雪之寺羽狩紀念拍立得' : '', wantsLinaSigned ? '每日限量服務：Lina 簽繪拍立得' : '', wantsPlainPolaroid ? `包含：${staffName} 拍立得(無簽繪)` : ''].filter(Boolean).join('\n');
 
     // Lina 簽繪拍立得每日限量 3 張：先占用取件名額，再建立指名。
     // 既有資料庫 trigger 會原子檢查每日上限，避免多人同時下單造成超賣。
@@ -197,7 +200,7 @@ export async function POST(request: Request) {
     }
     const pickupItems:{code:string;type:string;label:string}[]=[];
     if(linaPickup) pickupItems.push({code:linaPickup.code,type:'lina_signed_polaroid',label:'Lina 簽繪拍立得'});
-    async function createPickup(itemType:'polaroid'|'chibi_public'|'lina_signed_polaroid'|'lina_plain_polaroid',label:string){
+    async function createPickup(itemType:'polaroid'|'chibi_public'|'lina_signed_polaroid'|'lina_plain_polaroid'|'sai_plain_polaroid',label:string){
       const admin=adminSupabase();
       for(let attempt=0;attempt<8;attempt++){
         const code=makePickupCode();
@@ -210,7 +213,7 @@ export async function POST(request: Request) {
       throw new Error('無法產生成品取件碼，請稍後再試');
     }
     if(wantsChibi) await createPickup('chibi_public','Q版繪圖(公版)');
-    if(wantsLinaPlain) await createPickup('lina_plain_polaroid','Lina 拍立得(無簽繪)');
+    if(wantsPlainPolaroid) await createPickup(staff.slug==='sai'?'sai_plain_polaroid':'lina_plain_polaroid',`${staffName} 拍立得(無簽繪)`);
     if(wantsPolaroid||wantsYukinojiPolaroid) await createPickup('polaroid','紀念拍立得');
     return NextResponse.json({ ok:true, reservation_id:reservationId, pickup_code:pickupItems[0]?.code, pickup_codes:pickupItems.map(x=>x.code), pickup_items:pickupItems });
   } catch (error) {

@@ -10,7 +10,8 @@ const bookableServices = new Set(['泡湯洗浴', '按摩服務', '耳語陪伴'
 export function normalizeServiceName(name: string): string { return aliases[name] || name; }
 export function staffServiceOptions(staff: StaffServiceProfile): string[] {
   if (staff.slug === 'riku') return [];
-  if (staff.slug === 'shenaixue' || staff.slug === 'sai') return ['耳語陪伴'];
+  if (staff.slug === 'shenaixue') return ['耳語陪伴'];
+  if (staff.slug === 'sai') return ['耳語陪伴', '拍立得(無簽繪)'];
   if (staff.slug === 'yukinoji-hakari') return ['耳語陪伴', 'Q版繪圖(公版)', '紀念拍立得'];
   if (staff.slug === 'lina') return ['簽繪拍立得', '拍立得(無簽繪)'];
   return [...new Set((Array.isArray(staff.services) ? staff.services : [])

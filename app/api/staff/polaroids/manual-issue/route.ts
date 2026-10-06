@@ -6,6 +6,7 @@ const MANUAL_PRODUCTS:Record<string,Record<string,string>>={
   musufiru:{polaroid:'紀念拍立得'},
   'yukinoji-hakari':{polaroid:'紀念拍立得',chibi_public:'Q版繪圖(公版)'},
   lina:{lina_signed_polaroid:'簽繪拍立得',lina_plain_polaroid:'拍立得(無簽繪)'},
+  sai:{sai_plain_polaroid:'拍立得(無簽繪)'},
 };
 
 function makePickupCode(){
