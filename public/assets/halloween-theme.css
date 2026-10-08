@@ -1,0 +1,45 @@
+/* 2026 Halloween — opt-in public-page atmosphere only.
+ * Homepage/admin are not opted in. Existing content, images and interaction
+ * scripts stay untouched. Decorations sit below the page content and cannot
+ * receive pointer events or focus.
+ */
+body.mf-halloween {
+  position:relative;
+  isolation:isolate;
+  --mf-halloween-prop-size:clamp(104px,10vw,154px);
+}
+body.mf-halloween.mf-page-theme::before {z-index:-3 !important}
+body.mf-halloween.mf-staff-page {
+  --mf-background:url("images/halloween-staff-2026.png") !important;
+}
+body.mf-halloween > .mf-halloween-atmosphere {
+  position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
+  background:radial-gradient(ellipse at 0% 100%,rgba(171,64,19,.15),transparent 34%),
+             radial-gradient(ellipse at 100% 100%,rgba(178,101,31,.11),transparent 32%);
+}
+body.mf-halloween .mf-halloween-prop {
+  position:absolute;bottom:5px;
+  width:var(--mf-halloween-prop-size);height:var(--mf-halloween-prop-size);
+  background-image:url("images/halloween-corners-2026.png");
+  background-size:200% 100%;background-repeat:no-repeat;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.33));opacity:.96;
+}
+body.mf-halloween .mf-halloween-prop-left {left:clamp(2px,1.1vw,22px);background-position:left center}
+body.mf-halloween .mf-halloween-prop-right {right:clamp(2px,1.1vw,22px);background-position:right center}
+body.mf-halloween .mf-halloween-web {
+  position:absolute;top:84px;width:clamp(76px,8vw,132px);height:clamp(76px,8vw,132px);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20140%20140%22%20fill%3D%22none%22%20stroke%3D%22%23f4dec4%22%20stroke-width%3D%22.7%22%3E%3Cpath%20d%3D%22M1%201L132%202M1%201L126%2049M1%201L100%2099M1%201L48%20129M1%201L2%20134%22%2F%3E%3Cpath%20d%3D%22M33%201Q28%209%2030%2012Q25%2017%2024%2024Q16%2025%2012%2032Q7%2029%201%2034M64%202Q55%2018%2060%2024Q48%2032%2046%2046Q32%2048%2024%2062Q15%2057%202%2066M96%202Q84%2025%2088%2035Q72%2047%2068%2069Q46%2070%2036%2094Q22%2086%202%20100M126%202Q112%2033%20117%2045Q94%2062%2091%2091Q62%2094%2047%20123Q30%20112%202%20130%22%2F%3E%3C%2Fsvg%3E");background-size:contain;background-repeat:no-repeat;opacity:.15;
+}
+body.mf-halloween .mf-halloween-web-left {left:0}
+body.mf-halloween .mf-halloween-web-right {right:0;transform:scaleX(-1)}
+body.mf-halloween.reserve-card-theme .mf-halloween-web {top:144px}
+/* The staff photograph already includes its seasonal props. */
+body.mf-halloween.mf-staff-page > .mf-halloween-atmosphere {display:none}
+@media(max-width:560px){
+  body.mf-halloween {--mf-halloween-prop-size:78px}
+  body.mf-halloween .mf-halloween-prop {bottom:1px;opacity:.89}
+  body.mf-halloween .mf-halloween-prop-left {left:-5px}
+  body.mf-halloween .mf-halloween-prop-right {right:-5px}
+  body.mf-halloween .mf-halloween-web {top:76px;width:66px;height:66px;opacity:.12}
+  body.mf-halloween.reserve-card-theme .mf-halloween-web {top:126px}
+}
