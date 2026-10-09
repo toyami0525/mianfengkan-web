@@ -84,3 +84,6 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
 @media (prefers-reduced-motion:reduce) {
   .mf-staff-directory * { transition:none !important; animation:none !important; }
 }
+
+/* 愛梨的對客人話保留原本的分行與語氣。 */
+.mf-staff-directory #airi .quote { white-space:pre-wrap; }

@@ -14,6 +14,7 @@ export function staffServiceOptions(staff: StaffServiceProfile): string[] {
   if (staff.slug === 'sai') return ['耳語陪伴', '拍立得(無簽繪)'];
   if (staff.slug === 'yukinoji-hakari') return ['耳語陪伴', 'Q版繪圖(公版)', '紀念拍立得'];
   if (staff.slug === 'lina') return ['簽繪拍立得', '拍立得(無簽繪)'];
+  if (staff.slug === 'airi') return ['簽繪拍立得'];
   return [...new Set((Array.isArray(staff.services) ? staff.services : [])
     .map(String).map(normalizeServiceName).filter(name => bookableServices.has(name)))];
 }

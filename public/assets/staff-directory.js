@@ -36,7 +36,8 @@
     wei: ['50% 24%', '50% 30%'],
     musufiru: ['50% 40%', '50% 30%'],
     'yukinoji-hakari': ['13% 36%', '31% 34%'],
-    sai: ['45% 40%', '45% 30%']
+    sai: ['45% 40%', '45% 30%'],
+    airi: ['50% 16%', '50% 33%']
   };
   const esc = (value = '') => String(value).replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -55,7 +56,7 @@
         <span class="photo-index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
       </div>
       <div class="staff-copy"><p class="quote">${esc(row.quote || '')}</p><p class="bio">${esc(row.bio || '')}</p>
-        ${services.length ? `<div class="services"><span class="services-label">提供服務</span>${services.map(service => `<span class="service" data-type="${esc(service)}">${esc(service)}</span>`).join('')}</div>` : ''}
+        ${services.length ? `<div class="services"><span class="services-label">提供服務</span>${services.map(service => `<span class="service" data-type="${esc(service)}">${esc(row.slug === 'airi' && service === '簽繪拍立得' ? '簽繪拍立得｜300,000 Gil／張' : service)}</span>`).join('')}</div>` : ''}
         ${row.slug === deputy.slug ? `<section class="midnight-invitation" aria-labelledby="croseviel-midnight-title">
           <h3 id="croseviel-midnight-title" class="midnight-invitation-title">午夜邀請</h3>
           <p class="midnight-invitation-quote">「若今夜還不想散場，親愛的，隨我來。」</p>

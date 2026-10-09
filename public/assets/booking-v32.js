@@ -1,5 +1,5 @@
 const FALLBACK_DELIVERY_STAFF=[{id:'riku',slug:'riku',name:'羽鶴璃久',role:'館主'},{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員'},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員'},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員'},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員'},{id:'lina',slug:'lina',name:'Lina',role:'館員'},{id:'sai',slug:'sai',name:'賽伊',role:'館員'}];
-const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',services:['耳語陪伴']},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員',services:['耳語陪伴']},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'lina',slug:'lina',name:'Lina',role:'館員',services:['簽繪拍立得','拍立得(無簽繪)']},{id:'sai',slug:'sai',name:'賽伊',role:'館員',services:['耳語陪伴','拍立得(無簽繪)']}];
+const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',services:['耳語陪伴']},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員',services:['耳語陪伴']},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'lina',slug:'lina',name:'Lina',role:'館員',services:['簽繪拍立得','拍立得(無簽繪)']},{id:'sai',slug:'sai',name:'賽伊',role:'館員',services:['耳語陪伴','拍立得(無簽繪)']},{id:'airi',slug:'airi',name:'愛梨',role:'館員',services:['簽繪拍立得']}];
 // 名錄只用來識別可指名角色；是否接單以 API 回傳為準，不以備用名單補回已關閉的館員。
 const BOOKABLE_STAFF_SLUGS=new Set(FALLBACK_STAFF.map(x=>x.slug));
 const SERVICE_INFO={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'Q版繪圖(公版)':{price:500000,duration:15},'簽繪拍立得':{price:150000,duration:15},'拍立得(無簽繪)':{price:80000,duration:15},'眠楓套席':{price:300000,duration:45}};
@@ -29,7 +29,8 @@ $('liquorChoices').innerHTML=liquors.map(l=>`<label class="liquor-choice liquor-
 const fmt=d=>new Date(d).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}),fmtTime=d=>new Date(d).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}),pad=n=>String(n).padStart(2,'0');
 const localDate=d=>{const x=new Date(d);return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`};
 function chosenServices(){return serviceBoxes().filter(x=>x.checked).map(x=>x.value)}
-function serviceTotals(){if(orderMode==='dining')return {price:0,duration:0,names:[]};if(packageBox.checked)return {price:300000,duration:45,names:['眠楓套席']};const names=chosenServices();return {price:names.reduce((n,x)=>n+SERVICE_INFO[x].price,0),duration:names.reduce((n,x)=>n+SERVICE_INFO[x].duration,0),names}}
+function servicePriceForSelected(name){return selectedStaffSlug()==='airi'&&name==='簽繪拍立得'?300000:SERVICE_INFO[name].price}
+function serviceTotals(){if(orderMode==='dining')return {price:0,duration:0,names:[]};if(packageBox.checked)return {price:300000,duration:45,names:['眠楓套席']};const names=chosenServices();return {price:names.reduce((n,x)=>n+servicePriceForSelected(x),0),duration:names.reduce((n,x)=>n+SERVICE_INFO[x].duration,0),names}}
 function selectedItems(){return [...document.querySelectorAll('.food-choice:checked')].map(x=>({food:foods.find(f=>f.id===Number(x.dataset.id)),qty:1}))}
 function selectedLiquors(){return [...document.querySelectorAll('.liquor-qty')].map(x=>({liquor:liquors.find(l=>l.id===Number(x.dataset.id)),qty:Number(x.value||0)})).filter(x=>x.liquor&&x.qty>0)}
 function liquorCount(){return selectedLiquors().reduce((n,x)=>n+x.qty,0)}
@@ -51,7 +52,7 @@ function syncPackage(){
  packageBox.checked=false;packageBox.disabled=true;
  serviceBoxes().forEach(input=>{
   const row=input.closest('.service-check'),offered=options.includes(input.value),paused=offered&&!available.includes(input.value);
-  const soldOut=input.value==='簽繪拍立得'&&linaSignedRemaining<=0;
+  const soldOut=current?.slug==='lina'&&input.value==='簽繪拍立得'&&linaSignedRemaining<=0;
   input.disabled=!offered||paused||soldOut;
   if(input.disabled&&input.checked){input.checked=false;confirmedPolaroid=false}
   row.hidden=!offered;
@@ -61,7 +62,7 @@ function syncPackage(){
   if(!status){status=document.createElement('small');status.className='service-pause-note';status.style.color='#f1b6a7';row.querySelector('span')?.append(status)}
   status.textContent=paused?'暫停提供':soldOut?'今日已額滿':'';
   status.hidden=!paused&&!soldOut;
-  if(input.value==='簽繪拍立得'&&linaSignedPolaroidHint)linaSignedPolaroidHint.textContent=`150,000 Gil｜今日剩餘 ${linaSignedRemaining}／3 張`;
+  if(input.value==='簽繪拍立得'&&linaSignedPolaroidHint)linaSignedPolaroidHint.textContent=current?.slug==='lina'?`150,000 Gil｜今日剩餘 ${linaSignedRemaining}／3 張`:`${servicePriceForSelected(input.value).toLocaleString('zh-TW')} Gil／張`;
  });
 }
 function updatePolaroid(){
