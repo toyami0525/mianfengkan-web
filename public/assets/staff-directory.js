@@ -57,6 +57,10 @@
       </div>
       <div class="staff-copy"><p class="quote">${esc(row.quote || '')}</p><p class="bio">${esc(row.bio || '')}</p>
         ${services.length ? `<div class="services"><span class="services-label">提供服務</span>${services.map(service => `<span class="service" data-type="${esc(service)}">${esc(service)}</span>`).join('')}</div>` : ''}
+        ${row.slug === 'airi' ? `<a class="twitch-link" href="https://www.twitch.tv/ookamiaily" target="_blank" rel="noopener noreferrer" aria-label="開啟愛梨的 Twitch 直播，另開分頁">
+          <svg class="twitch-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.571 4.714h1.715v5.143h-1.715zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6V1.714h14.571z"/></svg>
+          <span>愛梨的 Twitch 直播</span><span class="twitch-link-arrow" aria-hidden="true">↗</span>
+        </a>` : ''}
         ${row.slug === deputy.slug ? `<section class="midnight-invitation" aria-labelledby="croseviel-midnight-title">
           <h3 id="croseviel-midnight-title" class="midnight-invitation-title">午夜邀請</h3>
           <p class="midnight-invitation-quote">「若今夜還不想散場，親愛的，隨我來。」</p>

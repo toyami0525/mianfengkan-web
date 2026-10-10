@@ -93,3 +93,10 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
 .mf-staff-directory #airi .services { border-top-color:rgba(36,78,99,.25); }
 .mf-staff-directory #airi .services-label { color:#365f74; }
 .mf-staff-directory #airi .service { color:#244e63; border-color:rgba(36,78,99,.38); background:rgba(255,255,255,.3); }
+
+/* 愛梨的直播入口，置於服務項目下方。 */
+.mf-staff-directory #airi .twitch-link { display:inline-flex; align-items:center; justify-content:center; align-self:flex-start; gap:10px; max-width:100%; min-height:48px; margin-top:20px; padding:11px 17px; border:1px solid rgba(255,255,255,.4); border-radius:9px; background:#6441a5; color:#fff; font-size:15px; font-weight:600; line-height:1.6; text-align:center; text-decoration:none; box-shadow:0 4px 12px rgba(72,45,118,.18); transition:background .2s ease,box-shadow .2s ease; }
+.mf-staff-directory #airi .twitch-link:hover { background:#52318d; color:#fff; box-shadow:0 5px 15px rgba(72,45,118,.25); }
+.mf-staff-directory #airi .twitch-link:focus-visible { outline:3px solid #173c4b; outline-offset:3px; }
+.mf-staff-directory #airi .twitch-icon { display:block; flex:0 0 22px; }
+.mf-staff-directory #airi .twitch-link-arrow { flex:0 0 auto; font-size:19px; line-height:1; }
