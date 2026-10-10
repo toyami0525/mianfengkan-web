@@ -85,5 +85,11 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
   .mf-staff-directory * { transition:none !important; animation:none !important; }
 }
 
-/* 愛梨的對客人話保留原本的分行與語氣。 */
-.mf-staff-directory #airi .quote { white-space:pre-wrap; }
+/* 愛梨介紹格：採用館主提供的淺藍色，搭配深色文字。 */
+.mf-staff-directory #airi { background:#c3e1f0; border-color:#8db3c7; }
+.mf-staff-directory #airi .staff-copy { color:#173c4b; }
+.mf-staff-directory #airi .quote { color:#244e63 !important; white-space:pre-wrap; }
+.mf-staff-directory #airi .bio { color:#173c4b !important; }
+.mf-staff-directory #airi .services { border-top-color:rgba(36,78,99,.25); }
+.mf-staff-directory #airi .services-label { color:#365f74; }
+.mf-staff-directory #airi .service { color:#244e63; border-color:rgba(36,78,99,.38); background:rgba(255,255,255,.3); }

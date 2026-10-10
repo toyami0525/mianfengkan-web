@@ -12,6 +12,10 @@ const LEGACY_TEST_CUTOFF='2026-08-28T11:03:00.000Z';
 
 function normalizeText(value:any){return String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ')}
 function textKey(value:any){return normalizeText(value).toLocaleLowerCase('zh-Hant-TW')}
+// 依館主指定從公開 VIP 榜隱藏的角色；原始消費與館員資料仍保留。
+const HIDDEN_VIP_GUEST_KEYS=new Set([
+ `${textKey('愛梨')}::${textKey('伊弗利特')}`,
+]);
 const LEGACY_TEST_GUEST_KEYS=new Set(LEGACY_TEST_GUEST_NAMES.map(textKey));
 function isLegacyTestRow(rawName:any,createdAt:any){
  const key=textKey(rawName);if(!LEGACY_TEST_GUEST_KEYS.has(key))return false;
@@ -76,7 +80,8 @@ export async function GET(){
    known.set(`${nameKey}::__legacy__`,{guest_name:old.guest_name,guest_server:'',total:old.total});
   }
 
-  const ranking:VipRow[]=[...known.values()].filter(row=>row.total>0)
+  const ranking:VipRow[]=[...known.values()]
+   .filter(row=>row.total>0&&!HIDDEN_VIP_GUEST_KEYS.has(`${textKey(row.guest_name)}::${textKey(row.guest_server)}`))
    .sort((a,b)=>b.total-a.total||a.guest_name.localeCompare(b.guest_name,'zh-Hant-TW')||a.guest_server.localeCompare(b.guest_server,'zh-Hant-TW'))
    .slice(0,50).map(row=>({...row,tier:vipTier(row.total)}));
   return NextResponse.json({ranking,updated_at:new Date().toISOString(),rules:{tips_count:false,completed_only:true,server_identity:true}}, {headers:{'Cache-Control':'no-store, max-age=0'}});
