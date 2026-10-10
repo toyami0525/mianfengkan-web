@@ -85,18 +85,12 @@ body.mf-staff-page .page.staff-page { max-width: 1260px; padding-left: 26px; pad
   .mf-staff-directory * { transition:none !important; animation:none !important; }
 }
 
-/* 愛梨介紹格：採用館主提供的淺藍色，搭配深色文字。 */
-.mf-staff-directory #airi { background:#c3e1f0; border-color:#8db3c7; }
-.mf-staff-directory #airi .staff-copy { color:#173c4b; }
-.mf-staff-directory #airi .quote { color:#244e63 !important; white-space:pre-wrap; }
-.mf-staff-directory #airi .bio { color:#173c4b !important; }
-.mf-staff-directory #airi .services { border-top-color:rgba(36,78,99,.25); }
-.mf-staff-directory #airi .services-label { color:#365f74; }
-.mf-staff-directory #airi .service { color:#244e63; border-color:rgba(36,78,99,.38); background:rgba(255,255,255,.3); }
+/* 愛梨的對客人話保留原本的分行與語氣。 */
+.mf-staff-directory #airi .quote { white-space:pre-wrap; }
 
 /* 愛梨的直播入口，置於服務項目下方。 */
 .mf-staff-directory #airi .twitch-link { display:inline-flex; align-items:center; justify-content:center; align-self:flex-start; gap:10px; max-width:100%; min-height:48px; margin-top:20px; padding:11px 17px; border:1px solid rgba(255,255,255,.4); border-radius:9px; background:#6441a5; color:#fff; font-size:15px; font-weight:600; line-height:1.6; text-align:center; text-decoration:none; box-shadow:0 4px 12px rgba(72,45,118,.18); transition:background .2s ease,box-shadow .2s ease; }
 .mf-staff-directory #airi .twitch-link:hover { background:#52318d; color:#fff; box-shadow:0 5px 15px rgba(72,45,118,.25); }
-.mf-staff-directory #airi .twitch-link:focus-visible { outline:3px solid #173c4b; outline-offset:3px; }
+.mf-staff-directory #airi .twitch-link:focus-visible { outline:3px solid #c7ac77; outline-offset:3px; }
 .mf-staff-directory #airi .twitch-icon { display:block; flex:0 0 22px; }
 .mf-staff-directory #airi .twitch-link-arrow { flex:0 0 auto; font-size:19px; line-height:1; }
