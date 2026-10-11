@@ -28,7 +28,7 @@
     <button type="button" class="booking-mode-btn" data-mode="dining" aria-pressed="false"><span aria-hidden="true">貳</span><b>餐點</b></button>
   </div>
 </section>
-<div class="booking-shell"><aside class="booking-note"><span class="eyebrow">Choose Your Host</span><h2>今夜，與誰相伴</h2><p id="bookingHoursNote">每日 21:00～24:00 開放即時指名；館員服務中時暫停新的指名。</p><div class="staff-select" id="staffSelect"></div><p class="mf-signature" aria-hidden="true">眠楓敬呈</p></aside>
+<div class="booking-shell"><aside class="booking-note"><span class="eyebrow">Choose Your Host</span><h2>今夜，與誰相伴</h2><p id="bookingHoursNote">每週二至週日 21:00～24:00 開放。愛梨採排隊制，最多 5 人等候；其他館員服務中時暫停新的指名。</p><div class="staff-select" id="staffSelect"></div><p class="mf-signature" aria-hidden="true">眠楓敬呈</p></aside>
 <section class="form-panel">
 <div class="mf-guest-fields">
 <div class="field full common-guest"><label for="guest">客人名稱</label><input id="guest" placeholder="角色名稱" required></div>
@@ -56,7 +56,7 @@
 </div></div>
 <div class="field full polaroid-section" id="polaroidSection" hidden><label>慕斯菲露專屬服務</label><label class="service-check polaroid"><input type="checkbox" id="polaroid" disabled><span><b>紀念拍立得｜80,000 Gil</b><small id="polaroidHint">單筆服務費滿 150,000 Gil 後即可加購</small></span></label></div>
 <div class="field full polaroid-section" id="yukinojiPolaroidSection" hidden><label>雪之寺羽狩專屬服務</label><label class="service-check polaroid"><input type="checkbox" id="yukinojiPolaroid" disabled><span><b>紀念拍立得｜100,000 Gil</b><small id="yukinojiPolaroidHint">單筆服務費滿 200,000 Gil 後即可加購</small></span></label></div>
-<div class="field full"><label>目前指名狀態</label><div class="availability-message" id="availabilityMessage" aria-live="polite">正在確認館員狀態…</div><small class="field-help">不需選擇日期或時間；系統會以送出當下時間安排。館員服務中時，請待服務完成後再重新指名。</small></div>
+<div class="field full"><label>目前指名狀態</label><div class="availability-message" id="availabilityMessage" aria-live="polite">正在確認館員狀態…</div><small class="field-help" id="bookingStatusHelp">不需選擇日期或時間；系統會以送出當下時間安排。館員服務中時，請待服務完成後再重新指名。</small></div>
 <div class="field full"><label for="note">備註</label><textarea id="note" rows="3" placeholder="偏好的互動節奏或其他說明……"></textarea></div>
 </div><div class="booking-summary" id="bookingServiceSummary" aria-live="polite"></div></section>
 <section class="booking-tab-panel" id="diningTab" data-panel="dining"><div class="mf-menu-panel"><div class="dining-head"><div><span class="eyebrow">Dining Selection</span><h2>今夜，想品嚐什麼？</h2><p>主食、甜點、飲品各選一項。酒品可單點，每次點餐合計最多 2 瓶。</p><div class="tab-actions"><button type="button" class="secondary-tab" id="randomMealBtn">聽天由命</button><small class="field-help">為您從主食、甜點、飲品各隨機選一項。</small></div></div></div>
@@ -69,11 +69,11 @@
 <div class="dining-polaroid-status" id="diningPolaroidStatus"></div>
 <div class="booking-summary dining-summary" id="bookingSummary" aria-live="polite"></div>
 </div></section>
-<div class="mf-confirm-actions"><button class="submit" id="bookingSubmit" type="submit">送出指名</button><button class="submit" id="diningSubmit" type="submit" hidden>送出餐點訂單</button></div>
+<div class="mf-confirm-actions"><button class="submit" id="bookingSubmit" type="submit" disabled>送出指名</button><button class="submit" id="diningSubmit" type="submit" hidden>送出餐點訂單</button></div>
 </section></div></form><footer class="mf-card-footer"><span>眠楓館 · 穹頂皓天 7區22號</span><span>願今夜安歇，明日從容。</span></footer></main>
 <div class="modal-backdrop" id="polaroidModal" hidden><section class="notice-modal" role="dialog" aria-modal="true" aria-labelledby="polaroidTitle"><span class="eyebrow">IMPORTANT NOTICE</span><h2 id="polaroidTitle">紀念拍立得服務提醒</h2><p>紀念拍立得為現場拍攝及簡短題字，風格為和風素雅，不含客製簽繪與大量塗鴉裝飾。</p><p>成品於約 1～2 日內上傳至專屬連結，請自行下載。</p><label class="notice-confirm"><input type="checkbox" id="polaroidRead">我已閱讀並了解紀念拍立得的製作方式與交付時間</label><div class="modal-actions"><button type="button" class="secondary" id="returnEdit">返回修改訂單</button><button type="button" class="submit" id="confirmSubmit" disabled>我已了解，確認送出</button></div></section></div>
 
 
 <div class="modal-backdrop" id="alcoholModal" hidden><section class="notice-modal alcohol-notice-modal" role="dialog" aria-modal="true" aria-labelledby="alcoholTitle"><span class="eyebrow">DRINK RESPONSIBLY</span><h2 id="alcoholTitle">飲酒提醒</h2><p class="alcohol-warning-main">開車不喝酒，喝酒不開車。</p><p>飲酒請適量，今晚也請旅人好好照顧自己。</p><div class="modal-actions"><button type="button" class="secondary" id="returnAlcoholEdit">返回修改訂單</button><button type="button" class="submit" id="confirmAlcohol">我知道了，繼續送出</button></div></section></div>
-<div class="modal-backdrop" id="pickupCodeModal" hidden><section class="notice-modal pickup-code-modal" role="dialog" aria-modal="true"><span class="eyebrow">ARTWORK PICKUP</span><h2>請保存您的成品取件碼</h2><p>館員完成拍立得或 Q版繪圖後，可至領取頁輸入此碼查看。</p><div class="generated-pickup-code" id="generatedPickupCode">MF-XXXXXX</div><div class="modal-actions"><button type="button" class="secondary" id="copyPickupCode">複製取件碼</button><a class="submit pickup-link-button" href="polaroid.html">前往領取頁</a></div><button type="button" class="pickup-close" id="closePickupCode">我已保存，關閉</button></section></div>
-<div class="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/script.js"></script><script src="assets/booking-v32.js?v=20261010-airi"></script><script src="assets/site-content.js"></script></body></html>
+<div class="modal-backdrop" id="pickupCodeModal" hidden><section class="notice-modal pickup-code-modal" role="dialog" aria-modal="true" aria-labelledby="pickupCodeTitle"><span class="eyebrow">ARTWORK PICKUP</span><h2 id="pickupCodeTitle">請保存您的成品取件碼</h2><p id="pickupQueueNotice" class="availability-message available" role="status" hidden></p><p>館員完成拍立得或 Q版繪圖後，可至領取頁輸入此碼查看。</p><div class="generated-pickup-code" id="generatedPickupCode">MF-XXXXXX</div><div class="modal-actions"><button type="button" class="secondary" id="copyPickupCode">複製取件碼</button><a class="submit pickup-link-button" href="polaroid.html">前往領取頁</a></div><button type="button" class="pickup-close" id="closePickupCode">我已保存，關閉</button></section></div>
+<div class="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/script.js"></script><script src="assets/booking-v32.js?v=20261011-airi-queue"></script><script src="assets/site-content.js"></script></body></html>

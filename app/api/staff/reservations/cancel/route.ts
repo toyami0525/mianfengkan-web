@@ -21,12 +21,27 @@ export async function POST(req:NextRequest){
     if(!reservationId)return NextResponse.json({error:'缺少指名資料'},{status:400});
 
     const{db,account}=auth;
-    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,staff_id,status,service_name').eq('id',reservationId).maybeSingle();
+    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,staff_id,status,service_name,booking_mode').eq('id',reservationId).maybeSingle();
     if(reservationError)throw reservationError;
     if(!reservation)return NextResponse.json({error:'找不到這筆指名服務'},{status:404});
 
     if(account.role==='staff'&&String(account.staff_id||'')!==String(reservation.staff_id||'')){
       return NextResponse.json({error:'只能取消自己的指名服務'},{status:403});
+    }
+
+    if(reservation.booking_mode==='queue'){
+      const{data:cancelled,error:cancelError}=await db.rpc('cancel_queued_reservation',{p_reservation_id:reservationId});
+      if(cancelError){
+        if(cancelError.code==='P0001')return NextResponse.json({error:cancelError.message},{status:409});
+        throw cancelError;
+      }
+      if(!cancelled?.reservation)throw new Error('取消排隊資料回傳不完整');
+      const imagePaths=Array.isArray(cancelled.image_paths)?cancelled.image_paths:[];
+      if(imagePaths.length){
+        const{error:storageError}=await db.storage.from('polaroids').remove(imagePaths);
+        if(storageError)console.error('remove cancelled queue images failed',storageError);
+      }
+      return NextResponse.json({ok:true,reservation:cancelled.reservation,removed_pickups:cancelled.removed_pickups});
     }
 
     // 取消指名時，成品管理不應留下「等待上傳」的孤兒紀錄。

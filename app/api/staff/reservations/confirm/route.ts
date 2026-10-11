@@ -26,11 +26,23 @@ export async function POST(req:NextRequest){
     const{db,account}=auth;
     if(account.role==='frontdesk')return NextResponse.json({error:'櫃台帳號不能開始館員的指名服務'},{status:403});
 
-    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,guest_name,staff_id,staff_name,service_name,price,starts_at,ends_at,note,status').eq('id',reservationId).maybeSingle();
+    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,guest_name,staff_id,staff_name,service_name,price,starts_at,ends_at,note,status,booking_mode').eq('id',reservationId).maybeSingle();
     if(reservationError)throw reservationError;if(!reservation)return NextResponse.json({error:'找不到這筆指名服務'},{status:404});
     if(account.role!=='owner'&&account.staff_id!==reservation.staff_id)return NextResponse.json({error:'只能開始自己的指名服務'},{status:403});
     if(TERMINAL.includes(String(reservation.status)))return NextResponse.json({error:'這筆服務已經結束或取消'},{status:400});
-    if(String(reservation.status)!=='acknowledged')return NextResponse.json({error:'請先按「確認」，再按「開始」正式計時'},{status:409});
+    if(String(reservation.status)!=='acknowledged')return NextResponse.json({error:reservation.booking_mode==='queue'?'請先確認這筆排隊，再開始服務':'請先按「確認」，再按「開始」正式計時'},{status:409});
+
+    if(reservation.booking_mode==='queue'){
+      // FIFO、同時最多一位服務與釋放等候名額，皆由資料庫同一交易處理。
+      const{data:updated,error:updateError}=await db.from('reservations').update({status:'confirmed'}).eq('id',reservation.id).eq('status','acknowledged').select('*').maybeSingle();
+      if(updateError){
+        if(updateError.code==='P0001')return NextResponse.json({error:updateError.message},{status:409});
+        if(updateError.code==='23505')return NextResponse.json({error:'愛梨已有一位客人正在服務中，請完成後再開始下一位'},{status:409});
+        throw updateError;
+      }
+      if(!updated)return NextResponse.json({error:'這筆排隊剛剛已更新，請重新整理後再試'},{status:409});
+      return NextResponse.json({ok:true,booking_mode:'queue',reservation:updated});
+    }
 
     const oldStart=new Date(reservation.starts_at),oldEnd=new Date(reservation.ends_at),now=new Date();
     if(Number.isNaN(oldStart.getTime())||Number.isNaN(oldEnd.getTime())||oldEnd<=oldStart)return NextResponse.json({error:'原服務時間資料不正確'},{status:400});

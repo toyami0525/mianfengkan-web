@@ -14,6 +14,9 @@ type PayrollSettlementState={distributed_food:number;food_shares:Record<string,n
 type HomepageSettings={tagline:string,services_text:string};
 type RuleItem={title:string,content:string};
 const PAGE_SIZE=20;
+const AIRI_QUEUE_CAPACITY=5;
+const QUEUE_WAITING_STATUSES=['pending','acknowledged'];
+const QUEUE_ACTIVE_STATUSES=[...QUEUE_WAITING_STATUSES,'confirmed'];
 const BASE_DAILY_PAY=150000;
 const BUSINESS_DAY_START_HOUR=21;
 const OWNER_PAYROLL_FALLBACK_ID='__owner__';
@@ -21,7 +24,7 @@ const EMPTY_PAYROLL_SETTLEMENT:PayrollSettlementState={distributed_food:0,food_s
 const ownerTabs=[['dashboard','總覽'],['payroll','營業日薪資'],['staff','館員管理'],['schedule','排班月曆'],['operations','營運管理'],['polaroids','成品管理'],['feedback','滿意度調查'],['announcements','公告管理'],['rules','規章管理'],['settings','網站設定']];
 const staffTabs=[['dashboard','我的總覽'],['schedule','排班月曆'],['operations','營運管理'],['polaroids','我的成品']];
 const frontdeskTabs=[['dashboard','總覽'],['operations','營運管理'],['polaroids','成品管理']];
-const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐',item_type:'成品類型'};
+const labels:Record<string,string>={guest_name:'客人',contact:'聯絡方式',staff_name:'指名館員',service_name:'服務',price:'服務金額',starts_at:'預約／開始時間',status:'狀態',note:'備註',items:'點餐內容',total:'總金額',created_at:'送出時間',name:'姓名',role:'職位',active:'前台顯示',accepting_reservations:'接受指名',staff_id:'館員 ID',ends_at:'結束時間',reason:'原因',title:'標題',content:'內容',published:'公開',key:'設定項目',value:'設定內容',updated_at:'更新時間',pickup_code:'取件碼',delivery_preference_staff_name:'希望送餐',delivery_staff_name:'實際送餐',item_type:'成品類型',queue_position:'排隊順序',guest_server:'伺服器'};
 const MUSUFIRU_POLAROID_EXTENSION='慕斯菲露紀念拍立得';
 const EXTENSION_INFO:Record<string,{price:number;duration:number;product?:boolean}>={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},[MUSUFIRU_POLAROID_EXTENSION]:{price:80000,duration:0,product:true}};
 // 館主提供的四組正式語音提示音。
@@ -65,6 +68,7 @@ export default function AdminApp(){
  const[manualPolaroidGuest,setManualPolaroidGuest]=useState(''),[manualPolaroidCode,setManualPolaroidCode]=useState(''),[manualProductStaff,setManualProductStaff]=useState('musufiru'),[manualProductType,setManualProductType]=useState('polaroid'),[manualProductIssuedLabel,setManualProductIssuedLabel]=useState('');
  const[calendarMonth,setCalendarMonth]=useState(()=>taipeiDateKey(new Date()).slice(0,7)),[calendarRows,setCalendarRows]=useState<Row[]>([]),[calendarClosures,setCalendarClosures]=useState<Row[]>([]),[calendarStaff,setCalendarStaff]=useState<Row[]>([]),[calendarStaffId,setCalendarStaffId]=useState(''),[calendarLoading,setCalendarLoading]=useState(false);
  const[account,setAccount]=useState<Account|null>(null);
+ const[queueLoaded,setQueueLoaded]=useState(false),[queueLoadError,setQueueLoadError]=useState('');
  const[availabilityPanelOpen,setAvailabilityPanelOpen]=useState(false),[availabilityPending,setAvailabilityPending]=useState<Record<string,boolean>>({}),[availabilityMessage,setAvailabilityMessage]=useState(''),[staffLoadError,setStaffLoadError]=useState('');
  const availabilityPendingRef=useRef(new Set<string>());
  const[servicePending,setServicePending]=useState<Record<string,boolean>>({});
@@ -113,6 +117,7 @@ export default function AdminApp(){
  const tabs=account?.role==='owner'?ownerTabs:account?.role==='frontdesk'?frontdeskTabs:staffTabs;
  async function load(currentAccount=account){
   setMsg('讀取中…');
+  setQueueLoaded(false);
   await refreshStaff(currentAccount);
   const names=['staff_work_calendar','reservations','orders','polaroid_pickups','announcements','site_settings'];
   const out:Record<string,Row[]>={};
@@ -120,6 +125,22 @@ export default function AdminApp(){
    const query=db.from(n).select('*');
    const result=n==='site_settings'?await query.order('key',{ascending:true}):await query.order('created_at',{ascending:false});
    if(result.error){console.error(n,result.error);out[n]=[];}else out[n]=result.data||[];
+  }
+  // 另讀所有未完成排隊，避免被一般歷史查詢的筆數上限或日期篩選擠掉。
+  if(currentAccount&&(currentAccount.role!=='staff'||currentAccount.staff_slug==='airi')){
+   let queueQuery=db.from('reservations').select('*').eq('booking_mode','queue')
+    .in('status',QUEUE_ACTIVE_STATUSES).order('created_at',{ascending:true}).order('id',{ascending:true});
+   if(currentAccount.role==='staff')queueQuery=queueQuery.eq('staff_id',String(currentAccount.staff_id));
+   const{data:queueRows,error:queueError}=await queueQuery;
+   if(queueError){
+    console.error('active reservation queue',queueError);
+    setQueueLoadError('排隊資料未完整更新，請按「重新整理」後再開始服務。');
+   }else{
+    // 專用查詢是目前隊列的來源；移除前一次歷史查詢中已完成或取消的舊等待狀態。
+    const history=(out.reservations||[]).filter(row=>!isQueueReservation(row)||!QUEUE_ACTIVE_STATUSES.includes(row.status));
+    out.reservations=Array.from(new Map([...history,...(queueRows||[])].map(row=>[String(row.id),row])).values());
+    setQueueLoadError('');setQueueLoaded(true);
+   }
   }
   if(currentAccount?.role==='staff'&&currentAccount.staff_id){
    out.reservations=(out.reservations||[]).filter(r=>r.staff_id===currentAccount.staff_id);
@@ -165,7 +186,7 @@ export default function AdminApp(){
     const row=payload.new as Row;
     if(!currentAccount)return;
     if(currentAccount.role==='staff'&&row.staff_id!==currentAccount.staff_id)return;
-    setData(prev=>({...prev,reservations:(prev.reservations||[]).map(x=>x.id===row.id?row:x)}));
+    setData(prev=>({...prev,reservations:isQueueReservation(row)?[row,...(prev.reservations||[]).filter(x=>x.id!==row.id)]:(prev.reservations||[]).map(x=>x.id===row.id?row:x)}));
    })
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},payload=>{
     const row=payload.new as Row;
@@ -258,6 +279,7 @@ export default function AdminApp(){
   const tick=()=>{
    const now=Date.now();
    const rows=(data.reservations||[]).filter(r=>{
+    if(isQueueReservation(r))return false;
     if(!['confirmed','已確認'].includes(String(r.status)))return false;
     return account.role==='staff'?r.staff_id===account.staff_id:true;
    });
@@ -446,10 +468,39 @@ export default function AdminApp(){
    setYukinojiChibiAccepting(result.enabled===true);setMsg(result.enabled?'Q版繪圖(公版)已恢復接單。':'Q版繪圖(公版)已暫停接單。');notifyPublicBookingChange('settings_changed');await load();
   }catch(error){const text=error instanceof Error?error.message:'更新失敗';setMsg(text);alert(text)}finally{setBusy('')}
  }
+ function canManageQueueReservation(reservation:Row){
+  return account?.role==='owner'||(account?.role==='staff'&&account.staff_slug==='airi'&&String(reservation.staff_id)===String(account.staff_id));
+ }
+ function canStartQueueReservation(reservation:Row){
+  if(!canManageQueueReservation(reservation)||!queueLoaded||queueLoadError||reservation.status!=='acknowledged')return false;
+  const staffRows=(data.reservations||[]).filter(row=>String(row.staff_id)===String(reservation.staff_id));
+  if(staffRows.some(row=>row.status==='confirmed'))return false;
+  const waiting=staffRows.filter(row=>isQueueReservation(row)&&QUEUE_WAITING_STATUSES.includes(row.status)).sort(compareQueueOrder);
+  return String(waiting[0]?.id)===String(reservation.id);
+ }
+ function queueReservationActions(reservation:Row){
+  const canManage=canManageQueueReservation(reservation),saving=busy.startsWith('reservations:');
+  const active=QUEUE_ACTIVE_STATUSES.includes(reservation.status);
+  return <>
+   {canManage&&reservation.status==='pending'&&<button disabled={saving} onClick={()=>status('reservations',reservation.id,'acknowledged')}>確認</button>}
+   {canManage&&reservation.status==='acknowledged'&&<button disabled={saving||!canStartQueueReservation(reservation)} title={canStartQueueReservation(reservation)?'開始服務這位客人':'請依排隊順序，完成目前服務後再開始下一位'} onClick={()=>status('reservations',reservation.id,'confirmed')}>開始</button>}
+   {canManage&&reservation.status==='confirmed'&&<button disabled={saving} onClick={()=>status('reservations',reservation.id,'completed')}>完成</button>}
+   {active&&(canManage||account?.role==='frontdesk')&&<button disabled={saving} onClick={()=>status('reservations',reservation.id,'cancelled')}>取消</button>}
+  </>;
+ }
  async function status(table:string,id:string,nextStatus:string){
+  const reservation=table==='reservations'?(data.reservations||[]).find(row=>String(row.id)===String(id)):null;
+  const queued=isQueueReservation(reservation);
+  if(queued){
+   if(!canManageQueueReservation(reservation!)&&(nextStatus!=='cancelled'||account?.role!=='frontdesk'))return;
+   if(nextStatus==='completed'&&reservation?.status!=='confirmed')return;
+   if(nextStatus==='confirmed'&&!canStartQueueReservation(reservation!)){
+    setMsg('請依排隊順序，完成目前服務後再開始下一位。');return;
+   }
+  }
   const key=`${table}:${id}`;setBusy(key);
   const isReservation=table==='reservations';
-  setMsg(isReservation&&nextStatus==='acknowledged'?'確認指名中…':isReservation&&nextStatus==='confirmed'?'開始服務並重新計時中…':'更新中…');
+  setMsg(isReservation&&nextStatus==='acknowledged'?'確認指名中…':isReservation&&nextStatus==='confirmed'?(queued?'開始服務中…':'開始服務並重新計時中…'):'更新中…');
   try{
    if(isReservation&&nextStatus==='cancelled'){
     const{data:{session}}=await db.auth.getSession();if(!session)throw new Error('登入已失效，請重新登入');
@@ -471,18 +522,25 @@ export default function AdminApp(){
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||(nextStatus==='acknowledged'?'確認指名失敗':'開始服務失敗'));
     if(result.reservation)setData(prev=>({...prev,reservations:(prev.reservations||[]).map(x=>x.id===result.reservation.id?result.reservation:x)}));
-    if(nextStatus==='acknowledged')setMsg('指名已確認，等待館員按「開始」後才會正式計時。');
-    else setMsg(`服務已開始：${formatDate(result.reservation?.starts_at)} → ${formatDate(result.reservation?.ends_at)}。`);
-    notifyPublicBookingChange('booking_changed');await load();
+    const queueResult=queued||isQueueReservation(result.reservation);
+    const successMessage=nextStatus==='acknowledged'
+     ?queueResult?'排隊指名已確認，請依順序開始服務。':'指名已確認，等待館員按「開始」後才會正式計時。'
+     :queueResult?`已開始服務 ${result.reservation?.guest_name||reservation?.guest_name||'這位客人'}，製作完成後請按「完成」。`:`服務已開始：${formatDate(result.reservation?.starts_at)} → ${formatDate(result.reservation?.ends_at)}。`;
+    setMsg(successMessage);notifyPublicBookingChange('booking_changed');await load();
+    if(queueResult)setMsg(successMessage);
    }else{
-    const{error}=await db.from(table).update({status:nextStatus}).eq('id',id).select('id').single();
+    let query=db.from(table).update({status:nextStatus}).eq('id',id);
+    if(queued&&nextStatus==='completed')query=query.eq('status','confirmed');
+    const{error}=await query.select('id').single();
     if(error)throw error;
     if(isReservation)notifyPublicBookingChange('booking_changed');
     setMsg(`狀態已更新為「${statusText[nextStatus]||nextStatus}」`);await load();
+    if(queued&&nextStatus==='completed')setMsg('本次服務已完成，可以依排隊順序開始下一位。');
    }
   }catch(error){const text=error instanceof Error?error.message:'更新失敗';console.error(error);setMsg(`更新失敗：${text}`);alert(`更新失敗：${text}`)}finally{setBusy('')}
  }
  function extensionOptionsFor(reservation:Row){
+  if(isQueueReservation(reservation))return [];
   // 一般續時項目可自由追加；慕斯菲露的服務單另外可單獨續費加購紀念拍立得。
   const base=['泡湯洗浴','按摩服務','耳語陪伴'];
   const staffRow=(data.staff||[]).find(x=>String(x.id)===String(reservation.staff_id||''));
@@ -490,6 +548,7 @@ export default function AdminApp(){
   return isMusufiru?[...base,MUSUFIRU_POLAROID_EXTENSION]:base;
  }
  function canExtendReservation(reservation:Row){
+  if(isQueueReservation(reservation))return false;
   if(!account||account.role==='frontdesk')return false;
   if(account.role==='staff'&&reservation.staff_id!==account.staff_id)return false;
   if(!['confirmed','已確認'].includes(String(reservation.status)))return false;
@@ -497,10 +556,11 @@ export default function AdminApp(){
   return Number.isFinite(start)&&Number.isFinite(end)&&now>=start&&now<end+5*60*1000;
  }
  function openExtend(reservation:Row){
+  if(isQueueReservation(reservation))return;
   const options=extensionOptionsFor(reservation);setExtendService(options[0]||'耳語陪伴');setExtendTarget(reservation);
  }
  async function extendReservation(){
-  if(!extendTarget||!EXTENSION_INFO[extendService])return;
+  if(!extendTarget||isQueueReservation(extendTarget)||!EXTENSION_INFO[extendService])return;
   const info=EXTENSION_INFO[extendService],isProduct=info.product===true;
   const key=`extend:${extendTarget.id}`;setBusy(key);setMsg(isProduct?'續費加購處理中…':'續時處理中…');
   try{
@@ -603,6 +663,12 @@ export default function AdminApp(){
   if(reservationId&&addon>0)reservationAddonById.set(reservationId,(reservationAddonById.get(reservationId)||0)+addon);
  }
  const reservations=rawReservations.map(r=>{const addon=reservationAddonById.get(String(r.id))||0;return addon?{...r,price:Math.max(0,Number(r.price||0))+addon}:r});
+ const showAiriQueue=account.role!=='staff'||account.staff_slug==='airi';
+ const airiStaffId=staff.find(row=>row.slug==='airi')?.id||(account.staff_slug==='airi'?account.staff_id:null)||reservations.find(isQueueReservation)?.staff_id;
+ const airiReservations=reservations.filter(row=>airiStaffId&&String(row.staff_id)===String(airiStaffId));
+ const airiWaiting=airiReservations.filter(row=>isQueueReservation(row)&&QUEUE_WAITING_STATUSES.includes(row.status)).sort(compareQueueOrder);
+ const airiServing=airiReservations.filter(row=>row.status==='confirmed').sort(compareQueueOrder);
+ const airiQueueRows=[...airiServing.map(row=>({...row,queue_position:'服務中'})),...airiWaiting.map((row,index)=>({...row,queue_position:`第 ${index+1} 位`}))];
  const orders=rawOrders.filter(hasFoodItems).map(foodDisplayOrder);
  const todayRawOrders=filterRows(rawOrders,'today','all','');
  const todayReservations=filterRows(reservations,'today','all','');
@@ -704,18 +770,29 @@ export default function AdminApp(){
  {tab==='feedback'&&account.role==='owner'&&<FeedbackPanel/>}
  {tab==='staff'&&account.role==='owner'&&<Panel title="館員資料" action={<button onClick={()=>quickAdd('staff')}>新增館員</button>}><Table rows={staff} keys={['name','role','active','accepting_reservations']} actions={(r)=><>{!isOwnerProfile(r,account.staff_id)&&<button type="button" className={`availability-action ${r.accepting_reservations?'pause':'resume'}`} disabled={Boolean(availabilityPending[String(r.id)])||busy===`staff:${r.id}`} onClick={()=>void updateStaffAvailability(r,r.accepting_reservations!==true)}>{availabilityPending[String(r.id)]?'更新中…':r.accepting_reservations?'暫停接單':'恢復接單'}</button>}<button disabled={busy===`staff:${r.id}`||Boolean(availabilityPending[String(r.id)])} onClick={()=>remove('staff',r.id)}>刪除</button></>}/></Panel>}
  {tab==='schedule'&&account.role!=='frontdesk'&&<>{account.role==='owner'&&<Panel title="臨時休館"><VenueClosureControl db={db} onSaved={()=>{notifyPublicBookingChange('schedule_changed');void loadWorkCalendar(calendarMonth)}}/></Panel>}<Panel title={account.role==='owner'?'全館排班月曆':'我的排班月曆'} action={<div className="calendar-month-actions"><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,-1))}>‹ 上個月</button><strong>{monthLabel(calendarMonth)}</strong><button className="ghost" onClick={()=>setCalendarMonth(shiftMonth(calendarMonth,1))}>下個月 ›</button></div>}><div className="work-calendar-toolbar">{account.role==='owner'&&<label><span>查看／編輯館員</span><select value={calendarStaffId} onChange={e=>setCalendarStaffId(e.target.value)}>{calendarStaff.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}<div className="work-calendar-legend"><span className="working">● 預設上班</span><span className="off">● 館員休假</span><span className="closed">● 全館休館</span></div></div>{calendarLoading?<p className="empty-state">排班月曆讀取中…</p>:<WorkCalendar month={calendarMonth} staffId={account.role==='staff'?(account.staff_id||''):calendarStaffId} rows={calendarRows} closures={calendarClosures} busy={busy} onChange={setWorkCalendarDay}/>}<p className="hint">週二～週日預設為上班（綠燈），館員只需點日期設定「休假」；再點一次即可取消休假。每週一為全館固定休館。</p></Panel></>}
- {tab==='operations'&&<div className="operations-grid">
+ {tab==='operations'&&<>
+  {showAiriQueue&&<Panel title="愛梨・排隊管理" action={<span className="status-pill">等待 {airiWaiting.length}／{AIRI_QUEUE_CAPACITY} 人</span>}>
+   {queueLoadError&&<p className="admin-message" role="alert">{queueLoadError}</p>}
+   {!queueLoaded&&!queueLoadError?<p className="hint">排隊資料讀取中…</p>:<>
+    <p className="record-summary" role="status">等待 {airiWaiting.length} 人，服務中 {airiServing.length} 人。服務中的客人不占等待名額。</p>
+    <p className="hint">依送出順序服務，確認後仍保留原順位。製作完成後請按「完成」，再開始下一位。</p>
+    {airiQueueRows.length?<Table rows={airiQueueRows} keys={['queue_position','guest_name','guest_server','service_name','price','status','created_at','note']} actions={row=>isQueueReservation(row)?queueReservationActions(row):<>{account.role!=='frontdesk'&&<button disabled={busy===`reservations:${row.id}`} onClick={()=>status('reservations',row.id,'completed')}>完成</button>}<button disabled={busy===`reservations:${row.id}`} onClick={()=>status('reservations',row.id,'cancelled')}>取消</button></>}/>:<p className="empty">目前沒有等待或服務中的客人。</p>}
+    {account.role==='frontdesk'&&<p className="hint">櫃台可查看排隊與取消指名；確認、開始及完成由館主或愛梨操作。</p>}
+   </>}
+  </Panel>}
+  <div className="operations-grid">
   <div className="operations-column operations-orders"><Panel title="點餐管理"><RecordToolbar range={orderRange} status={orderStatus} search={orderSearch} onRange={v=>{setOrderRange(v);setOrderPage(1)}} onStatus={v=>{setOrderStatus(v);setOrderPage(1)}} onSearch={v=>{setOrderSearch(v);setOrderPage(1)}} statuses={['pending','completed','cancelled','all']}/><RecordSummary total={filteredOrders.length} range={orderRange} status={orderStatus}/><Table rows={visibleOrders} keys={['guest_name','items','delivery_preference_staff_name','delivery_staff_name','total','status','created_at']} actions={r=><>{account.staff_id&&!r.delivery_staff_id&&r.status==='pending'&&<button disabled={busy===`delivery:${r.id}`} onClick={()=>claimDelivery(r)}>{r.delivery_preference_staff_id&&r.delivery_preference_staff_id!==account.staff_id?'代為送餐':'由我送餐'}</button>}{r.delivery_staff_id===account.staff_id&&<button disabled>已由我接單</button>}<button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'completed')}>完成</button><button disabled={busy===`orders:${r.id}`} onClick={()=>status('orders',r.id,'cancelled')}>取消</button></>}/><Pagination page={orderPage} pages={orderPages} onChange={setOrderPage}/></Panel></div>
-  <div className="operations-column operations-reservations"><Panel title={account.role==='staff'?'我的指名管理':'指名管理'}><RecordToolbar range={reservationRange} status={reservationStatus} search={reservationSearch} onRange={v=>{setReservationRange(v);setReservationPage(1)}} onStatus={v=>{setReservationStatus(v);setReservationPage(1)}} onSearch={v=>{setReservationSearch(v);setReservationPage(1)}} statuses={['pending','acknowledged','confirmed','completed','cancelled','all']}/><RecordSummary total={filteredReservations.length} range={reservationRange} status={reservationStatus}/><Table rows={visibleReservations} keys={['guest_name','contact','staff_name','service_name','starts_at','ends_at','price','status','note']} actions={r=><>{r.status==='pending'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'acknowledged')}>確認</button>}{r.status==='acknowledged'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'confirmed')}>開始</button>}{canExtendReservation(r)&&<button className="extend-button" disabled={busy===`extend:${r.id}`} onClick={()=>openExtend(r)}>續時／續費</button>}<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'completed')}>完成</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'cancelled')}>取消</button></>}/><Pagination page={reservationPage} pages={reservationPages} onChange={setReservationPage}/></Panel></div>
- </div>}
+  <div className="operations-column operations-reservations"><Panel title={account.role==='staff'?'我的指名管理':'指名管理'}><RecordToolbar range={reservationRange} status={reservationStatus} search={reservationSearch} onRange={v=>{setReservationRange(v);setReservationPage(1)}} onStatus={v=>{setReservationStatus(v);setReservationPage(1)}} onSearch={v=>{setReservationSearch(v);setReservationPage(1)}} statuses={['pending','acknowledged','confirmed','completed','cancelled','all']}/><RecordSummary total={filteredReservations.length} range={reservationRange} status={reservationStatus}/><Table rows={visibleReservations} keys={['guest_name','contact','staff_name','service_name','starts_at','ends_at','price','status','note']} actions={r=>isQueueReservation(r)?queueReservationActions(r):<>{r.status==='pending'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'acknowledged')}>確認</button>}{r.status==='acknowledged'&&account.role!=='frontdesk'&&<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'confirmed')}>開始</button>}{canExtendReservation(r)&&<button className="extend-button" disabled={busy===`extend:${r.id}`} onClick={()=>openExtend(r)}>續時／續費</button>}<button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'completed')}>完成</button><button disabled={busy===`reservations:${r.id}`} onClick={()=>status('reservations',r.id,'cancelled')}>取消</button></>}/><Pagination page={reservationPage} pages={reservationPages} onChange={setReservationPage}/></Panel></div>
+  </div>
+ </>}
  {tab==='payroll'&&account.role==='owner'&&<><section className="payroll-stats"><article><span>本營業日餐點收入</span><b>{payrollFoodRevenue.toLocaleString('zh-TW')} <small>Gil</small></b><em>已排除取消訂單與拍立得加購</em></article><article><span>已分配餐點收入</span><b>{payrollDistributedFood.toLocaleString('zh-TW')} <small>Gil</small></b><em>已在先前結算時分給當時未結算人員</em></article><article><span>尚未分配餐點收入</span><b>{payrollUnallocatedFood.toLocaleString('zh-TW')} <small>Gil</small></b><em>下一次按結算時才會平均分配</em></article><article className="payroll-highlight"><span>尚未結算</span><b>{payrollUnsettledHeadcount} <small>人</small></b><em>固定基本薪資每人 150,000 Gil</em></article></section><Panel title="本營業日上班人員" action={<button className="ghost" disabled={payrollHasSettlementActivity} onClick={resetPayrollRoster}>依排班月曆重新判定</button>}><p className="hint">館主固定計入。基本薪資固定為 150,000 Gil；「結算」只處理當下尚未分配的餐點收入。某人結算後不再參與後續新增餐點分紅。為避免分紅被算亂，第一次結算後本日上班名單會鎖定；需要更正時請先按「重設本日結算」。</p><div className="payroll-roster">{payrollPeople.map(person=><label key={person.id} className={`${person.isOwner?'owner':''} ${payrollSettledIds.has(person.id)?'settled':''}`.trim()}><input type="checkbox" checked={person.isOwner||payrollStaffIds.includes(person.id)} disabled={person.isOwner||payrollHasSettlementActivity} onChange={()=>togglePayrollStaff(person.id)}/><span><strong>{person.name}</strong><small>{person.isOwner?'館主・固定計入':payrollSettledIds.has(person.id)?'館員・已結算':'館員'}</small></span></label>)}</div></Panel><Panel title="本營業日薪資結算" action={<div className="payroll-settlement-actions"><button className="ghost" onClick={resetPayrollSettlement}>重設本日結算</button><button disabled={!payrollUnsettledPeople.length} onClick={settleAllPayroll}>全部剩餘人員結算</button></div>}><div className="payroll-formula"><span>基本薪資</span><strong>{BASE_DAILY_PAY.toLocaleString('zh-TW')} Gil／人</strong><b>＋</b><span>目前未分配餐點</span><strong>{payrollUnallocatedFood.toLocaleString('zh-TW')} Gil</strong><b>÷</b><span>尚未結算</span><strong>{payrollUnsettledHeadcount} 人</strong><b>＝</b><span>本次每人可再分</span><strong>{payrollCurrentShare.toLocaleString('zh-TW')} Gil</strong></div><div className="table-wrap payroll-settlement-wrap"><table className="payroll-table payroll-settlement-table"><thead><tr><th>人員</th><th>固定基本薪資</th><th>已累積餐點分紅</th><th>本次可再分</th><th>若現在結算</th><th>狀態</th><th>操作</th></tr></thead><tbody>{selectedPayrollPeople.map(person=>{const settled=payrollSettlement.settled[person.id];const accrued=Math.max(0,Number(payrollSettlement.food_shares?.[person.id]||0));const extra=settled?0:payrollCurrentShare;const foodShare=settled?Math.max(0,Number(settled.food_share||accrued)):accrued+extra;const payout=settled?Math.max(BASE_DAILY_PAY,Number(settled.payout||BASE_DAILY_PAY+foodShare)):BASE_DAILY_PAY+foodShare;return <tr key={person.id} className={settled?'payroll-row-settled':''}><td><strong>{person.name}</strong>{person.isOwner&&<small>（館主）</small>}</td><td>{BASE_DAILY_PAY.toLocaleString('zh-TW')}</td><td>{accrued.toLocaleString('zh-TW')}</td><td>{extra.toLocaleString('zh-TW')}</td><td><strong>{payout.toLocaleString('zh-TW')} Gil</strong></td><td>{settled?<span className="payroll-status settled">已結算</span>:<span className="payroll-status pending">未結算</span>}</td><td>{settled?<button className="ghost" disabled>已結算</button>:<button onClick={()=>settlePayrollPerson(person.id)}>結算</button>}</td></tr>})}</tbody></table></div>{payrollRemainder>0&&<p className="payroll-remainder">目前平均後有 <strong>{payrollRemainder.toLocaleString('zh-TW')} Gil</strong> 無法整除，先留在「尚未分配餐點收入」，之後有新餐點或剩餘人數減少時再一起分。</p>}{payrollDistributedFood>payrollFoodRevenue&&<p className="payroll-warning">⚠ 已分配餐點收入高於目前有效餐點收入，可能是結算後有訂單被取消。已結算紀錄不會自動倒扣，請人工確認後視需要重設本日結算。</p>}<div className="payroll-payout"><div><span>已結算其他館員實際應付</span><strong>{payrollPaidOtherStaff.toLocaleString('zh-TW')} Gil</strong></div><div className="total"><span>目前尚未分配餐點收入</span><strong>{payrollUnallocatedFood.toLocaleString('zh-TW')} Gil</strong></div><small>此結算紀錄保存在目前這台裝置的瀏覽器。基本薪資固定 150,000 Gil；餐點分紅會在每次按「結算」時，平均分給當下尚未結算的人員。</small></div></Panel></>}
  {tab==='polaroids'&&<>{account.role==='owner'&&<Panel title="成品・手動發號"><div className="manual-pickup-box"><div><p className="hint">館主專用。可替有拍立得／繪圖成品的館員直接發放取件碼，不走指名與營業時間限制。</p><label className="manual-pickup-field"><span>館員</span><select value={manualProductStaff} onChange={e=>{const slug=e.target.value;setManualProductStaff(slug);const first=MANUAL_PRODUCT_OPTIONS.find(x=>x.staff_slug===slug);if(first)setManualProductType(first.item_type);setManualPolaroidCode('');setManualProductIssuedLabel('')}}>{[...new Map(MANUAL_PRODUCT_OPTIONS.map(x=>[x.staff_slug,x])).values()].map(x=><option key={x.staff_slug} value={x.staff_slug}>{x.staff_name}</option>)}</select></label><label className="manual-pickup-field"><span>成品類型</span><select value={manualProductType} onChange={e=>{setManualProductType(e.target.value);setManualPolaroidCode('');setManualProductIssuedLabel('')}}>{MANUAL_PRODUCT_OPTIONS.filter(x=>x.staff_slug===manualProductStaff).map(x=><option key={`${x.staff_slug}:${x.item_type}`} value={x.item_type}>{x.label}</option>)}</select></label><label className="manual-pickup-field"><span>客人名稱</span><input value={manualPolaroidGuest} onChange={e=>setManualPolaroidGuest(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();void issueManualProduct()}}} placeholder="輸入客人角色名稱"/></label><button disabled={busy==='manual-polaroid'} onClick={()=>void issueManualProduct()}>{busy==='manual-polaroid'?'發號中…':'發放成品取件碼'}</button><small className="manual-pickup-note">Lina「簽繪拍立得」手動發號仍會計入每日 3 張上限；其他類型依原本規則直接建立成品紀錄。</small></div>{manualPolaroidCode&&<div className="manual-pickup-result"><span>{manualProductIssuedLabel||'剛剛發放的成品'}取件碼</span><strong>{manualPolaroidCode}</strong><button className="ghost" onClick={()=>void navigator.clipboard?.writeText(manualPolaroidCode)}>複製號碼</button><small>這筆會直接出現在對應館員的「我的成品」，之後照原本流程上傳即可。</small></div>}</div></Panel>}<Panel title={account.role==='staff'?'我的成品':'成品管理'}><div className="record-summary">拍立得與 Q版繪圖都在這裡上傳。上傳完成後，客人即可使用取件碼領取。</div><div className="polaroid-admin-grid">{polaroids.length?polaroids.map(r=>{const itemName=pickupTypeText(r.item_type);return <article className="polaroid-admin-card" key={r.id}><div><span className="eyebrow">{r.item_type==='chibi_public'?'Q ART PICKUP':'PICKUP CODE'}</span><h3>{r.pickup_code}</h3><p><b>{itemName}</b>・{r.staff_name}・客人：{r.guest_name}</p><small>{r.status==='ready'?'已完成，可領取':'等待館員上傳'}</small></div><label className="polaroid-upload-button">{busy===`polaroid:${r.id}`?'上傳中…':r.status==='ready'?'重新上傳':`上傳${itemName}`}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy===`polaroid:${r.id}`} onChange={e=>{const f=e.target.files?.[0];if(f)void uploadPolaroid(r.id,f);e.currentTarget.value=''}}/></label></article>}):<p className="empty-state">目前沒有待上傳成品。</p>}</div></Panel></>}
  {tab==='announcements'&&<Panel title="公告" action={<button onClick={()=>quickAdd('announcement')}>新增公告</button>}><Table rows={data.announcements||[]} keys={['title','content','published','created_at']} actions={r=><button disabled={busy===`announcements:${r.id}`} onClick={()=>remove('announcements',r.id)}>刪除</button>}/></Panel>}
  {tab==='rules'&&<Panel title="來館規章" action={<button onClick={()=>setRules(prev=>[...prev,{title:'新規章',content:''}])}>新增規章</button>}><div className="rules-editor">{rules.map((rule,index)=><article className="rule-editor" key={index}><div className="rule-number">{String(index+1).padStart(2,'0')}</div><label>標題<input value={rule.title} onChange={e=>updateRule(index,'title',e.target.value)}/></label><label>內容<textarea rows={3} value={rule.content} onChange={e=>updateRule(index,'content',e.target.value)}/></label><div className="rule-actions"><button onClick={()=>moveRule(index,-1)} disabled={index===0}>上移</button><button onClick={()=>moveRule(index,1)} disabled={index===rules.length-1}>下移</button><button className="danger" onClick={()=>setRules(prev=>prev.filter((_,i)=>i!==index))}>刪除</button></div></article>)}</div><div className="form-submit"><button disabled={busy==='setting:rules'} onClick={()=>saveSetting('rules',rules)}>儲存全部規章</button></div></Panel>}
  {tab==='settings'&&<><Panel title="指名測試模式"><div className="staff-availability"><div><strong>{bookingTestMode?'目前：測試模式已開啟':'目前：正式營業模式'}</strong><p className="hint">{bookingTestMode?'客人端可在 21:00～24:00 以外送出指名；館員休息、排班休假與服務中鎖定仍會生效。':'客人端維持每日 21:00～24:00 的正式指名時間限制。'}</p></div><button disabled={busy==='setting:booking_test_mode'} className={bookingTestMode?'offline':'online'} onClick={()=>saveSetting('booking_test_mode',{enabled:!bookingTestMode})}>{bookingTestMode?'關閉測試模式':'開啟測試模式'}</button></div><p className="permission-note">僅館主後台提供此切換。測試完成後請記得關閉，避免非營業時段仍可送出指名。</p></Panel><Panel title="基本資訊"><div className="settings-grid"><label>店名<input value={venue.name} onChange={e=>setVenue({...venue,name:e.target.value})}/></label><label>住宅地址<input value={venue.address} onChange={e=>setVenue({...venue,address:e.target.value})}/></label><label>Discord／聯絡資訊<input value={venue.discord} onChange={e=>setVenue({...venue,discord:e.target.value})} placeholder="可留空"/></label><label>營業時間<input value={venue.business_hours} onChange={e=>setVenue({...venue,business_hours:e.target.value})}/></label><label>營業狀態<select value={venue.business_status} onChange={e=>setVenue({...venue,business_status:e.target.value})}><option value="open">營業中</option><option value="closed">今日休館</option><option value="preparing">準備中</option></select></label></div><div className="form-submit"><button disabled={busy==='setting:venue'} onClick={()=>saveSetting('venue',venue)}>儲存基本資訊</button></div></Panel><Panel title="首頁文字"><div className="settings-grid single"><label>首頁標語<input value={homepage.tagline} onChange={e=>setHomepage({...homepage,tagline:e.target.value})}/></label><label>服務摘要<input value={homepage.services_text} onChange={e=>setHomepage({...homepage,services_text:e.target.value})}/></label></div><div className="form-submit"><button disabled={busy==='setting:homepage'} onClick={()=>saveSetting('homepage',homepage)}>儲存首頁文字</button></div><p className="hint">本版可直接修改文字、地址、營業狀態與規章。圖片上傳會在後續版本加入。</p></Panel></>}
- {extendTarget&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="續時或續費"><div className="reservation-alert extension-dialog"><div className="reservation-alert-icon">⏳</div><p className="eyebrow">EXTEND SERVICE</p><h2>續時／續費</h2><dl><div><dt>客人</dt><dd>{extendTarget.guest_name||'—'}</dd></div><div><dt>館員</dt><dd>{extendTarget.staff_name||'—'}</dd></div><div><dt>目前結束</dt><dd>{formatDate(extendTarget.ends_at)}</dd></div></dl><label className="extension-select"><span>選擇追加項目</span><select value={extendService} onChange={e=>setExtendService(e.target.value)}>{extensionOptionsFor(extendTarget).map(name=>{const info=EXTENSION_INFO[name];return <option key={name} value={name}>{name}　{info.product?'單獨加購':`+${info.duration} 分鐘`}／{info.price.toLocaleString('zh-TW')} Gil</option>})}</select></label><div className="extension-summary"><span>{EXTENSION_INFO[extendService]?.product?'服務時間不變':'續時後預計結束'}</span><strong>{EXTENSION_INFO[extendService]?.product?'單獨加購拍立得':formatDate(new Date(new Date(extendTarget.ends_at).getTime()+(EXTENSION_INFO[extendService]?.duration||0)*60000))}</strong><small>追加 {Number(EXTENSION_INFO[extendService]?.price||0).toLocaleString('zh-TW')} Gil</small></div><div className="reservation-alert-actions"><button disabled={busy===`extend:${extendTarget.id}`} onClick={()=>void extendReservation()}>{busy===`extend:${extendTarget.id}`?(EXTENSION_INFO[extendService]?.product?'續費中…':'續時中…'):(EXTENSION_INFO[extendService]?.product?'確認續費':'確認續時')}</button><button className="ghost" disabled={busy===`extend:${extendTarget.id}`} onClick={()=>setExtendTarget(null)}>取消</button></div></div></div>}
- {endingReservation&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label={endingReservation.__service_alert_phase==='ended'?'服務時間已到':'服務即將結束'}><div className="reservation-alert service-ending-alert"><div className="reservation-alert-icon">🌙</div><p className="eyebrow">{endingReservation.__service_alert_phase==='ended'?'SERVICE ENDED':'SERVICE ENDING'}</p><h2>{endingReservation.__service_alert_phase==='ended'?'服務時間已到':'服務時間剩不到 3 分鐘'}</h2><dl><div><dt>客人</dt><dd>{endingReservation.guest_name||'—'}</dd></div><div><dt>服務</dt><dd>{endingReservation.service_name||'—'}</dd></div><div><dt>預計結束</dt><dd>{formatDate(endingReservation.ends_at)}</dd></div></dl><p className="hint">{endingReservation.__service_alert_phase==='ended'?'目前已到預計結束時間。若客人要續時，可直接追加服務；否則請完成本次指名。':'若客人要續時，現在可直接選擇追加的服務項目；續時後提醒時間會依新的結束時間重新計算。'}</p><div className="reservation-alert-actions"><button onClick={()=>{openExtend(endingReservation);setEndingReservation(null)}}>續時／續費</button><button className="ghost" onClick={()=>setEndingReservation(null)}>知道了</button></div></div></div>}
- {newReservation&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="新的指名預約"><div className="reservation-alert"><div className="reservation-alert-icon">🔔</div><p className="eyebrow">NEW RESERVATION</p><h2>{account.role==='staff'?'你收到新的指名預約':'收到新的指名預約'}</h2><dl><div><dt>客人</dt><dd>{newReservation.guest_name||'未填寫'}</dd></div><div><dt>指名館員</dt><dd>{newReservation.staff_name||'未指定'}</dd></div><div><dt>服務</dt><dd>{newReservation.service_name||'—'}</dd></div><div><dt>時間</dt><dd>{formatDate(newReservation.starts_at||newReservation.start_at)}</dd></div></dl><div className="reservation-alert-actions"><button onClick={()=>{setTab('operations');setNewReservation(null)}}>前往營運管理</button><button className="ghost" onClick={()=>setNewReservation(null)}>關閉</button></div></div></div>}
+ {extendTarget&&!isQueueReservation(extendTarget)&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="續時或續費"><div className="reservation-alert extension-dialog"><div className="reservation-alert-icon">⏳</div><p className="eyebrow">EXTEND SERVICE</p><h2>續時／續費</h2><dl><div><dt>客人</dt><dd>{extendTarget.guest_name||'—'}</dd></div><div><dt>館員</dt><dd>{extendTarget.staff_name||'—'}</dd></div><div><dt>目前結束</dt><dd>{formatDate(extendTarget.ends_at)}</dd></div></dl><label className="extension-select"><span>選擇追加項目</span><select value={extendService} onChange={e=>setExtendService(e.target.value)}>{extensionOptionsFor(extendTarget).map(name=>{const info=EXTENSION_INFO[name];return <option key={name} value={name}>{name}　{info.product?'單獨加購':`+${info.duration} 分鐘`}／{info.price.toLocaleString('zh-TW')} Gil</option>})}</select></label><div className="extension-summary"><span>{EXTENSION_INFO[extendService]?.product?'服務時間不變':'續時後預計結束'}</span><strong>{EXTENSION_INFO[extendService]?.product?'單獨加購拍立得':formatDate(new Date(new Date(extendTarget.ends_at).getTime()+(EXTENSION_INFO[extendService]?.duration||0)*60000))}</strong><small>追加 {Number(EXTENSION_INFO[extendService]?.price||0).toLocaleString('zh-TW')} Gil</small></div><div className="reservation-alert-actions"><button disabled={busy===`extend:${extendTarget.id}`} onClick={()=>void extendReservation()}>{busy===`extend:${extendTarget.id}`?(EXTENSION_INFO[extendService]?.product?'續費中…':'續時中…'):(EXTENSION_INFO[extendService]?.product?'確認續費':'確認續時')}</button><button className="ghost" disabled={busy===`extend:${extendTarget.id}`} onClick={()=>setExtendTarget(null)}>取消</button></div></div></div>}
+ {endingReservation&&!isQueueReservation(endingReservation)&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label={endingReservation.__service_alert_phase==='ended'?'服務時間已到':'服務即將結束'}><div className="reservation-alert service-ending-alert"><div className="reservation-alert-icon">🌙</div><p className="eyebrow">{endingReservation.__service_alert_phase==='ended'?'SERVICE ENDED':'SERVICE ENDING'}</p><h2>{endingReservation.__service_alert_phase==='ended'?'服務時間已到':'服務時間剩不到 3 分鐘'}</h2><dl><div><dt>客人</dt><dd>{endingReservation.guest_name||'—'}</dd></div><div><dt>服務</dt><dd>{endingReservation.service_name||'—'}</dd></div><div><dt>預計結束</dt><dd>{formatDate(endingReservation.ends_at)}</dd></div></dl><p className="hint">{endingReservation.__service_alert_phase==='ended'?'目前已到預計結束時間。若客人要續時，可直接追加服務；否則請完成本次指名。':'若客人要續時，現在可直接選擇追加的服務項目；續時後提醒時間會依新的結束時間重新計算。'}</p><div className="reservation-alert-actions"><button onClick={()=>{openExtend(endingReservation);setEndingReservation(null)}}>續時／續費</button><button className="ghost" onClick={()=>setEndingReservation(null)}>知道了</button></div></div></div>}
+ {newReservation&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="新的指名預約"><div className="reservation-alert"><div className="reservation-alert-icon">🔔</div><p className="eyebrow">NEW RESERVATION</p><h2>{isQueueReservation(newReservation)?(account.role==='staff'?'你收到新的排隊指名':'收到新的排隊指名'):(account.role==='staff'?'你收到新的指名預約':'收到新的指名預約')}</h2><dl><div><dt>客人</dt><dd>{newReservation.guest_name||'未填寫'}</dd></div><div><dt>指名館員</dt><dd>{newReservation.staff_name||'未指定'}</dd></div><div><dt>服務</dt><dd>{newReservation.service_name||'—'}</dd></div><div><dt>{isQueueReservation(newReservation)?'送出時間':'時間'}</dt><dd>{formatDate(isQueueReservation(newReservation)?newReservation.created_at:newReservation.starts_at||newReservation.start_at)}</dd></div></dl><div className="reservation-alert-actions"><button onClick={()=>{setTab('operations');setNewReservation(null)}}>前往營運管理</button><button className="ghost" onClick={()=>setNewReservation(null)}>關閉</button></div></div></div>}
  {newOrder&&<div className="reservation-alert-backdrop" role="dialog" aria-modal="true" aria-label="新的點餐訂單"><div className="reservation-alert"><div className="reservation-alert-icon">🍽️</div><p className="eyebrow">NEW ORDER</p><h2>{newOrder.delivery_preference_staff_id&&newOrder.delivery_preference_staff_id===account.staff_id?'🍱 客人希望由你送餐':'收到新的餐點訂單'}</h2><dl><div><dt>客人</dt><dd>{newOrder.guest_name||'未填寫'}</dd></div><div><dt>餐點</dt><dd className="new-order-items">{Array.isArray(newOrder.items)?newOrder.items.map((x:any,i:number)=>{const color=liquorClass(x.name);return <span key={i} className={color?`liquor-admin-item ${color}`:''} style={color?liquorInlineStyle(color):undefined}>{x.name} × {x.qty??1}</span>}):'請至營運管理查看'}</dd></div><div><dt>希望送餐</dt><dd>{newOrder.delivery_preference_staff_name||'不指定／由館內安排'}</dd></div><div><dt>總金額</dt><dd>{Number(newOrder.total||0).toLocaleString('zh-TW')} Gil</dd></div><div><dt>送出時間</dt><dd>{formatDate(newOrder.created_at)}</dd></div></dl><div className="reservation-alert-actions"><button onClick={()=>{setTab('operations');setNewOrder(null)}}>前往營運管理</button><button className="ghost" onClick={()=>setNewOrder(null)}>關閉</button></div></div></div>}
  </main></div>
 }
@@ -746,6 +823,16 @@ function hasFoodItems(order:Row){
  return items.some((item:any)=>{const name=String(item?.name||'').trim();return Boolean(name)&&!name.includes('拍立得')});
 }
 
+function isQueueReservation(row:Row|null|undefined){return row?.booking_mode==='queue'}
+function compareQueueOrder(a:Row,b:Row){
+ const timeDifference=new Date(a.created_at).getTime()-new Date(b.created_at).getTime();
+ if(timeDifference)return timeDifference;
+ // 保留資料庫時間戳的微秒精度，再以 id 決定同時送出的順位。
+ const fraction=(row:Row)=>(String(row.created_at).match(/\.(\d+)/)?.[1]||'').padEnd(6,'0');
+ const aFraction=fraction(a),bFraction=fraction(b);
+ if(aFraction!==bFraction)return aFraction<bFraction?-1:1;
+ return String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0;
+}
 function isChibiReservation(row:Row){return String(row?.service_name||'').includes('Q版繪圖(公版)')}
 function pickupTypeText(value:any){const type=String(value);if(type==='chibi_public')return 'Q版繪圖(公版)';if(type==='lina_signed_polaroid'||type==='airi_signed_polaroid')return '簽繪拍立得';if(type==='lina_plain_polaroid'||type==='sai_plain_polaroid')return '拍立得(無簽繪)';return '紀念拍立得'}
 function filterRows(rows:Row[],range:DateRange,status:string,search:string){const q=search.trim().toLowerCase();return rows.filter(r=>{const time=r.created_at||r.starts_at;const dateOk=inDateRange(time,range);const statusOk=status==='all'||r.status===status;let searchOk=true;if(q){const items=Array.isArray(r.items)?r.items:[];const hay=[r.guest_name,r.contact,r.staff_name,r.service_name,r.note,r.delivery_preference_staff_name,r.delivery_staff_name,...items.map((x:any)=>x?.name)].filter(Boolean).join(' ').toLowerCase();searchOk=hay.includes(q)}return dateOk&&statusOk&&searchOk})}
@@ -789,7 +876,12 @@ function formatSpecialServiceText(value:any){
   return <span key={i}>{part}</span>;
  })}</>;
 }
-function formatCell(key:string,value:any){
+function formatCell(key:string,value:any,row?:Row){
+ if(isQueueReservation(row)){
+  if(key==='ends_at')return QUEUE_ACTIVE_STATUSES.includes(row!.status)?'由館員完成':'—';
+  if(key==='starts_at')return ['confirmed','completed'].includes(row!.status)?formatDate(value):'依序等候';
+  if(key==='status')return <span className={`status-pill status-${value}`}>{value==='pending'?'等待確認':value==='acknowledged'?'已確認・待服務':statusText[String(value)]||String(value??'—')}</span>;
+ }
  if(key==='items')return formatItems(value);
  if(key==='note'||key==='service_name')return formatSpecialServiceText(value);
  if(key==='delivery_preference_staff_name')return <span className={`delivery-pill ${value?'preferred':'neutral'}`}>{value||'不指定／館內安排'}</span>;
@@ -801,4 +893,4 @@ function formatCell(key:string,value:any){
  if(typeof value==='object')return JSON.stringify(value);
  return String(value??'—');
 }
-function Table({rows,keys,actions}:{rows:Row[],keys:string[],actions?:(r:Row)=>React.ReactNode}){if(!rows.length)return <div className="empty">目前沒有符合條件的資料</div>;return <div className={`table-wrap${actions?' has-actions':''}`}><table><thead><tr>{actions&&<th className="actions-head">操作</th>}{keys.map(k=><th key={k}>{labels[k]||k}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i}>{actions&&<td className="actions">{actions(r)}</td>}{keys.map(k=><td key={k} className={`cell-${k}`}>{formatCell(k,r[k])}</td>)}</tr>)}</tbody></table></div>}
+function Table({rows,keys,actions}:{rows:Row[],keys:string[],actions?:(r:Row)=>React.ReactNode}){if(!rows.length)return <div className="empty">目前沒有符合條件的資料</div>;return <div className={`table-wrap${actions?' has-actions':''}`}><table><thead><tr>{actions&&<th className="actions-head">操作</th>}{keys.map(k=><th key={k}>{labels[k]||k}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i}>{actions&&<td className="actions">{actions(r)}</td>}{keys.map(k=><td key={k} className={`cell-${k}`}>{formatCell(k,r[k],r)}</td>)}</tr>)}</tbody></table></div>}

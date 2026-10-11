@@ -35,9 +35,10 @@ export async function POST(req:NextRequest){
     const info=SERVICE_INFO[serviceName];if(!reservationId||!info)return NextResponse.json({error:'續時／續費資料不完整或項目不正確'},{status:400});
     const{db,account}=auth;
     if(account.role==='frontdesk')return NextResponse.json({error:'櫃台帳號不能替館員執行續時／續費'},{status:403});
-    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,guest_name,staff_id,staff_name,service_name,price,starts_at,ends_at,note,status').eq('id',reservationId).maybeSingle();
+    const{data:reservation,error:reservationError}=await db.from('reservations').select('id,guest_name,staff_id,staff_name,service_name,price,starts_at,ends_at,note,status,booking_mode').eq('id',reservationId).maybeSingle();
     if(reservationError)throw reservationError;if(!reservation)return NextResponse.json({error:'找不到這筆指名服務'},{status:404});
     if(account.role!=='owner'&&account.staff_id!==reservation.staff_id)return NextResponse.json({error:'只能替自己的指名服務續時／續費'},{status:403});
+    if(reservation.booking_mode==='queue')return NextResponse.json({error:'愛梨採排隊制，請完成目前服務後再處理下一位客人'},{status:409});
     if(TERMINAL.includes(String(reservation.status)))return NextResponse.json({error:'已結束或取消的服務不能續時／續費'},{status:400});
     if(!['confirmed','已確認'].includes(String(reservation.status)))return NextResponse.json({error:'請先按「開始」，服務開始後才能續時／續費'},{status:400});
     const start=new Date(reservation.starts_at),oldEnd=new Date(reservation.ends_at),now=new Date();

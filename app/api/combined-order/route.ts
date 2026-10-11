@@ -3,6 +3,7 @@ import { publicSupabase } from '@/lib/supabase-server';
 import { adminSupabase } from '@/lib/supabase-admin';
 import { randomBytes } from 'crypto';
 import {staffServiceState,requestedServiceNames} from '@/lib/staff-services';
+import {isQueueStaff,AIRI_QUEUE_LIMIT} from '@/lib/staff-queue';
 
 const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const POLAROID_PRICE = 80000;
@@ -105,6 +106,32 @@ export async function POST(request: Request) {
     const {data:calendarOff,error:calendarOffError}=await adminDb.from('staff_work_calendar').select('staff_id').eq('staff_id',staffId).eq('work_date',todayKey).eq('status','off').maybeSingle();
     if(calendarOffError)throw calendarOffError;
     if(calendarOff)return NextResponse.json({error:'此館員今日休假，暫停接受指名'},{status:409});
+    if(isQueueStaff(staff)){
+      if(services.length!==1||services[0]!=='簽繪拍立得'||wantsPolaroid||wantsYukinojiPolaroid){
+        return NextResponse.json({error:'愛梨目前僅提供簽繪拍立得排隊'},{status:400});
+      }
+      // 排隊名額與取件碼在同一交易建立，額滿或發號失敗時不留下半筆訂單。
+      for(let attempt=0;attempt<8;attempt++){
+        const {data:queued,error:queueError}=await adminDb.rpc('enqueue_airi_reservation',{
+          p_staff_id:staffId,p_guest_name:guestName,p_guest_server:guestServer,
+          p_note:note,p_pickup_code:makePickupCode(),
+        });
+        if(queueError){
+          if(queueError.code==='23505'&&queueError.message.includes('polaroid_pickups_pickup_code_key'))continue;
+          if(queueError.code==='P0001')return NextResponse.json({error:queueError.message},{status:409});
+          if(queueError.code==='23505')return NextResponse.json({error:'排隊名額剛剛已更新，請重新整理後再試'},{status:409});
+          throw queueError;
+        }
+        if(!queued?.reservation_id||!queued?.pickup_code)throw new Error('排隊資料回傳不完整，請聯絡館員確認');
+        const pickup={code:queued.pickup_code,type:'airi_signed_polaroid',label:'愛梨 簽繪拍立得'};
+        return NextResponse.json({
+          ok:true,booking_mode:'queue',reservation_id:queued.reservation_id,
+          queue_count:queued.queue_count,queue_position:queued.queue_position,queue_limit:AIRI_QUEUE_LIMIT,
+          pickup_code:pickup.code,pickup_codes:[pickup.code],pickup_items:[pickup],
+        });
+      }
+      return NextResponse.json({error:'暫時無法產生取件碼，請稍後再加入排隊'},{status:503});
+    }
     // 只要本營業時段仍有未完成的指名，就暫停該館員的新指名；服務完成後才重新開放。
     const sessionStart = bookingTestMode
       ? new Date(Date.UTC(taipeiNow.year, taipeiNow.month, taipeiNow.day, -8, 0, 0, 0)) // 台北當日 00:00
