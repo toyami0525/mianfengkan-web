@@ -14,13 +14,15 @@
       panels[index].hidden = !selected;
     });
     if (updateAddress) {
-      const hash = tab.id === 'house-cat-tab' ? '#house-cat' : '';
+      const hash = tab.id === 'house-cat-tab' ? '#house-cat' : tab.id === 'performers-tab' ? '#performers' : '';
       window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + hash);
     }
   }
 
   function selectFromAddress() {
-    selectTab(tabs.find(tab => tab.id === 'house-cat-tab' && window.location.hash === '#house-cat') || tabs[0]);
+    const hash = window.location.hash;
+    const id = hash === '#house-cat' ? 'house-cat-tab' : ['#performers','#ogino-chihiro','#kohakugawa-haku'].includes(hash) ? 'performers-tab' : 'staff-directory-tab';
+    selectTab(tabs.find(tab => tab.id === id) || tabs[0]);
   }
 
   tabs.forEach((tab, index) => {
