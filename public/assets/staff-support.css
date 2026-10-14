@@ -1,0 +1,38 @@
+/* Added photographer uses the approved photo frame; other staff cards are unchanged. */
+.mf-staff-directory #airi .photographer-photo{position:absolute;z-index:4;right:20px;bottom:18px;width:30%;max-width:172px;display:block;padding:4px;margin:0;border:1px solid #dfc697;border-radius:12px;overflow:hidden;background:#19110def;box-shadow:0 8px 26px #0008;color:#f3e6cf;cursor:zoom-in;text-align:center;transition:transform .2s ease,box-shadow .2s ease}
+.mf-staff-directory #airi .photographer-photo:hover{transform:translateY(-2px);box-shadow:0 10px 28px #000a}
+.mf-staff-directory #airi .photographer-photo img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:70% 35%;border-radius:8px 8px 2px 2px}
+.mf-staff-directory #airi .photographer-caption{display:grid;gap:2px;padding:6px 3px 4px;line-height:1.5}
+.mf-staff-directory #airi .photographer-caption small{display:block;font-size:11px;font-weight:400;letter-spacing:.13em;color:#d1b78c}
+.mf-staff-directory #airi .photographer-caption strong{display:block;font-size:16px;line-height:1.5;font-weight:500;letter-spacing:.12em;color:#fff0d4}
+.mf-staff-directory #airi .nameplate{right:calc(30% + 33px)}
+.mf-staff-directory #airi .photo-index{display:none}
+.staff-directory-tabs{flex-wrap:wrap}
+.performers-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:28px 0 20px;color:#ead8b8}
+.performers-heading h2{margin:0;font-size:25px;font-weight:500;letter-spacing:.16em}
+.performers-heading p{margin:0;color:#c6b28a;font-size:11px;letter-spacing:.18em}
+.performers-profile{overflow:hidden;border:1px solid rgba(199,172,119,.55);border-radius:22px;background:linear-gradient(145deg,rgba(33,24,17,.96),rgba(18,14,10,.98));box-shadow:0 16px 35px #0004}
+.performers-photo{display:block;position:relative;width:100%;padding:0;border:0;background:#18120e;cursor:zoom-in}
+.performers-photo img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+.performers-photo-hint{position:absolute;bottom:16px;right:18px;padding:6px 12px;background:#15100cbd;border:1px solid #b9a17c66;border-radius:5px;color:#f5ead6;font:12px/1.6 sans-serif}
+.performers-names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0;padding:28px 32px;gap:24px;text-align:center}
+.performers-names>div+div{border-left:1px solid #c7ac7744}
+.performers-names p{margin:0 0 6px;color:#bea779;font-size:12px;letter-spacing:.2em}
+.performers-names h3{margin:0;color:#fff0d4;font-size:clamp(21px,2.4vw,30px);font-weight:500;letter-spacing:.12em}
+.performers-photo:focus-visible{outline:3px solid #e7c994;outline-offset:-5px}
+@media(max-width:760px){
+ .mf-staff-directory #airi .photographer-photo{right:15px;bottom:14px;width:32%;padding:3px;border-radius:9px}
+ .mf-staff-directory #airi .photographer-photo img{border-radius:6px 6px 2px 2px}
+ .mf-staff-directory #airi .photographer-caption{padding:5px 0 3px;gap:1px}
+ .mf-staff-directory #airi .photographer-caption small{font-size:10px;letter-spacing:.05em}
+ .mf-staff-directory #airi .photographer-caption strong{font-size:14px;letter-spacing:.08em}
+ .mf-staff-directory #airi .nameplate{right:calc(32% + 28px)}
+ .performers-heading{align-items:flex-start;flex-direction:column;gap:8px;margin-top:22px}
+ .performers-heading h2{font-size:22px}
+ .performers-profile{border-radius:17px}
+ .performers-names{padding:22px 12px;gap:12px}
+ .performers-names h3{font-size:20px;letter-spacing:.05em}
+ .performers-photo-hint{font-size:10px;bottom:10px;right:10px;padding:4px 7px}
+}
+@media(max-width:360px){.mf-staff-directory #airi .photographer-photo{bottom:10px}.mf-staff-directory #airi .photographer-photo img{aspect-ratio:16/9}.mf-staff-directory #airi .photographer-caption{padding-block:3px}.performers-names h3{font-size:18px}}
+@media(prefers-reduced-motion:reduce){.mf-staff-directory #airi .photographer-photo{transition:none}}
