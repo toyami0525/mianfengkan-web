@@ -1,0 +1,35 @@
+name: Prepare update source
+on:
+  push:
+    branches: [update/airi-chat-food-20261015]
+    paths: [.github/workflows/export-update-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - name: Package tracked source and local test compiler
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          with zipfile.ZipFile('update-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for name in subprocess.check_output(['git','ls-files','-z']).decode().split('\0'):
+                  p=pathlib.Path(name)
+                  if p.is_file() and p.suffix in {'.html','.js','.mjs','.cjs','.ts','.tsx','.css','.json','.sql','.yml','.md'}:
+                      z.write(p,str(p))
+              for p in pathlib.Path('node_modules/typescript').rglob('*'):
+                  if p.is_file(): z.write(p,str(p))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: update-source
+          path: update-source.zip
+          retention-days: 2
