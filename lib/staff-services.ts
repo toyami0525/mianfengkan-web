@@ -1,3 +1,5 @@
+import {AIRI_CHAT,AIRI_SIGNED,AIRI_COMBO,AIRI_SERVICE_NAMES} from './airi-services';
+
 // The staff directory still contains historical service labels. Keep the
 // booking names consistent without rewriting anybody's profile.
 export type StaffServiceProfile = {id?: string; slug?: string; services?: unknown};
@@ -14,17 +16,18 @@ export function staffServiceOptions(staff: StaffServiceProfile): string[] {
   if (staff.slug === 'sai') return ['耳語陪伴', '拍立得(無簽繪)'];
   if (staff.slug === 'yukinoji-hakari') return ['耳語陪伴', 'Q版繪圖(公版)', '紀念拍立得'];
   if (staff.slug === 'lina') return ['簽繪拍立得', '拍立得(無簽繪)'];
-  if (staff.slug === 'airi') return ['簽繪拍立得'];
+  if (staff.slug === 'airi') return [...AIRI_SERVICE_NAMES];
   return [...new Set((Array.isArray(staff.services) ? staff.services : [])
     .map(String).map(normalizeServiceName).filter(name => bookableServices.has(name)))];
 }
 export function staffServiceState(staff: StaffServiceProfile, availability: StaffServiceAvailability[]) {
   const service_options = staffServiceOptions(staff);
   const paused = new Set(availability.filter(row => row.staff_id === staff.id && row.enabled === false).map(row => row.service_name));
-  return {service_options, available_services: service_options.filter(name => !paused.has(name))};
+  return {service_options, available_services: service_options.filter(name => !paused.has(name)
+    && (name !== AIRI_COMBO || (!paused.has(AIRI_CHAT) && !paused.has(AIRI_SIGNED))))};
 }
 export function requestedServiceNames(names: string[], polaroid = false): string[] {
   return [...new Set(names.flatMap(name => name === '眠楓套席'
-    ? ['泡湯洗浴', '按摩服務', '耳語陪伴'] : [normalizeServiceName(name)])
+    ? ['泡湯洗浴', '按摩服務', '耳語陪伴'] : name === AIRI_COMBO ? [AIRI_COMBO,AIRI_CHAT,AIRI_SIGNED] : [normalizeServiceName(name)])
     .concat(polaroid ? ['紀念拍立得'] : []))];
 }

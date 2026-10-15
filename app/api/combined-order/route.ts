@@ -4,11 +4,14 @@ import { adminSupabase } from '@/lib/supabase-admin';
 import { randomBytes } from 'crypto';
 import {staffServiceState,requestedServiceNames} from '@/lib/staff-services';
 import {isQueueStaff,AIRI_QUEUE_LIMIT} from '@/lib/staff-queue';
+import {AIRI_CHAT,AIRI_COMBO,airiServiceSelection} from '@/lib/airi-services';
 
 const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const POLAROID_PRICE = 80000;
 const YUKINOJI_POLAROID_PRICE = 100000;
 const SERVICE_INFO: Record<string, { price: number; duration: number }> = {
+  [AIRI_CHAT]: { price: 150000, duration: 15 },
+  [AIRI_COMBO]: { price: 400000, duration: 15 },
   '泡湯洗浴': { price: 150000, duration: 15 },
   '按摩服務': { price: 100000, duration: 15 },
   '耳語陪伴': { price: 100000, duration: 15 },
@@ -92,6 +95,8 @@ export async function POST(request: Request) {
     const { data: staff, error: staffError } = await publicSupabase().from('staff').select('id,slug,name,services').eq('id',staffId).single();
     if (staffError || !staff) return NextResponse.json({ error: '找不到指定館員' }, { status: 400 });
     const staffName = staff.name;
+    const airiSelection=isQueueStaff(staff)?airiServiceSelection(services):null;
+    if(isQueueStaff(staff)&&(!airiSelection||wantsPolaroid||wantsYukinojiPolaroid))return NextResponse.json({error:'請選擇愛梨的談天說地、簽繪拍立得或優惠組合'},{status:400});
     const servicePrice = services.reduce(
       (n, name) => n + (staff.slug === 'airi' && name === '簽繪拍立得' ? 300000 : SERVICE_INFO[name].price),
       0,
@@ -99,7 +104,7 @@ export async function POST(request: Request) {
     const {data:serviceAvailability,error:serviceError}=await adminDb.from('staff_service_availability').select('staff_id,service_name,enabled').eq('staff_id',staffId);
     if(serviceError)throw serviceError;
     const serviceState=staffServiceState(staff,serviceAvailability||[]);
-    const requested=requestedServiceNames(services,wantsPolaroid||wantsYukinojiPolaroid);
+    const requested=requestedServiceNames(airiSelection?[airiSelection.name]:services,wantsPolaroid||wantsYukinojiPolaroid);
     if(requested.some(name=>!serviceState.service_options.includes(name)))return NextResponse.json({error:'此館員未提供所選的服務項目'},{status:400});
     const paused=requested.filter(name=>!serviceState.available_services.includes(name));
     if(paused.length)return NextResponse.json({error:`${staffName}的「${paused.join('、')}」目前暫停提供，請重新選擇服務。`},{status:409});
@@ -107,14 +112,12 @@ export async function POST(request: Request) {
     if(calendarOffError)throw calendarOffError;
     if(calendarOff)return NextResponse.json({error:'此館員今日休假，暫停接受指名'},{status:409});
     if(isQueueStaff(staff)){
-      if(services.length!==1||services[0]!=='簽繪拍立得'||wantsPolaroid||wantsYukinojiPolaroid){
-        return NextResponse.json({error:'愛梨目前僅提供簽繪拍立得排隊'},{status:400});
-      }
+      if(!airiSelection)return NextResponse.json({error:'請重新選擇愛梨的服務'},{status:400});
       // 排隊名額與取件碼在同一交易建立，額滿或發號失敗時不留下半筆訂單。
       for(let attempt=0;attempt<8;attempt++){
-        const {data:queued,error:queueError}=await adminDb.rpc('enqueue_airi_reservation',{
+        const {data:queued,error:queueError}=await adminDb.rpc('enqueue_airi_service',{
           p_staff_id:staffId,p_guest_name:guestName,p_guest_server:guestServer,
-          p_note:note,p_pickup_code:makePickupCode(),
+          p_note:note,p_service_name:airiSelection.name,p_pickup_code:airiSelection.pickup?makePickupCode():null,
         });
         if(queueError){
           if(queueError.code==='23505'&&queueError.message.includes('polaroid_pickups_pickup_code_key'))continue;
@@ -122,12 +125,13 @@ export async function POST(request: Request) {
           if(queueError.code==='23505')return NextResponse.json({error:'排隊名額剛剛已更新，請重新整理後再試'},{status:409});
           throw queueError;
         }
-        if(!queued?.reservation_id||!queued?.pickup_code)throw new Error('排隊資料回傳不完整，請聯絡館員確認');
-        const pickup={code:queued.pickup_code,type:'airi_signed_polaroid',label:'愛梨 簽繪拍立得'};
+        if(!queued?.reservation_id||(airiSelection.pickup&&!queued.pickup_code))throw new Error('排隊資料回傳不完整，請聯絡館員確認');
+        const pickup=airiSelection.pickup?{code:queued.pickup_code,type:'airi_signed_polaroid',label:'愛梨 簽繪拍立得'}:null;
         return NextResponse.json({
           ok:true,booking_mode:'queue',reservation_id:queued.reservation_id,
           queue_count:queued.queue_count,queue_position:queued.queue_position,queue_limit:AIRI_QUEUE_LIMIT,
-          pickup_code:pickup.code,pickup_codes:[pickup.code],pickup_items:[pickup],
+          service_name:airiSelection.name,price:airiSelection.price,original_price:airiSelection.original_price,
+          pickup_code:pickup?.code||null,pickup_codes:pickup?[pickup.code]:[],pickup_items:pickup?[pickup]:[],
         });
       }
       return NextResponse.json({error:'暫時無法產生取件碼，請稍後再加入排隊'},{status:503});
