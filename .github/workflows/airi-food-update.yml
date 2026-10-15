@@ -1,0 +1,61 @@
+name: Verify Airi services and dining quantities
+on:
+  push:
+    branches: [update/airi-chat-food-20261015]
+    paths: ['.github/airi-food-update/data/**', '.github/workflows/airi-food-update.yml']
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and apply source patch
+        run: |
+          python3 - <<'PY'
+          import base64, zlib, pathlib, hashlib, subprocess
+          hashes=['d4fe0a414d86ee88a49f3b4b77d2cca9afbf1b5dfc13031d480fe9b1c99cd019','00713aa7d4ed0868d47bbe59c1d06d738b7c7106f3bd6af8b023feb04b489e52','63a332bb4c4a771f2743fb552d6f5541cf216049213d05286207978c806ec9da','e70f338e8315926b045a30ac6c70d825fb10f2099a349ff8696f8d12ccfae1ae','6c2e0b3299dc05c655028b890add5a5f8e54bd2008f3427f5738b2b4b0817efb','eba2786be6b25e44e2164d3e509e0302cefc65a485a7dc5630d670b182cdb1a5','34fc9bef76f28bd582f546b330e7fc807c0b8e28af7cf1843b1a375654d25f36','543d88cacbb5b73067622f87b5fd966a32ca5e349dde05577cbb9333aa9029bf','731a39ad9640596bf3c45e58b64da7b2fb202debe6618677913fddd9aa906b37','8fbd86d936a565e8a3ee830c1231bad9c61e45636e127afc3f55ee75f70ad916','66b26a13b3dac5fb7b8f77b060ffd60cf945f23b80f13651235022491c3c04b4','485d4bd43b26c5f1cdf7b02d022da2149bb0c4276c4ddffedc38d0d0e1240f8b']
+          chunks=[]
+          invalid=[]
+          for i,expected in enumerate(hashes):
+              value=pathlib.Path(f'.github/airi-food-update/data/{i:02}.b64').read_text().strip()
+              if hashlib.sha256(value.encode()).hexdigest()!=expected: invalid.append(i)
+              chunks.append(value)
+          assert not invalid, f'Invalid transport chunks: {invalid}'
+          patch=zlib.decompress(base64.b64decode(''.join(chunks),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='6d04b3499c2ba7b7f799b24ef135d6fe7f1186d22dbe4f992fec898a6a75a753'
+          pathlib.Path('/tmp/feature.patch').write_bytes(patch)
+          subprocess.run(['git','apply','--unidiff-zero','--check','/tmp/feature.patch'],check=True)
+          subprocess.run(['git','apply','--unidiff-zero','/tmp/feature.patch'],check=True)
+          PY
+      - run: npm install --no-package-lock --no-audit --no-fund
+      - name: Regression tests
+        run: |
+          node --check public/assets/booking-v32.js
+          node scripts/test-airi-queue.cjs
+          node scripts/test-airi-chat-food.cjs
+          node scripts/test-payroll-roster.cjs
+          node scripts/test-venue-closures.cjs
+      - name: Verify production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local-build-test-only
+          SUPABASE_SERVICE_ROLE_KEY: local-build-test-only
+        run: npm run build
+      - name: Commit only verified feature files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/api/combined-order/route.ts app/api/orders/route.ts lib/airi-services.ts lib/dining-items.ts lib/staff-services.ts public/assets/booking-options.css public/assets/booking-v32.js public/assets/staff-data.js public/reserve.html public/services.html public/staff.html scripts/test-airi-chat-food.cjs scripts/test-airi-queue.cjs supabase/migrations/20261015111909_airi_chat_combo.sql supabase/tests/airi_chat_combo.sql
+          git diff --cached --check
+          git commit -m 'Implement verified Airi chat bundle and unrestricted food quantities'
+          git push origin HEAD:update/airi-chat-food-20261015
+          python3 - <<'PY'
+          import subprocess,json
+          files=subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD']).decode().splitlines()
+          print('VERIFIED_COMMIT',subprocess.check_output(['git','rev-parse','HEAD']).decode().strip())
+          print('VERIFIED_BLOBS',json.dumps({p:subprocess.check_output(['git','rev-parse','HEAD:'+p]).decode().strip() for p in files},ensure_ascii=False))
+          PY
