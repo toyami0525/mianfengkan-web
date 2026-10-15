@@ -1,8 +1,9 @@
 const FALLBACK_DELIVERY_STAFF=[{id:'riku',slug:'riku',name:'羽鶴璃久',role:'館主'},{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員'},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員'},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員'},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員'},{id:'lina',slug:'lina',name:'Lina',role:'館員'},{id:'sai',slug:'sai',name:'賽伊',role:'館員'}];
-const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',services:['耳語陪伴']},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員',services:['耳語陪伴']},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'lina',slug:'lina',name:'Lina',role:'館員',services:['簽繪拍立得','拍立得(無簽繪)']},{id:'sai',slug:'sai',name:'賽伊',role:'館員',services:['耳語陪伴','拍立得(無簽繪)']},{id:'airi',slug:'airi',name:'愛梨',role:'館員',services:['簽繪拍立得']}];
+const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufiru',slug:'musufiru',name:'慕斯菲露',role:'館員'},{id:'yukinoji-hakari',slug:'yukinoji-hakari',name:'雪之寺羽狩',role:'館員',services:['耳語陪伴']},{id:'hong-hong-hong-taidafeng',slug:'hong-hong-hong-taidafeng',name:'轟轟轟里可',role:'館員'},{id:'grin',slug:'grin',name:'格林',role:'館員'},{id:'shenaixue',slug:'shenaixue',name:'神噯雪',role:'館員',services:['耳語陪伴']},{id:'zixuan',slug:'zixuan',name:'子瑄',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'feitong',slug:'feitong',name:'緋瞳',role:'館員',services:['泡湯洗浴','按摩服務','耳語陪伴']},{id:'lina',slug:'lina',name:'Lina',role:'館員',services:['簽繪拍立得','拍立得(無簽繪)']},{id:'sai',slug:'sai',name:'賽伊',role:'館員',services:['耳語陪伴','拍立得(無簽繪)']},{id:'airi',slug:'airi',name:'愛梨',role:'館員',services:['談天說地','簽繪拍立得','談天說地＋簽繪拍立得']}];
 // 名錄只用來識別可指名角色；是否接單以 API 回傳為準，不以備用名單補回已關閉的館員。
 const BOOKABLE_STAFF_SLUGS=new Set(FALLBACK_STAFF.map(x=>x.slug));
-const SERVICE_INFO={'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'Q版繪圖(公版)':{price:500000,duration:15},'簽繪拍立得':{price:150000,duration:15},'拍立得(無簽繪)':{price:80000,duration:15},'眠楓套席':{price:300000,duration:45}};
+const AIRI_COMBO='談天說地＋簽繪拍立得';
+const SERVICE_INFO={'談天說地':{price:150000,duration:15},[AIRI_COMBO]:{price:400000,duration:15},'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'Q版繪圖(公版)':{price:500000,duration:15},'簽繪拍立得':{price:150000,duration:15},'拍立得(無簽繪)':{price:80000,duration:15},'眠楓套席':{price:300000,duration:45}};
 const POLAROID_PRICE=80000;const YUKINOJI_POLAROID_PRICE=100000;
 const foods=[['主食','蛋包飯',7000],['主食','扇貝咖哩',9000],['主食','加雷馬披薩',9000],['主食','醬炒飯',7000],['主食','懸掛番茄沙拉',9000],['主食','羊駝奶油麵',7000],['主食','犎牛牛排',15000],['甜點','圓扇刺刺梨蛋糕',6000],['甜點','巧克力奶油蛋糕',6000],['甜點','白桃塔',8000],['甜點','蜂蜜牛角麵包',8000],['甜點','烏雞布丁',8000],['飲品','奶油熱巧克力',5000],['飲品','蜜瓜果汁',7000],['飲品','白桃汁',7000],['飲品','抹茶',7000],['飲品','路易波士紅茶',7000]].map((x,i)=>({id:i+1,category:x[0],name:x[1],price:x[2]}));
 const LIQUOR_LIMIT=2;const liquors=[['red','純米酒・宵紅葉',15000],['blue','純米吟釀・月白',15000],['green','本釀造・青嵐',15000],['purple','生酒・夢紫',15000],['yellow','梅酒・金梅',15000]].map((x,i)=>({id:i+1,color:x[0],name:x[1],price:x[2]}));
@@ -14,6 +15,7 @@ const serviceBoxes=()=>[...document.querySelectorAll('input[name="service"]')];
 let polaroidPausedSlugs=['musufiru','yukinoji-hakari'];
 let lastRandomMeal='';
 function randomMealPackage(){
+ if(submitting)return;
  const categories=['主食','甜點','飲品'];
  let picks=[];
  for(let attempt=0;attempt<12;attempt++){
@@ -21,12 +23,13 @@ function randomMealPackage(){
   const signature=picks.map(x=>x.id).join('-');
   if(signature!==lastRandomMeal||attempt===11){lastRandomMeal=signature;break}
  }
- document.querySelectorAll('.food-choice').forEach(x=>x.checked=false);
- picks.forEach(food=>{const input=document.querySelector(`.food-choice[data-id="${food.id}"]`);if(input)input.checked=true});
+ document.querySelectorAll('.food-qty').forEach(x=>{x.value='0';x.setCustomValidity('')});
+ picks.forEach(food=>{const input=$('food-quantity-'+food.id);if(input)input.value='1'});
+ confirmedPolaroid=false;
  updateAll();
  toast(`🎲 聽天由命：${picks.map(x=>x.name).join('＋')}`);
 }
-$('foodChoices').innerHTML=['主食','甜點','飲品'].map(c=>`<h3 class="food-category-title">${c}</h3>`+foods.filter(f=>f.category===c).map(f=>`<label class="food-row package-choice"><span><small>${f.category}</small><b>${f.name}</b></span><span>${f.price.toLocaleString('zh-TW')} Gil</span><input class="food-choice" type="radio" name="food-${c}" value="${f.id}" data-id="${f.id}" aria-label="${f.name}"></label>`).join('')).join('');
+$('foodChoices').innerHTML=['主食','甜點','飲品'].map(c=>`<h3 class="food-category-title">${c==='主食'?'主餐':c}</h3>`+foods.filter(f=>f.category===c).map(f=>`<div class="food-row quantity-food-row" id="food-row-${f.id}"><div class="food-copy"><label for="food-quantity-${f.id}">${f.name}</label><span class="food-unit-price">${f.price.toLocaleString('zh-TW')} Gil／${c==='飲品'?'杯':'份'}</span></div><div class="food-quantity" role="group" aria-label="${f.name}數量"><button type="button" data-food-step="-1" data-id="${f.id}" aria-label="減少${f.name}" disabled>−</button><input class="food-qty" id="food-quantity-${f.id}" type="number" min="0" step="1" inputmode="numeric" value="0" data-id="${f.id}" aria-label="${f.name}數量"><button type="button" data-food-step="1" data-id="${f.id}" aria-label="增加${f.name}">＋</button></div><span class="food-line-total" id="food-line-${f.id}">小計 0 Gil</span></div>`).join('')).join('');
 $('liquorChoices').innerHTML=liquors.map(l=>`<label class="liquor-choice liquor-${l.color}"><span class="liquor-color-dot" aria-hidden="true"></span><span class="liquor-copy"><small>${l.color==='red'?'赤瓶':l.color==='blue'?'藍瓶':l.color==='green'?'綠瓶':l.color==='purple'?'紫瓶':'黃瓶'}</small><b>${l.name}</b><em>${l.price.toLocaleString('zh-TW')} Gil／瓶</em></span><select class="liquor-qty" data-id="${l.id}" aria-label="${l.name} 數量"><option value="0">0 瓶</option><option value="1">1 瓶</option><option value="2">2 瓶</option></select></label>`).join('');
 const fmt=d=>new Date(d).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}),fmtTime=d=>new Date(d).toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}),pad=n=>String(n).padStart(2,'0');
 const taipeiClock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',weekday:'short',hourCycle:'h23'});
@@ -35,7 +38,26 @@ const localDate=d=>{const x=new Date(d);return `${x.getFullYear()}-${pad(x.getMo
 function chosenServices(){return serviceBoxes().filter(x=>x.checked).map(x=>x.value)}
 function servicePriceForSelected(name){return selectedStaffSlug()==='airi'&&name==='簽繪拍立得'?300000:SERVICE_INFO[name].price}
 function serviceTotals(){if(orderMode==='dining')return {price:0,duration:0,names:[]};if(packageBox.checked)return {price:300000,duration:isQueueStaff()?null:45,names:['眠楓套席']};const names=chosenServices();return {price:names.reduce((n,x)=>n+servicePriceForSelected(x),0),duration:isQueueStaff()?null:names.reduce((n,x)=>n+SERVICE_INFO[x].duration,0),names}}
-function selectedItems(){return [...document.querySelectorAll('.food-choice:checked')].map(x=>({food:foods.find(f=>f.id===Number(x.dataset.id)),qty:1}))}
+function foodQuantity(input){
+ if(input.validity.badInput)return null;
+ if(input.value==='')return 0;
+ const qty=Number(input.value),food=foods.find(f=>f.id===Number(input.dataset.id));
+ return /^\d+$/.test(input.value)&&Number.isSafeInteger(qty)&&qty>=0&&food&&Number.isSafeInteger(qty*food.price)?qty:null;
+}
+function foodQuantitiesValid(){return [...document.querySelectorAll('.food-qty')].every(input=>foodQuantity(input)!==null)&&Number.isSafeInteger(foodTotal()+liquorTotal())}
+function selectedItems(){return [...document.querySelectorAll('.food-qty')].map(input=>({food:foods.find(f=>f.id===Number(input.dataset.id)),qty:foodQuantity(input)})).filter(item=>item.food&&item.qty!==null&&item.qty>0)}
+function updateFoodQuantities(){
+ document.querySelectorAll('.food-qty').forEach(input=>{
+  const food=foods.find(f=>f.id===Number(input.dataset.id)),qty=foodQuantity(input);
+  input.setCustomValidity(qty===null?'數量請輸入 0 或正整數；過大的數量請分筆送出':'');
+  input.disabled=submitting;
+  $('food-row-'+food.id).classList.toggle('chosen',qty>0);
+  $('food-line-'+food.id).textContent=qty===null?'請確認數量':'小計 '+(qty*food.price).toLocaleString('zh-TW')+' Gil';
+  document.querySelector(`[data-food-step="-1"][data-id="${food.id}"]`).disabled=submitting||qty===null||qty===0;
+  document.querySelector(`[data-food-step="1"][data-id="${food.id}"]`).disabled=submitting;
+ });
+ $('randomMealBtn').disabled=submitting;
+}
 function selectedLiquors(){return [...document.querySelectorAll('.liquor-qty')].map(x=>({liquor:liquors.find(l=>l.id===Number(x.dataset.id)),qty:Number(x.value||0)})).filter(x=>x.liquor&&x.qty>0)}
 function liquorCount(){return selectedLiquors().reduce((n,x)=>n+x.qty,0)}
 function liquorTotal(){return selectedLiquors().reduce((n,x)=>n+x.liquor.price*x.qty,0)}
@@ -59,11 +81,14 @@ function selectedServiceAvailable(name){
 function syncPackage(){
  if(orderMode==='dining')return;
  const current=staff.find(x=>x.id===selected),options=current?.service_options||[],available=current?.available_services||[],queueMode=isQueueStaff(current);
+ const choicesLabel=$('serviceChoicesLabel');
+ if(choicesLabel)choicesLabel.textContent=current?.slug==='airi'?'服務項目（擇一，組合已含兩項服務）':'服務項目（可複選）';
  const statusHelp=$('bookingStatusHelp');
  if(statusHelp)statusHelp.textContent=queueMode?'依加入順序安排服務，最多 5 人等候，正在服務的人不計入；輪到時由館員安排。':'不需選擇日期或時間；系統會以送出當下時間安排。館員服務中時，請待服務完成後再重新指名。';
  // Package bookings are retired; individual choices are controlled by the API.
  packageBox.checked=false;packageBox.disabled=true;
  serviceBoxes().forEach(input=>{
+  input.type=current?.slug==='airi'?'radio':'checkbox';
   const row=input.closest('.service-check'),offered=options.includes(input.value),paused=offered&&!available.includes(input.value);
   const soldOut=current?.slug==='lina'&&input.value==='簽繪拍立得'&&linaSignedRemaining<=0;
   input.disabled=!offered||paused||soldOut;
@@ -74,7 +99,8 @@ function syncPackage(){
   const hint=row.querySelector('span small:not(.service-pause-note)');
   if(hint){
    if(hint.dataset.timedHint===undefined)hint.dataset.timedHint=hint.textContent;
-   hint.textContent=queueMode?`${servicePriceForSelected(input.value).toLocaleString('zh-TW')} Gil｜排隊制`:hint.dataset.timedHint;
+   if(queueMode&&input.value===AIRI_COMBO)hint.innerHTML='<del>原價 450,000 Gil</del> <strong>優惠價 400,000 Gil</strong>｜排隊制';
+   else hint.textContent=queueMode?`${servicePriceForSelected(input.value).toLocaleString('zh-TW')} Gil｜排隊制`:hint.dataset.timedHint;
   }
   let status=row.querySelector('.service-pause-note');
   if(!status){status=document.createElement('small');status.className='service-pause-note';status.style.color='#f1b6a7';row.querySelector('span')?.append(status)}
@@ -136,12 +162,11 @@ function staffStatus(staffId){
 }
 function escapeStaffText(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function renderStaff(){if(!staff.length){staffBox.innerHTML='<p class="empty">目前沒有可指名的館員，請稍後再查看。</p>';return}staffBox.innerHTML=staff.map(s=>{const st=staffStatus(s.id),services=Array.isArray(s.services)?s.services.filter(name=>name!=='眠楓套席').join('・'):'';return `<button type="button" class="staff-choice ${selected===s.id?'selected':''}" data-id="${escapeStaffText(s.id)}" aria-pressed="${selected===s.id}"><span class="mf-staff-copy"><b>${escapeStaffText(s.name)}</b>${services?`<span class="mf-staff-services">${escapeStaffText(services)}</span>`:''}</span><span class="mf-staff-status status-${st.kind}">${escapeStaffText(st.text)}</span></button>`}).join('');staffBox.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(submitting)return;selected=b.dataset.id;renderStaff();updateAll()})}
-function mealPackageOk(){const items=selectedItems();return items.length===3&&['主食','甜點','飲品'].every(c=>items.some(x=>x.food.category===c))}
-function diningOrderOk(){const mealItems=selectedItems(),hasMeal=mealItems.length>0,mealOk=!hasMeal||mealPackageOk(),bottles=liquorCount(),hasAnything=hasMeal||bottles>0;return mealOk&&bottles<=LIQUOR_LIMIT&&hasAnything}
+function diningOrderOk(){const items=selectedItems(),bottles=liquorCount();return foodQuantitiesValid()&&Number.isSafeInteger(orderTotal())&&bottles<=LIQUOR_LIMIT&&(items.length>0||bottles>0)}
 function check(){
  if(submitting){bookingSubmit.disabled=true;diningSubmit.disabled=true;return false}
  bookingSubmit.textContent=isQueueStaff()?'加入排隊':'送出指名';
- if(orderMode==='dining'){const mealItems=selectedItems(),bottles=liquorCount(),mealOk=mealItems.length===0||mealPackageOk(),ok=diningOrderOk();if(!mealOk)availabilityMessage.textContent='套餐若有選擇，請完成主食、甜點、飲品各一項。';else if(!mealItems.length&&!bottles)availabilityMessage.textContent='請選擇一份套餐，或至少單點 1 瓶酒品。';else if(!mealItems.length&&bottles)availabilityMessage.textContent=`已選 ${bottles} 瓶酒品，可單獨送出點餐。`;else availabilityMessage.textContent=bottles?`套餐已完成，另加購 ${bottles} 瓶酒品，可送出點餐。`:'套餐已完成，可送出點餐。';availabilityMessage.className='availability-message '+(ok?'available':'unavailable');diningSubmit.disabled=!ok;updateLiquorLimitNote();return ok}
+ if(orderMode==='dining'){const mealItems=selectedItems(),bottles=liquorCount(),ok=diningOrderOk();availabilityMessage.textContent=!foodQuantitiesValid()?'請確認餐點數量，須為 0 或正整數。':!mealItems.length&&!bottles?'請至少選擇一份餐點或一瓶酒品。':ok?'餐點數量已確認，可送出訂單。':'請確認數量與酒品上限。';availabilityMessage.className='availability-message '+(ok?'available':'unavailable');diningSubmit.disabled=!ok;updateLiquorLimitNote();return ok}
  if(!bookingDataReady){availabilityMessage.textContent='暫時無法確認最新指名狀態，請稍後再試。';availabilityMessage.className='availability-message unavailable';bookingSubmit.disabled=true;return false}
  if(!selected||!staff.some(x=>x.id===selected)){availabilityMessage.textContent='目前沒有可指名的館員，請稍後再查看。';availabilityMessage.className='availability-message unavailable';bookingSubmit.disabled=true;return false}
  const st=staffStatus(selected);if(st.kind==='off'||st.kind==='busy'){availabilityMessage.textContent=st.text;availabilityMessage.className='availability-message unavailable';bookingSubmit.disabled=true;return false}
@@ -152,7 +177,7 @@ function check(){
  const now=new Date();
  const s=serviceTotals(),start=new Date(now),end=new Date(start.getTime()+s.duration*60000),close=closingTime(now);if(!bookingTestMode&&(start>=close||end>close)){availabilityMessage.textContent=`此服務約需 ${s.duration} 分鐘，若現在開始預計 ${fmtTime(end)} 結束，將超過 24:00，今晚無法指名。`;availabilityMessage.className='availability-message unavailable';bookingSubmit.disabled=true;return false}
  const msg=bookingTestMode?`⚠ 指名測試模式啟用中｜此館員目前可立即指名，預計約 ${fmtTime(end)} 結束。`:`此館員目前可立即指名｜預計約 ${fmtTime(end)} 結束。`;availabilityMessage.textContent=msg;availabilityMessage.className='availability-message available';bookingSubmit.disabled=false;return true}
-function updateSummary(){syncPackage();updatePolaroid();const s=serviceTotals(),items=selectedItems(),liquorItems=selectedLiquors(),staffName=staff.find(x=>x.id===selected)?.name||'';const queueSummary=isQueueStaff()?`<div class="summary-group"><span>服務方式</span><b>排隊制</b><small>${queueCountText()}｜正在服務的人不計入等候名額。</small></div>`:'';let services=packageBox.checked?'眠楓套席（包含泡湯洗浴、按摩服務、耳語陪伴）':s.names.join('、');if(orderMode==='booking'){const photo=(polaroid.checked?POLAROID_PRICE:0)+(yukinojiPolaroid.checked?YUKINOJI_POLAROID_PRICE:0);bookingServiceSummary.innerHTML=`<div class="summary-title"><b>${staffName||'尚未選擇館員'}</b></div>${queueSummary}<div class="summary-group"><span>服務項目</span><b>${s.price.toLocaleString('zh-TW')} Gil</b><small>${services||'尚未選擇'}</small></div>${polaroid.checked?`<div class="summary-group photo-line selected"><span>慕斯菲露紀念拍立得</span><b>${POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}${yukinojiPolaroid.checked?`<div class="summary-group photo-line selected"><span>雪之寺羽狩紀念拍立得</span><b>${YUKINOJI_POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}<div class="summary-total"><span>服務總金額</span><strong>${(s.price+photo).toLocaleString('zh-TW')} Gil</strong></div>`;}else{const mealPrice=foodTotal(),liquorPrice=liquorTotal(),foodLines=items.length?items.map(x=>`${x.food.name} × ${x.qty}`).join('、'):'未選套餐',liquorLines=liquorItems.length?liquorItems.map(x=>`${x.liquor.name} × ${x.qty}`).join('、'):'未選酒品';bookingSummary.innerHTML=`<div class="summary-title"><b>點餐內容</b></div>${items.length?`<div class="summary-group"><span>套餐內容</span><b>${mealPrice.toLocaleString('zh-TW')} Gil</b><small>${foodLines}</small></div>`:''}${liquorItems.length?`<div class="summary-group liquor-summary-line"><span>酒品（${liquorCount()}／${LIQUOR_LIMIT} 瓶）</span><b>${liquorPrice.toLocaleString('zh-TW')} Gil</b><small>${liquorLines}</small></div>`:''}<div class="summary-group delivery-line"><span>希望送餐館員</span><b>${deliveryPreferenceName()||'不指定／由館內安排'}</b><small>此為送餐希望，實際依現場狀況安排。</small></div>${diningPolaroid.checked?`<div class="summary-group photo-line selected"><span>慕斯菲露紀念拍立得</span><b>${POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}${diningYukinojiPolaroid.checked?`<div class="summary-group photo-line selected"><span>雪之寺羽狩紀念拍立得</span><b>${YUKINOJI_POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}<div class="summary-total"><span>點餐總金額</span><strong>${orderTotal().toLocaleString('zh-TW')} Gil</strong></div>`;}updateLiquorLimitNote();updateDiningPolaroidStatus();check()}
+function updateSummary(){updateFoodQuantities();syncPackage();updatePolaroid();const s=serviceTotals(),items=selectedItems(),liquorItems=selectedLiquors(),staffName=staff.find(x=>x.id===selected)?.name||'';const queueSummary=isQueueStaff()?`<div class="summary-group"><span>服務方式</span><b>排隊制</b><small>${queueCountText()}｜正在服務的人不計入等候名額。</small></div>`:'';let services=packageBox.checked?'眠楓套席（包含泡湯洗浴、按摩服務、耳語陪伴）':s.names.join('、');if(orderMode==='booking'){const photo=(polaroid.checked?POLAROID_PRICE:0)+(yukinojiPolaroid.checked?YUKINOJI_POLAROID_PRICE:0);bookingServiceSummary.innerHTML=`<div class="summary-title"><b>${staffName||'尚未選擇館員'}</b></div>${queueSummary}<div class="summary-group"><span>服務項目</span><b>${s.price.toLocaleString('zh-TW')} Gil</b><small>${services||'尚未選擇'}${s.names.includes(AIRI_COMBO)?'<br><del>原價 450,000 Gil</del>　優惠省 50,000 Gil':''}</small></div>${polaroid.checked?`<div class="summary-group photo-line selected"><span>慕斯菲露紀念拍立得</span><b>${POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}${yukinojiPolaroid.checked?`<div class="summary-group photo-line selected"><span>雪之寺羽狩紀念拍立得</span><b>${YUKINOJI_POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}<div class="summary-total"><span>服務總金額</span><strong>${(s.price+photo).toLocaleString('zh-TW')} Gil</strong></div>`;}else{const mealPrice=foodTotal(),liquorPrice=liquorTotal(),foodLines=items.length?items.map(x=>`${x.food.name} × ${x.qty}`).join('、'):'未選餐點',liquorLines=liquorItems.length?liquorItems.map(x=>`${x.liquor.name} × ${x.qty}`).join('、'):'未選酒品';bookingSummary.innerHTML=`<div class="summary-title"><b>點餐內容</b></div>${items.length?`<div class="summary-group"><span>餐點內容</span><b>${mealPrice.toLocaleString('zh-TW')} Gil</b><small>${foodLines}</small></div>`:''}${liquorItems.length?`<div class="summary-group liquor-summary-line"><span>酒品（${liquorCount()}／${LIQUOR_LIMIT} 瓶）</span><b>${liquorPrice.toLocaleString('zh-TW')} Gil</b><small>${liquorLines}</small></div>`:''}<div class="summary-group delivery-line"><span>希望送餐館員</span><b>${deliveryPreferenceName()||'不指定／由館內安排'}</b><small>此為送餐希望，實際依現場狀況安排。</small></div>${diningPolaroid.checked?`<div class="summary-group photo-line selected"><span>慕斯菲露紀念拍立得</span><b>${POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}${diningYukinojiPolaroid.checked?`<div class="summary-group photo-line selected"><span>雪之寺羽狩紀念拍立得</span><b>${YUKINOJI_POLAROID_PRICE.toLocaleString('zh-TW')} Gil</b></div>`:''}<div class="summary-total"><span>點餐總金額</span><strong>${orderTotal().toLocaleString('zh-TW')} Gil</strong></div>`;}updateLiquorLimitNote();updateDiningPolaroidStatus();check()}
 function updateDiningPolaroidStatus(){if(orderMode==='dining'){const selectedPhotos=[diningPolaroid.checked?'慕斯菲露拍立得':'',diningYukinojiPolaroid.checked?'雪之寺羽狩拍立得':''].filter(Boolean);diningPolaroidStatus.innerHTML=selectedPhotos.length?`<span>只點餐＋拍立得</span><b>已選：${selectedPhotos.join('、')}</b>`:'<span>只點餐模式</span><b>餐點達指定門檻後，也可以直接加購拍立得</b>';diningPolaroidStatus.className=selectedPhotos.length?'dining-polaroid-status selected':'dining-polaroid-status available';return}const slug=selectedStaffSlug(),total=eligibleSubtotal();if(['musufiru','yukinoji-hakari'].includes(slug)&&!selectedServiceAvailable('紀念拍立得')){diningPolaroidStatus.innerHTML='<span>紀念拍立得</span><b>目前暫停提供</b>';diningPolaroidStatus.className='dining-polaroid-status locked';return}if(slug==='musufiru'){const missing=Math.max(0,150000-total);if(polaroid.checked){diningPolaroidStatus.innerHTML='<span>慕斯菲露紀念拍立得</span><b>已加購｜80,000 Gil 已計入總金額</b>';diningPolaroidStatus.className='dining-polaroid-status selected'}else if(missing>0){diningPolaroidStatus.innerHTML=`<span>慕斯菲露紀念拍立得</span><b>尚差 ${missing.toLocaleString('zh-TW')} Gil 解鎖</b><small>拍立得門檻僅以本次服務費計算。</small>`;diningPolaroidStatus.className='dining-polaroid-status locked'}else{diningPolaroidStatus.innerHTML='<span>慕斯菲露紀念拍立得</span><b>已達門檻，可勾選加購</b>';diningPolaroidStatus.className='dining-polaroid-status available'}return}if(slug==='yukinoji-hakari'){const missing=Math.max(0,200000-total);if(yukinojiPolaroid.checked){diningPolaroidStatus.innerHTML='<span>雪之寺羽狩紀念拍立得</span><b>已加購｜100,000 Gil 已計入總金額</b>';diningPolaroidStatus.className='dining-polaroid-status selected'}else if(missing>0){diningPolaroidStatus.innerHTML=`<span>雪之寺羽狩紀念拍立得</span><b>尚差 ${missing.toLocaleString('zh-TW')} Gil 解鎖</b><small>拍立得門檻僅以本次服務費計算。</small>`;diningPolaroidStatus.className='dining-polaroid-status locked'}else{diningPolaroidStatus.innerHTML='<span>雪之寺羽狩紀念拍立得</span><b>已達門檻，可勾選加購</b>';diningPolaroidStatus.className='dining-polaroid-status available'}return}diningPolaroidStatus.innerHTML='<span>館員專屬服務</span><b>目前指名館員沒有拍立得加購</b>';diningPolaroidStatus.className='dining-polaroid-status locked'}
 function setMode(mode){if(submitting||mode===orderMode)return;if(mode==='dining'&&(chosenServices().length||polaroid.checked||yukinojiPolaroid.checked)){if(!confirm('切換成「只點餐」後，會清除已選擇的館員服務；已選餐點會保留，拍立得可在點餐頁重新選擇。是否繼續？'))return;serviceBoxes().forEach(x=>{x.checked=false;x.disabled=false;x.closest('.service-check').classList.remove('locked')});polaroid.checked=false;yukinojiPolaroid.checked=false}orderMode=mode;document.body.classList.toggle('dining-only-mode',mode==='dining');document.querySelectorAll('.booking-mode-btn').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));document.querySelector('.booking-note').hidden=mode==='dining';document.querySelector('.booking-tabs').hidden=true;document.querySelector('.dining-only-note').hidden=mode!=='dining';diningOnlyPolaroids.hidden=mode!=='dining';bookingSubmit.hidden=mode!=='booking';diningSubmit.hidden=mode!=='dining';if(mode==='dining')switchTab('dining');else switchTab('booking');updateAll()}
 function updateAll(){updateSummary()}
@@ -195,7 +220,17 @@ async function load(){
  if(!selected||!staff.some(x=>x.id===selected))selected=staff[0]?.id||'';
  renderStaff();updateAll();
 }
-serviceBoxes().forEach(x=>x.addEventListener('change',updateAll));$('foodChoices').addEventListener('input',updateAll);$('liquorChoices').addEventListener('change',e=>{const target=e.target;if(target?.classList?.contains('liquor-qty'))clampLiquorSelection(target)});polaroid.addEventListener('change',updateAll);yukinojiPolaroid.addEventListener('change',updateAll);diningPolaroid.addEventListener('change',updateAll);diningYukinojiPolaroid.addEventListener('change',updateAll);deliveryPreference?.addEventListener('change',updateAll);$('randomMealBtn')?.addEventListener('click',randomMealPackage);
+serviceBoxes().forEach(x=>x.addEventListener('change',updateAll));$('foodChoices').addEventListener('input',event=>{if(!event.target.matches('.food-qty'))return;confirmedPolaroid=false;updateAll()});
+$('foodChoices').addEventListener('change',event=>{if(!event.target.matches('.food-qty'))return;if(event.target.value===''&&!event.target.validity.badInput)event.target.value='0';updateAll()});
+$('foodChoices').addEventListener('click',event=>{
+ const button=event.target.closest('[data-food-step]');if(!button||submitting)return;
+ const input=$('food-quantity-'+button.dataset.id),qty=foodQuantity(input);
+ if(qty===null)return toast('請先確認此品項的數量');
+ const next=qty+Number(button.dataset.foodStep),food=foods.find(f=>f.id===Number(button.dataset.id));
+ if(next<0)return;
+ if(!Number.isSafeInteger(next)||!Number.isSafeInteger(next*food.price))return toast('數量過大，請分筆送出');
+ input.value=String(next);confirmedPolaroid=false;updateAll();
+});$('liquorChoices').addEventListener('change',e=>{const target=e.target;if(target?.classList?.contains('liquor-qty'))clampLiquorSelection(target)});polaroid.addEventListener('change',updateAll);yukinojiPolaroid.addEventListener('change',updateAll);diningPolaroid.addEventListener('change',updateAll);diningYukinojiPolaroid.addEventListener('change',updateAll);deliveryPreference?.addEventListener('change',updateAll);$('randomMealBtn')?.addEventListener('click',randomMealPackage);
 document.querySelectorAll('.booking-mode-btn').forEach(x=>x.addEventListener('click',()=>setMode(x.dataset.mode)));
 function showPolaroidModal(){confirmedPolaroid=false;$('polaroidRead').checked=false;$('confirmSubmit').disabled=true;$('polaroidModal').hidden=false}
 function showAlcoholModal(){confirmedAlcohol=false;$('alcoholModal').hidden=false}
@@ -222,7 +257,7 @@ $('bookingForm').onsubmit=async e=>{
  if(!guest)return toast('請填寫客人名稱');
  if(!server)return toast('請填寫伺服器');
  if(orderMode==='dining'){
-  if(!diningOrderOk())return toast(selectedItems().length&&!mealPackageOk()?'套餐若有選擇，請完成主食、甜點、飲品各一項':'請選擇一份套餐或至少 1 瓶酒品');
+  if(!diningOrderOk())return toast(!foodQuantitiesValid()?'請確認餐點數量，須為 0 或正整數':'請至少選擇一份餐點或一瓶酒品，並確認酒品上限');
   if(liquorCount()>0&&!confirmedAlcohol)return showAlcoholModal();
   if(hasDiningPolaroid&&!confirmedPolaroid)return showPolaroidModal();
  }else{
@@ -230,7 +265,7 @@ $('bookingForm').onsubmit=async e=>{
   if((polaroid.checked||yukinojiPolaroid.checked)&&!confirmedPolaroid)return showPolaroidModal();
  }
  const submitMode=orderMode,submitStaffName=staff.find(x=>x.id===selected)?.name||'館員',activeSubmit=submitMode==='dining'?diningSubmit:bookingSubmit;
- submitting=true;activeSubmit.disabled=true;activeSubmit.textContent='傳送中…';
+ submitting=true;updateFoodQuantities();activeSubmit.disabled=true;activeSubmit.textContent='傳送中…';
  try{
   const url=submitMode==='dining'?'/api/orders':'/api/combined-order';
   const body=submitMode==='dining'?{guest_name:guest,guest_server:server,items:[...items.map(x=>({name:x.food.name,qty:x.qty})),...liquorItems.map(x=>({name:x.liquor.name,qty:x.qty}))],polaroid:diningPolaroid.checked,yukinoji_polaroid:diningYukinojiPolaroid.checked,note:$('diningNote').value.trim(),delivery_preference_staff_id:deliveryPreference?.value||null}:{guest_name:guest,guest_server:server,staff_id:selected,services:packageBox.checked?['眠楓套席']:s.names,items:[],polaroid:polaroid.checked,yukinoji_polaroid:yukinojiPolaroid.checked,note:$('note').value.trim()};
@@ -238,7 +273,7 @@ $('bookingForm').onsubmit=async e=>{
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'送出失敗');
   if(submitMode==='booking'){bookingDataReady=false;await broadcastBookingChange('booking_changed')}
-  e.target.reset();document.querySelectorAll('.food-choice').forEach(x=>x.checked=false);document.querySelectorAll('.liquor-qty').forEach(x=>x.value='0');
+  e.target.reset();document.querySelectorAll('.food-qty').forEach(x=>{x.value='0';x.setCustomValidity('')});document.querySelectorAll('.liquor-qty').forEach(x=>x.value='0');
   diningPolaroid.checked=false;diningYukinojiPolaroid.checked=false;confirmedPolaroid=false;confirmedAlcohol=false;
   const queueMessage=queueSuccessText(result,submitStaffName);
   if(result.pickup_items?.length)showPickupCode(result.pickup_items,queueMessage);

@@ -1,0 +1,22 @@
+/* Quantity controls preserve the existing red/gold ordering page. */
+body.reserve-card-theme #bookingForm .quantity-food-row{grid-template-columns:minmax(0,1fr) 142px;gap:4px 14px;padding:15px 12px}
+body.reserve-card-theme .quantity-food-row .food-copy{display:grid;gap:3px;min-width:0}
+body.reserve-card-theme .quantity-food-row .food-copy label{color:#fff0d8;font-size:18px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}
+body.reserve-card-theme .quantity-food-row .food-unit-price{font-size:14px;color:#e6c28b;white-space:nowrap}
+body.reserve-card-theme .quantity-food-row .food-quantity{display:grid;grid-template-columns:40px 62px 40px;align-items:center;gap:0}
+body.reserve-card-theme .food-quantity button{width:40px;height:44px;min-height:44px;padding:0;border:1px solid #b79566;background:#51241d;color:#ffe3a7;border-radius:4px;font-size:20px;line-height:1}
+body.reserve-card-theme #bookingForm .food-quantity .food-qty{width:62px;min-width:0;height:44px;min-height:44px;padding:5px 1px;border-radius:0;text-align:center;font-size:16px;appearance:textfield;-moz-appearance:textfield;font-variant-numeric:tabular-nums}
+body.reserve-card-theme .food-qty::-webkit-outer-spin-button,body.reserve-card-theme .food-qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+body.reserve-card-theme .quantity-food-row .food-line-total{grid-column:1 / -1;color:#d9bd9c;font-size:12px;text-align:right}
+body.reserve-card-theme #bookingForm .quantity-food-row.chosen{background:#89542545!important;box-shadow:inset 3px 0 #e4bf7f}
+body.reserve-card-theme #bookingForm .airi-combo-service{border-color:#dbb76a!important;background:#79502333!important}
+body.reserve-card-theme .airi-combo-service del{color:#c8ae9d;font-size:13px;margin-right:7px}
+body.reserve-card-theme .airi-combo-service small strong{color:#ffe0a0;font-size:15px}
+body.reserve-card-theme .food-qty:invalid{border-color:#ffb7a9!important}
+@media(max-width:480px){body.reserve-card-theme #bookingForm .quantity-food-row{padding:14px 4px;gap:3px 8px}body.reserve-card-theme .quantity-food-row .food-copy label{font-size:16px}body.reserve-card-theme .quantity-food-row .food-unit-price{font-size:12px}}
+@media(max-width:340px){body.reserve-card-theme #bookingForm .quantity-food-row{grid-template-columns:minmax(0,1fr)}body.reserve-card-theme .food-quantity{justify-self:end}body.reserve-card-theme .quantity-food-row .food-line-total{grid-column:1}}
+
+/* Keep scroll-container grid tracks from shrinking below the multi-line quantity rows. */
+body.reserve-card-theme #bookingForm #foodChoices{grid-auto-rows:max-content;align-content:start}
+body.reserve-card-theme #bookingForm .quantity-food-row{height:auto;min-height:max-content;flex-shrink:0}
+body.reserve-card-theme #bookingForm .food-quantity .food-qty{width:62px!important;min-width:0!important;padding:5px 1px!important}

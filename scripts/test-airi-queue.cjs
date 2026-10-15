@@ -163,13 +163,15 @@ function environment(options = {}) {
       if (Object.hasOwn(mocks, name)) return mocks[name];
       if (name === '@/lib/staff-services') return load('lib/staff-services.ts');
       if (name === '@/lib/staff-queue') return load('lib/staff-queue.ts');
+      if (name === '@/lib/airi-services'||name === './airi-services') return load('lib/airi-services.ts');
+      if (name === '@/lib/dining-items') return load('lib/dining-items.ts');
       throw new Error('Unmocked module import: ' + name);
     };
     vm.runInNewContext(js, {exports, require: localRequire, Date: ClockDate, Intl, Error, Uint8Array, console: {error: (...args) => env.logs.push(args)}, fetch: () => {throw new Error('Network access prohibited in local contract tests');}}, {filename: relative});
     return exports;
   }
   env.call = async (route, method = 'POST', body = {}, authorized = true) => {
-    const request = {json: async () => clone(body), headers: {get: name => name.toLowerCase() === 'authorization' && authorized ? 'Bearer local-test-token' : null}};
+    const request = {text: async () => JSON.stringify(body), json: async () => clone(body), headers: {get: name => name.toLowerCase() === 'authorization' && authorized ? 'Bearer local-test-token' : null}};
     return load('app/api/' + route + '/route.ts')[method](request);
   };
   return env;
@@ -179,7 +181,7 @@ const tableWrites = env => env.events.filter(event => event.kind === 'query' && 
 const rpcCalls = env => env.events.filter(event => event.kind === 'rpc' && event.phase === 'call');
 const storageRemovals = env => env.events.filter(event => event.kind === 'storage-remove');
 function assertNoWrites(env, message = '') {assert.equal(tableWrites(env).length, 0, message); assert.equal(rpcCalls(env).length, 0, message); assert.equal(storageRemovals(env).length, 0, message);}
-function assertQueueRPCOnly(env, count) {assert.equal(rpcCalls(env).length, count); assert.ok(rpcCalls(env).every(event => event.name === 'enqueue_airi_reservation' && event.client === 'admin')); assert.equal(tableWrites(env).length, 0); assert.equal(storageRemovals(env).length, 0);}
+function assertQueueRPCOnly(env, count) {assert.equal(rpcCalls(env).length, count); assert.ok(rpcCalls(env).every(event => event.name === 'enqueue_airi_service' && event.client === 'admin')); assert.equal(tableWrites(env).length, 0); assert.equal(storageRemovals(env).length, 0);}
 function queuedSuccess(args, position = 5) {return {data: {reservation_id: 'new-queue-id', pickup_code: args.p_pickup_code, queue_count: position, queue_position: position}, error: null};}
 const errorResult = (code, message) => ({data: null, error: {code, message}});
 
@@ -190,7 +192,8 @@ async function test(name, fn) {
   catch (error) {failures.push(name); console.error('FAIL ' + name + '\n' + error.stack);}
 }
 
-(async () => {
+module.exports={environment,tableWrites,rpcCalls,assertNoWrites,queuedSuccess,defaultOrder,AIRI_ID,SAI_ID,airi,sai};
+if(require.main===module)(async () => {
   await test('Public count includes pending/acknowledged only and strips every Airi time block, including legacy rows', async () => {
     const legacy = {...reservation('legacy-airi', AIRI_ID, 'pending', 'timed'), staff: [{slug: 'airi'}]};
     const ordinary = reservation('sai-active', SAI_ID, 'confirmed', 'timed');
@@ -216,7 +219,7 @@ async function test(name, fn) {
     const response = await env.call('booking-data', 'GET');
     assert.equal(response.status, 200);
     assert.deepEqual(response.body.staff.map(row => row.id), [AIRI_ID, SAI_ID]);
-    assert.deepEqual(response.body.staff.find(row => row.id === AIRI_ID).available_services, []);
+    assert.deepEqual(response.body.staff.find(row => row.id === AIRI_ID).available_services, ['談天說地']);
     assertNoWrites(env);
     const failed = environment({onQuery: query => query.table === 'reservations' && query.filters.some(filter => filter.column === 'staff.slug') ? errorResult('XX000', 'queue read failed') : undefined});
     const rejected = await failed.call('booking-data', 'GET');
@@ -238,7 +241,7 @@ async function test(name, fn) {
     assert.deepEqual(response.body.pickup_codes, [response.body.pickup_code]);
     assert.deepEqual(response.body.pickup_items, [{code: response.body.pickup_code, type: 'airi_signed_polaroid', label: '愛梨 簽繪拍立得'}]);
     assertQueueRPCOnly(env, 1);
-    assert.deepEqual(rpcCalls(env)[0].args, {p_staff_id: AIRI_ID, p_guest_name: defaultOrder.guest_name, p_guest_server: defaultOrder.guest_server, p_note: defaultOrder.note, p_pickup_code: response.body.pickup_code});
+    assert.deepEqual(rpcCalls(env)[0].args, {p_staff_id: AIRI_ID, p_guest_name: defaultOrder.guest_name, p_guest_server: defaultOrder.guest_server, p_note: defaultOrder.note, p_service_name:'簽繪拍立得', p_pickup_code: response.body.pickup_code});
     assert.equal(env.events.filter(event => event.kind === 'query' && event.table === 'reservations').length, 0, 'Airi must branch before the timed busy query');
   });
 
