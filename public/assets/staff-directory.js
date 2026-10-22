@@ -52,7 +52,6 @@
       <div class="photo-area">
         ${primary ? `<button type="button" class="photo-main-button" data-photo aria-label="放大${esc(row.name)}的主照片"><img class="photo-main" src="${esc(primary)}" alt="${esc(row.name)}主照片" decoding="async"${leader ? '' : ' loading="lazy"'}></button>` : '<div class="photo-placeholder" aria-hidden="true">楓</div>'}
         ${secondary ? `<button type="button" class="photo-inset" data-photo aria-label="放大${esc(row.name)}的小照片"><img src="${esc(secondary)}" alt="${esc(row.name)}第二張照片" decoding="async"${leader ? '' : ' loading="lazy"'}></button>` : ''}
-        ${row.slug === 'airi' ? `<button type="button" class="photographer-photo" data-photo aria-label="放大御用攝影師梓梓獸的照片"><img src="assets/images/staff-zizishou-20261014.avif" alt="御用攝影師・梓梓獸" width="640" height="360" loading="lazy" decoding="async"><span class="photographer-caption"><small>御用攝影師</small><strong>梓梓獸</strong></span></button>` : ''}
         <div class="nameplate"><p>${esc(row.role || '館員')}</p><h2>${esc(row.name)}</h2></div>
         <span class="photo-index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
       </div>
