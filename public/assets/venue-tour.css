@@ -1,0 +1,277 @@
+/* Renovated venue tour. Keep these styles local to the about page. */
+body.mf-about-page {
+  --venue-tour-cream: #f6ead7;
+  --venue-tour-gold: #e5c18b;
+  --venue-tour-muted: #d5c5af;
+  --venue-tour-panel: #201711;
+  --mf-background: none;
+}
+body.mf-about-page::before {
+  background: radial-gradient(ellipse at 15% 0, #342218 0, transparent 55%),
+    linear-gradient(145deg, #1e1611, #130e0b 72%) !important;
+}
+body.mf-about-page .page.venue-tour {
+  max-width: 1280px;
+  padding: 0 40px 88px;
+}
+.mf-about-page .venue-tour-header {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  align-items: center;
+  gap: 48px;
+  padding: 52px 0 38px;
+}
+.mf-about-page .venue-tour-eyebrow {
+  display: block;
+  color: var(--venue-tour-gold);
+  font-family: "Microsoft JhengHei", sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: .18em;
+}
+.mf-about-page .venue-tour-header h1 {
+  margin: 10px 0 0;
+  color: var(--venue-tour-cream);
+  font-size: clamp(36px, 4.5vw, 52px);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: .14em;
+}
+.mf-about-page .venue-tour-welcome {
+  padding-left: 32px;
+  border-left: 1px solid var(--line);
+}
+.mf-about-page .venue-tour-welcome p {
+  margin: 0;
+  color: var(--venue-tour-muted);
+  font-size: 16px;
+  line-height: 1.95;
+}
+.mf-about-page .venue-tour-welcome .venue-tour-welcome-title {
+  margin-bottom: 9px;
+  color: var(--venue-tour-cream);
+  font-size: 22px;
+  letter-spacing: .05em;
+}
+.mf-about-page .venue-tour-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 48px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--venue-tour-panel);
+}
+.mf-about-page .venue-tour-nav a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 17px 24px;
+  color: var(--venue-tour-cream);
+  font-size: 17px;
+  border-right: 1px solid var(--line);
+  transition: background .18s ease;
+}
+.mf-about-page .venue-tour-nav a:last-child { border-right: 0; }
+.mf-about-page .venue-tour-nav a:hover { background: #35261b; }
+.mf-about-page .venue-tour-nav-number {
+  color: var(--venue-tour-gold);
+  font: 13px/1.5 "Microsoft JhengHei", sans-serif;
+  letter-spacing: .06em;
+}
+.mf-about-page .venue-tour-nav-arrow { margin-left: auto; color: var(--venue-tour-gold); }
+.mf-about-page .venue-tour-spaces { display: grid; gap: 64px; }
+.mf-about-page .venue-tour-space { scroll-margin-top: 110px; }
+.mf-about-page .venue-tour-space-heading {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 36px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.mf-about-page .venue-tour-space-title { display: flex; align-items: center; gap: 22px; }
+.mf-about-page .venue-tour-number {
+  color: var(--venue-tour-gold);
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.mf-about-page .venue-tour-space h2 {
+  margin: 4px 0 0;
+  color: var(--venue-tour-cream);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: .08em;
+}
+.mf-about-page .venue-tour-description p {
+  margin: 0;
+  color: var(--venue-tour-muted);
+  font-size: 16px;
+  line-height: 1.9;
+}
+.mf-about-page .venue-tour-description .venue-tour-lead {
+  margin-bottom: 6px;
+  color: var(--venue-tour-cream);
+  font-size: 18px;
+}
+.mf-about-page .venue-tour-figure { margin: 0; }
+.mf-about-page .venue-tour-photo {
+  display: block;
+  border: 1px solid #7a5e3e;
+  border-radius: 4px;
+  background: var(--venue-tour-panel);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .24);
+  cursor: zoom-in;
+  transition: border-color .18s ease;
+}
+.mf-about-page .venue-tour-photo:hover { border-color: var(--venue-tour-gold); }
+.mf-about-page .venue-tour-photo > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: 3px 3px 0 0;
+}
+.mf-about-page .venue-tour-photo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 50px;
+  padding: 10px 20px;
+  color: var(--venue-tour-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.mf-about-page .venue-tour-enlarge { flex-shrink: 0; color: var(--venue-tour-gold); }
+.mf-about-page .venue-tour-enlarge > span { margin-left: 5px; font-size: 18px; }
+.mf-about-page .venue-tour-closing {
+  margin-top: 72px;
+  padding: 42px 24px 0;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.mf-about-page .venue-tour-closing h2 {
+  margin: 12px 0;
+  color: var(--venue-tour-cream);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 500;
+  line-height: 1.7;
+  letter-spacing: .08em;
+}
+.mf-about-page .venue-tour-closing p { color: var(--venue-tour-muted); font-size: 16px; line-height: 1.9; }
+.mf-about-page .venue-tour-actions { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 26px; }
+.mf-about-page .venue-tour-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  min-height: 50px;
+  padding: 12px 24px;
+  border: 1px solid #a58151;
+  border-radius: 4px;
+  background: var(--venue-tour-panel);
+  color: var(--venue-tour-cream);
+  font-size: 16px;
+}
+.mf-about-page .venue-tour-button-primary { background: #e5c18b; border-color: #e5c18b; color: #24170e; font-weight: 700; }
+.mf-about-page .venue-tour-button:hover { box-shadow: 0 0 0 2px rgba(229, 193, 139, .2); }
+.mf-about-page.venue-tour-photo-open { overflow: hidden; }
+.mf-about-page .venue-tour-lightbox {
+  width: min(1280px, calc(100vw - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #a58151;
+  border-radius: 5px;
+  background: #18120e;
+  color: var(--venue-tour-cream);
+  box-shadow: 0 24px 100px #000;
+  overflow: auto;
+}
+.mf-about-page .venue-tour-lightbox[open] { display: flex; flex-direction: column; }
+.mf-about-page .venue-tour-lightbox::backdrop { background: rgba(7, 5, 4, .92); }
+.mf-about-page .venue-tour-lightbox-head,
+.mf-about-page .venue-tour-lightbox-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; flex-shrink: 0; }
+.mf-about-page .venue-tour-lightbox-label { display: flex; align-items: baseline; gap: 16px; }
+.mf-about-page .venue-tour-lightbox h2 { margin: 0; font-size: 22px; line-height: 1.6; font-weight: 500; color: var(--venue-tour-cream); }
+.mf-about-page .venue-tour-lightbox-count { color: var(--venue-tour-gold); font-size: 14px; white-space: nowrap; }
+.mf-about-page .venue-tour-lightbox button {
+  min-height: 44px;
+  padding: 7px 16px;
+  border: 1px solid #806241;
+  border-radius: 3px;
+  background: #2c2017;
+  color: var(--venue-tour-cream);
+  font-size: 16px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.mf-about-page .venue-tour-lightbox button:hover { background: #493421; }
+.mf-about-page .venue-tour-lightbox-close { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.mf-about-page .venue-tour-lightbox-close > span:first-child { font-size: 24px; line-height: 1; }
+.mf-about-page .venue-tour-lightbox-stage { display: flex; align-items: center; justify-content: center; min-height: 0; background: #100c09; }
+.mf-about-page .venue-tour-lightbox-image { display: block; width: 100%; height: auto; max-height: calc(100dvh - 190px); object-fit: contain; }
+.mf-about-page .venue-tour-lightbox-hint { color: var(--venue-tour-muted); font-size: 14px; letter-spacing: .08em; }
+@media (max-width: 820px) {
+  body.mf-about-page .page.venue-tour { padding: 0 24px 72px; }
+  .mf-about-page .venue-tour-header { gap: 24px; padding: 38px 0 28px; }
+  .mf-about-page .venue-tour-welcome { padding-left: 24px; }
+  .mf-about-page .venue-tour-welcome .venue-tour-welcome-title { font-size: 19px; }
+  .mf-about-page .venue-tour-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 36px; }
+  .mf-about-page .venue-tour-nav a { min-height: 56px; padding: 12px 20px; }
+  .mf-about-page .venue-tour-nav a:nth-child(2) { border-right: 0; }
+  .mf-about-page .venue-tour-nav a:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .mf-about-page .venue-tour-space { display: grid; }
+  .mf-about-page .venue-tour-space-heading { display: contents; }
+  .mf-about-page .venue-tour-space-title { order: 1; margin-bottom: 18px; }
+  .mf-about-page .venue-tour-figure { order: 2; }
+  .mf-about-page .venue-tour-description { order: 3; margin-top: 18px; }
+  .mf-about-page .venue-tour-spaces { gap: 48px; }
+  .mf-about-page .venue-tour-number { font-size: 38px; }
+  .mf-about-page .venue-tour-space h2 { font-size: 28px; }
+  .mf-about-page .venue-tour-space { scroll-margin-top: 96px; }
+}
+@media (max-width: 560px) {
+  body.mf-about-page .page.venue-tour { padding: 0 18px 72px; }
+  .mf-about-page .venue-tour-header { display: block; padding: 30px 0 24px; }
+  .mf-about-page .venue-tour-header h1 { margin-top: 8px; font-size: 36px; }
+  .mf-about-page .venue-tour-eyebrow { font-size: 11px; letter-spacing: .15em; }
+  .mf-about-page .venue-tour-welcome { margin-top: 18px; padding: 0; border: 0; }
+  .mf-about-page .venue-tour-welcome .venue-tour-welcome-title { font-size: 18px; margin-bottom: 6px; }
+  .mf-about-page .venue-tour-welcome p { font-size: 16px; }
+  .mf-about-page .venue-tour-nav a { padding: 12px; gap: 9px; font-size: 16px; }
+  .mf-about-page .venue-tour-nav-number { font-size: 12px; }
+  .mf-about-page .venue-tour-space-title { gap: 16px; }
+  .mf-about-page .venue-tour-space h2 { font-size: 26px; }
+  .mf-about-page .venue-tour-description .venue-tour-lead { font-size: 17px; }
+  .mf-about-page .venue-tour-photo-bar { gap: 8px; padding: 10px 12px; font-size: 12px; }
+  .mf-about-page .venue-tour-enlarge { font-size: 14px; }
+  .mf-about-page .venue-tour-enlarge > span { margin-left: 2px; }
+  .mf-about-page .venue-tour-closing { margin-top: 48px; padding: 32px 0 0; }
+  .mf-about-page .venue-tour-closing h2 { letter-spacing: .03em; }
+  .mf-about-page .venue-tour-actions { gap: 10px; }
+  .mf-about-page .venue-tour-button { padding: 12px 16px; gap: 12px; }
+  .mf-about-page .venue-tour-lightbox { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .mf-about-page .venue-tour-lightbox-head,
+  .mf-about-page .venue-tour-lightbox-foot { gap: 8px; padding: 10px 12px; }
+  .mf-about-page .venue-tour-lightbox-label { display: block; }
+  .mf-about-page .venue-tour-lightbox h2 { font-size: 20px; }
+  .mf-about-page .venue-tour-lightbox-count { display: block; font-size: 13px; }
+  .mf-about-page .venue-tour-lightbox-close { padding: 7px 10px; }
+  .mf-about-page .venue-tour-lightbox-image { max-height: calc(100dvh - 170px); }
+  .mf-about-page .venue-tour-lightbox-hint { display: none; }
+}
+@media (max-width: 360px) {
+  .mf-about-page .venue-tour-nav a { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .mf-about-page .venue-tour-nav-arrow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(body.mf-about-page) { scroll-behavior: auto; }
+  .mf-about-page .venue-tour-nav a,
+  .mf-about-page .venue-tour-photo { transition: none; }
+}
