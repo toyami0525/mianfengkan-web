@@ -22,7 +22,7 @@ export async function GET(req:NextRequest){
   const auth=await accountFrom(req);if(!auth)return NextResponse.json({error:'請重新登入館員後台'},{status:401});
   if(!['owner','staff'].includes(String(auth.account.role)))return NextResponse.json({error:'沒有排班月曆權限'},{status:403});
   const month=req.nextUrl.searchParams.get('month')||'';const bounds=monthBounds(month);if(!bounds)return NextResponse.json({error:'月份格式錯誤'},{status:400});
-  let staffQuery=auth.db.from('staff').select('id,name,slug,active').eq('active',true).order('name',{ascending:true});
+  let staffQuery=auth.db.from('staff').select('id,name,slug,active').eq('active',true).neq('slug','zizishou').order('name',{ascending:true});
   if(auth.account.role==='staff'){if(!auth.account.staff_id)return NextResponse.json({error:'帳號未綁定館員'},{status:403});staffQuery=staffQuery.eq('id',auth.account.staff_id)}
   const{data:staff,error:staffError}=await staffQuery;if(staffError)throw staffError;const ids=(staff||[]).map(x=>x.id);
   const today=taipeiDateKey();
