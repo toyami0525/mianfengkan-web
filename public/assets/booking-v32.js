@@ -3,6 +3,7 @@ const FALLBACK_STAFF=[{id:'wei',slug:'wei',name:'微',role:'館員'},{id:'musufi
 // 名錄只用來識別可指名角色；是否接單以 API 回傳為準，不以備用名單補回已關閉的館員。
 const BOOKABLE_STAFF_SLUGS=new Set(FALLBACK_STAFF.map(x=>x.slug));
 const AIRI_COMBO='談天說地＋簽繪拍立得';
+const PACKAGE_SERVICES=['泡湯洗浴','按摩服務','耳語陪伴'];
 const SERVICE_INFO={'談天說地':{price:150000,duration:15},[AIRI_COMBO]:{price:400000,duration:15},'泡湯洗浴':{price:150000,duration:15},'按摩服務':{price:100000,duration:15},'耳語陪伴':{price:100000,duration:15},'Q版繪圖(公版)':{price:500000,duration:15},'簽繪拍立得':{price:150000,duration:15},'拍立得(無簽繪)':{price:80000,duration:15},'眠楓套席':{price:300000,duration:45}};
 const POLAROID_PRICE=80000;const YUKINOJI_POLAROID_PRICE=100000;
 const foods=[['主食','蛋包飯',7000],['主食','扇貝咖哩',9000],['主食','加雷馬披薩',9000],['主食','醬炒飯',7000],['主食','懸掛番茄沙拉',9000],['主食','羊駝奶油麵',7000],['主食','犎牛牛排',15000],['甜點','圓扇刺刺梨蛋糕',6000],['甜點','巧克力奶油蛋糕',6000],['甜點','白桃塔',8000],['甜點','蜂蜜牛角麵包',8000],['甜點','烏雞布丁',8000],['飲品','奶油熱巧克力',5000],['飲品','蜜瓜果汁',7000],['飲品','白桃汁',7000],['飲品','抹茶',7000],['飲品','路易波士紅茶',7000]].map((x,i)=>({id:i+1,category:x[0],name:x[1],price:x[2]}));
@@ -85,17 +86,26 @@ function syncPackage(){
  if(choicesLabel)choicesLabel.textContent=current?.slug==='airi'?'服務項目（擇一，組合已含兩項服務）':'服務項目（可複選）';
  const statusHelp=$('bookingStatusHelp');
  if(statusHelp)statusHelp.textContent=queueMode?'依加入順序安排服務，最多 5 人等候，正在服務的人不計入；輪到時由館員安排。':'不需選擇日期或時間；系統會以送出當下時間安排。館員服務中時，請待服務完成後再重新指名。';
- // Package bookings are retired; individual choices are controlled by the API.
- packageBox.checked=false;packageBox.disabled=true;
+ // 套席沿用三項服務的供應狀態；任何一項暫停時，套席也暫停。
+ const packageOffered=!queueMode&&PACKAGE_SERVICES.every(name=>options.includes(name));
+ const packageAvailable=packageOffered&&PACKAGE_SERVICES.every(name=>available.includes(name));
+ if(packageBox.checked&&!packageAvailable){
+  packageBox.checked=false;
+  serviceBoxes().filter(input=>PACKAGE_SERVICES.includes(input.value)).forEach(input=>input.checked=false);
+  confirmedPolaroid=false;
+ }
+ const packageSelected=packageBox.checked;
  serviceBoxes().forEach(input=>{
   input.type=current?.slug==='airi'?'radio':'checkbox';
-  const row=input.closest('.service-check'),offered=options.includes(input.value),paused=offered&&!available.includes(input.value);
+  const isPackage=input===packageBox,included=PACKAGE_SERVICES.includes(input.value);
+  const row=input.closest('.service-check'),offered=isPackage?packageOffered:options.includes(input.value),paused=offered&&(isPackage?!packageAvailable:!available.includes(input.value));
   const soldOut=current?.slug==='lina'&&input.value==='簽繪拍立得'&&linaSignedRemaining<=0;
-  input.disabled=!offered||paused||soldOut;
-  if(input.disabled&&input.checked){input.checked=false;confirmedPolaroid=false}
+  input.disabled=!offered||paused||soldOut||(!isPackage&&packageSelected);
+  if(!isPackage&&packageSelected)input.checked=included;
+  else if(input.disabled&&input.checked){input.checked=false;confirmedPolaroid=false}
   row.hidden=!offered;
   row.classList.toggle('locked',input.disabled);
-  row.title=paused?'此館員目前暫停提供此項目':soldOut?'今日已額滿':'';
+  row.title=paused?(isPackage?'套席內有服務目前暫停提供':'此館員目前暫停提供此項目'):soldOut?'今日已額滿':packageSelected&&!isPackage?(included?'已包含於眠楓套席':'請先取消眠楓套席，再選擇此項目'):'';
   const hint=row.querySelector('span small:not(.service-pause-note)');
   if(hint){
    if(hint.dataset.timedHint===undefined)hint.dataset.timedHint=hint.textContent;
@@ -104,7 +114,7 @@ function syncPackage(){
   }
   let status=row.querySelector('.service-pause-note');
   if(!status){status=document.createElement('small');status.className='service-pause-note';status.style.color='#f1b6a7';row.querySelector('span')?.append(status)}
-  status.textContent=paused?'暫停提供':soldOut?'今日已額滿':'';
+  status.textContent=paused?(isPackage?'套席內有服務暫停提供':'暫停提供'):soldOut?'今日已額滿':'';
   status.hidden=!paused&&!soldOut;
   if(input.value==='簽繪拍立得'&&linaSignedPolaroidHint)linaSignedPolaroidHint.textContent=current?.slug==='lina'?`150,000 Gil｜今日剩餘 ${linaSignedRemaining}／3 張`:`${servicePriceForSelected(input.value).toLocaleString('zh-TW')} Gil／張${queueMode?'｜排隊制':''}`;
  });

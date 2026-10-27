@@ -210,7 +210,6 @@ body.reserve-card-theme #bookingForm .service-check b { color: var(--ink) !impor
 body.reserve-card-theme #bookingForm .service-check small { color: var(--muted) !important; font-size: 15px; font-weight: 500; opacity: 1; }
 body.reserve-card-theme #bookingForm .service-check .service-pause-note { color: #ffc7b5 !important; font-weight: 600; }
 body.reserve-card-theme #bookingForm .service-check:has(input:checked) { border-color: #f0c98a !important; background: #50321f !important; box-shadow: inset 0 0 0 1px #d9b1784d; }
-body.reserve-card-theme #bookingForm .service-check.package { display: none !important; }
 body.reserve-card-theme :is(.polaroid-section, .dining-delivery-preference, .dining-only-polaroids) { margin: 0 0 20px; padding: 0; border: 0; border-radius: 0; background: transparent !important; }
 body.reserve-card-theme #bookingForm .service-check.locked,
 body.reserve-card-theme #bookingForm .service-check:has(input:disabled) { opacity: 1; cursor: not-allowed; color: #d8cbc6 !important; background: #30272a !important; border: 1px dashed #927f79 !important; box-shadow: none; }
